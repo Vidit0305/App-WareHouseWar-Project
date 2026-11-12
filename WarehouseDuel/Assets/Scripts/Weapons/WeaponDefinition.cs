@@ -1,0 +1,86 @@
+using UnityEngine;
+
+namespace WarehouseDuel.Weapons
+{
+    public enum FireMode : byte
+    {
+        Automatic = 0,
+        SemiAutomatic = 1,
+    }
+
+    /// <summary>
+    /// All tuning and presentation data for one weapon. Gameplay code reads only from here,
+    /// so balancing never requires code changes. Assets live in Assets/ScriptableObjects/Weapons.
+    /// </summary>
+    [CreateAssetMenu(menuName = "Warehouse Duel/Weapon Definition", fileName = "Weapon_")]
+    public sealed class WeaponDefinition : ScriptableObject
+    {
+        [Header("Identity")]
+        public string displayName = "Weapon";
+        [TextArea] public string description;
+        public Sprite icon;
+
+        [Header("Damage")]
+        [Min(1f)] public float damage = 20f;
+        [Min(1f)] public float headshotMultiplier = 1.5f;
+        [Tooltip("Rays per shot. 1 for bullets, 6-10 for a shotgun.")]
+        [Range(1, 16)] public int pellets = 1;
+        [Min(1f)] public float range = 80f;
+        [Tooltip("Full damage up to this distance (m).")]
+        [Min(0f)] public float falloffStart = 25f;
+        [Tooltip("Minimum damage reached at this distance (m).")]
+        [Min(0f)] public float falloffEnd = 60f;
+        [Range(0.05f, 1f)] public float minDamageMultiplier = 0.6f;
+
+        [Header("Firing")]
+        public FireMode fireMode = FireMode.Automatic;
+        [Min(30f)] public float roundsPerMinute = 600f;
+        [Tooltip("Cone half-angle in degrees when firing from the hip.")]
+        [Range(0f, 15f)] public float hipSpread = 2f;
+        [Tooltip("Cone half-angle in degrees while aiming.")]
+        [Range(0f, 15f)] public float aimSpread = 0.5f;
+
+        [Header("Ammunition")]
+        [Min(1)] public int magazineSize = 30;
+        [Tooltip("Spare rounds carried in addition to the loaded magazine (refilled on respawn).")]
+        [Min(0)] public int reserveAmmo = 120;
+        [Min(0.1f)] public float reloadSeconds = 2f;
+
+        [Header("Handling")]
+        [Tooltip("Camera kick per shot, degrees upward.")]
+        [Range(0f, 10f)] public float recoilPitch = 1f;
+        [Tooltip("Random sideways camera kick per shot, degrees (±).")]
+        [Range(0f, 5f)] public float recoilYaw = 0.3f;
+        [Range(0.5f, 1.2f)] public float moveSpeedMultiplier = 1f;
+        [Range(30f, 80f)] public float aimFieldOfView = 55f;
+        [Min(0f)] public float equipSeconds = 0.35f;
+
+        [Header("Presentation")]
+        public GameObject viewModelPrefab;
+        public GameObject worldModelPrefab;
+        public AudioClip fireSound;
+        public AudioClip reloadSound;
+        public AudioClip dryFireSound;
+        public Color muzzleFlashColor = new Color(1f, 0.8f, 0.4f);
+        [Min(0.1f)] public float muzzleFlashScale = 1f;
+        [Tooltip("View-model kick back per shot (m).")]
+        [Range(0f, 0.2f)] public float viewKick = 0.04f;
+
+        /// <summary>Seconds between shots implied by <see cref="roundsPerMinute"/>.</summary>
+        public float SecondsBetweenShots => 60f / roundsPerMinute;
+
+        /// <summary>Damage multiplier for a hit at <paramref name="distance"/> metres.</summary>
+        public float FalloffMultiplier(float distance)
+        {
+            if (distance <= falloffStart) return 1f;
+            if (distance >= falloffEnd) return minDamageMultiplier;
+            return Mathf.Lerp(1f, minDamageMultiplier, Mathf.InverseLerp(falloffStart, falloffEnd, distance));
+        }
+
+        private void OnValidate()
+        {
+            if (falloffEnd < falloffStart) falloffEnd = falloffStart;
+            if (range < falloffEnd) range = falloffEnd;
+        }
+    }
+}

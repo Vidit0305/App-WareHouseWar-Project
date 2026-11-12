@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d81ce3352d7a90241828c23e8ae72630, type: 3}
+  m_Name: Weapon_SMG
+  m_EditorClassIdentifier: Assembly-CSharp::WarehouseDuel.Weapons.WeaponDefinition
+  displayName: SMG
+  description: Very fast fire rate, low recoil. Best up close.
+  icon: {fileID: 21300000, guid: e9c545f39b562904b931338216a9cd6b, type: 3}
+  damage: 14
+  headshotMultiplier: 1.5
+  pellets: 1
+  range: 60
+  falloffStart: 12
+  falloffEnd: 30
+  minDamageMultiplier: 0.5
+  fireMode: 0
+  roundsPerMinute: 900
+  hipSpread: 3
+  aimSpread: 1.4
+  magazineSize: 32
+  reserveAmmo: 160
+  reloadSeconds: 1.7
+  recoilPitch: 0.55
+  recoilYaw: 0.3
+  moveSpeedMultiplier: 1.06
+  aimFieldOfView: 58
+  equipSeconds: 0.3
+  viewModelPrefab: {fileID: 3871461646891304319, guid: 5bfb14553002578489928f1111c1f5ce, type: 3}
+  worldModelPrefab: {fileID: 3871461646891304319, guid: 5bfb14553002578489928f1111c1f5ce, type: 3}
+  fireSound: {fileID: 8300000, guid: 8e8226173756686439a8826074bf5083, type: 3}
+  reloadSound: {fileID: 8300000, guid: 083901f705f75b340ab085aaa6df5ae1, type: 3}
+  dryFireSound: {fileID: 8300000, guid: 1e24a5f06c400404eb1f0ac2fc63fa09, type: 3}
+  muzzleFlashColor: {r: 1, g: 0.8, b: 0.4, a: 1}
+  muzzleFlashScale: 0.8
+  viewKick: 0.025
