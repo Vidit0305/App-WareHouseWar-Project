@@ -120,7 +120,7 @@ namespace WarehouseDuel.EditorTools
             PlayerSettings.SetIl2CppCodeGeneration(NamedBuildTarget.Android, Il2CppCodeGeneration.OptimizeSpeed);
             PlayerSettings.SetIl2CppCompilerConfiguration(NamedBuildTarget.Android, Il2CppCompilerConfiguration.Release);
             PlayerSettings.SplashScreen.showUnityLogo = false;
-            EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.ASTC;
+            EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.Generic; // per-texture formats (as in builds that ran on device)
             report.Pass("Android: ASTC textures; default (safe) IL2CPP code settings.");
         }
     }

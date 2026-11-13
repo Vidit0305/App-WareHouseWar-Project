@@ -67,15 +67,6 @@ namespace WarehouseDuel.EditorTools.UI
             importer.npotScale = TextureImporterNPOTScale.None;
             importer.maxTextureSize = maxSize;
             importer.textureCompression = TextureImporterCompression.CompressedHQ;
-            if (sprite)
-            {
-                // The full-screen splash art: ASTC 6×6 keeps it sharp at a fraction of the size.
-                importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings
-                {
-                    name = "Android", overridden = true, maxTextureSize = maxSize,
-                    format = TextureImporterFormat.ASTC_6x6, compressionQuality = 50,
-                });
-            }
             importer.SaveAndReimport();
         }
     }

@@ -96,14 +96,20 @@ namespace WarehouseDuel.EditorTools
             string[] scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
             Directory.CreateDirectory(Path.GetDirectoryName(AndroidOutput));
             EditorUserBuildSettings.buildAppBundle = false;
+            EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.Generic;
 
+            // "-developmentBuild" on the command line: debuggable diagnostic build next to the normal APK.
+            bool development = System.Environment.GetCommandLineArgs().Contains("-developmentBuild");
             var options = new BuildPlayerOptions
             {
                 scenes = scenes,
-                locationPathName = AndroidOutput,
+                locationPathName = development ? AndroidOutput.Replace(".apk", "_Debug.apk") : AndroidOutput,
                 target = BuildTarget.Android,
                 targetGroup = BuildTargetGroup.Android,
-                options = BuildOptions.None,
+                // LZ4HC: game data is compressed in small blocks Unity can seek into, and stored uncompressed in the
+                // APK zip. Without it the zip DEFLATEs the data and every backward seek re-inflates the file from the
+                // start, which froze startup on a black screen once the data grew (round 3).
+                options = BuildOptions.CompressWithLz4HC | (development ? BuildOptions.Development : BuildOptions.None),
             };
 
             BuildReport result = BuildPipeline.BuildPlayer(options);
