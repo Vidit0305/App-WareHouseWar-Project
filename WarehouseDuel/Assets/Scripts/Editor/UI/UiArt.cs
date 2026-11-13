@@ -54,15 +54,18 @@ namespace WarehouseDuel.EditorTools.UI
 
             foreach (KeyValuePair<string, Func<Vector2, float>> icon in Icons)
             {
-                SaveSprite(IconFolder, $"Icon_{icon.Key}", 128, (x, y) =>
+                // Match HUD icons are drawn at 256 px (shown large on high-DPI phones), the rest at 128 px.
+                int size = icon.Key.StartsWith("Hud") ? 256 : 128;
+                float half = size / 2f;
+                SaveSprite(IconFolder, $"Icon_{icon.Key}", size, (x, y) =>
                 {
                     // 2×2 supersampling for smooth edges.
                     float sum = 0f;
                     for (int sy = 0; sy < 2; sy++)
                     for (int sx = 0; sx < 2; sx++)
                     {
-                        var p = new Vector2((x + 0.25f + sx * 0.5f) / 64f - 1f, (y + 0.25f + sy * 0.5f) / 64f - 1f);
-                        sum += Mathf.Clamp01(0.5f - icon.Value(p) * 64f);
+                        var p = new Vector2((x + 0.25f + sx * 0.5f) / half - 1f, (y + 0.25f + sy * 0.5f) / half - 1f);
+                        sum += Mathf.Clamp01(0.5f - icon.Value(p) * half);
                     }
                     return sum / 4f;
                 });
@@ -243,6 +246,70 @@ namespace WarehouseDuel.EditorTools.UI
                 Mathf.Min(SdBox(p, new Vector2(-0.46f, -0.3f), new Vector2(0.2f, 0.34f)), SdBox(p, new Vector2(0.46f, -0.42f), new Vector2(0.2f, 0.22f)))),
             ["Close"] = p => Mathf.Min(SdSegment(p, new Vector2(-0.42f, -0.42f), new Vector2(0.42f, 0.42f), 0.1f),
                 SdSegment(p, new Vector2(-0.42f, 0.42f), new Vector2(0.42f, -0.42f), 0.1f)),
+            // ---- match HUD (256 px)
+            ["HudFire"] = p =>
+            {
+                // A rifle cartridge flying up-right, with three speed lines behind it.
+                Vector2 q = Rot(p, -45f);
+                float body = SdBox(q, new Vector2(0f, -0.1f), new Vector2(0.19f, 0.36f));
+                float nose = Mathf.Min(SdCircle(q, new Vector2(0f, 0.3f), 0.19f), SdTriangle(q, new Vector2(-0.19f, 0.3f), new Vector2(0.19f, 0.3f), new Vector2(0f, 0.7f)));
+                float rim = SdBox(q, new Vector2(0f, -0.52f), new Vector2(0.23f, 0.06f));
+                float groove = SdBox(q, new Vector2(0f, -0.42f), new Vector2(0.25f, 0.025f));
+                float neck = SdBox(q, new Vector2(0f, 0.25f), new Vector2(0.25f, 0.02f));
+                float bullet = Mathf.Max(Mathf.Min(Mathf.Min(body, nose), rim), -Mathf.Min(groove, neck));
+                float lines = Mathf.Min(SdSegment(q, new Vector2(-0.42f, -0.2f), new Vector2(-0.42f, -0.72f), 0.055f),
+                    Mathf.Min(SdSegment(q, new Vector2(0.42f, -0.2f), new Vector2(0.42f, -0.72f), 0.055f), SdSegment(q, new Vector2(0f, -0.68f), new Vector2(0f, -0.92f), 0.055f)));
+                return Mathf.Min(bullet, lines);
+            },
+            ["HudAim"] = p =>
+            {
+                // Scope reticle: ring, broken crosshair, centre dot, mil ticks.
+                float ring = SdRing(p, Vector2.zero, 0.66f, 0.07f);
+                float cross = Mathf.Min(Mathf.Min(SdBox(p, new Vector2(0f, 0.43f), new Vector2(0.04f, 0.21f)), SdBox(p, new Vector2(0f, -0.43f), new Vector2(0.04f, 0.21f))),
+                                        Mathf.Min(SdBox(p, new Vector2(0.43f, 0f), new Vector2(0.21f, 0.04f)), SdBox(p, new Vector2(-0.43f, 0f), new Vector2(0.21f, 0.04f))));
+                float dot = SdCircle(p, Vector2.zero, 0.08f);
+                float ticks = Mathf.Min(Mathf.Min(SdBox(p, new Vector2(0.2f, 0f), new Vector2(0.015f, 0.07f)), SdBox(p, new Vector2(-0.2f, 0f), new Vector2(0.015f, 0.07f))),
+                                        Mathf.Min(SdBox(p, new Vector2(0f, 0.2f), new Vector2(0.07f, 0.015f)), SdBox(p, new Vector2(0f, -0.2f), new Vector2(0.07f, 0.015f))));
+                return Mathf.Min(Mathf.Min(ring, cross), Mathf.Min(dot, ticks));
+            },
+            ["HudReload"] = p =>
+            {
+                // A curved magazine inside a circular "reload" arrow.
+                float arc = SdRing(p, Vector2.zero, 0.7f, 0.075f);
+                float angle = Mathf.Repeat(Mathf.Atan2(p.y, p.x) * Mathf.Rad2Deg, 360f);
+                if (angle > 40f && angle < 95f) arc = Mathf.Max(arc, 0.2f);
+                float head = SdTriangle(p, new Vector2(0.38f, 0.66f), new Vector2(0.66f, 0.27f), new Vector2(0.78f, 0.62f));
+                Vector2 m = Rot(p - new Vector2(0f, -0.04f), 12f);
+                float mag = SdBox(m, new Vector2(0f, -0.04f), new Vector2(0.17f, 0.3f)) - 0.03f;
+                float lip = SdBox(m, new Vector2(0f, 0.3f), new Vector2(0.11f, 0.06f));
+                float slot = SdBox(m, new Vector2(0f, -0.04f), new Vector2(0.05f, 0.2f));
+                float magazine = Mathf.Max(Mathf.Min(mag, lip), -slot);
+                return Mathf.Min(Mathf.Min(arc, head), magazine);
+            },
+            ["HudJump"] = p => Mathf.Min(Mathf.Min(SdChevron(p, new Vector2(0f, 0.62f), 0.5f, 0.1f), SdChevron(p, new Vector2(0f, 0.18f), 0.5f, 0.1f)),
+                SdBox(p, new Vector2(0f, -0.55f), new Vector2(0.5f, 0.07f))),
+            ["HudSprint"] = p =>
+            {
+                // Running soldier silhouette with two speed lines.
+                float head = SdCircle(p, new Vector2(0.16f, 0.62f), 0.14f);
+                float torso = SdSegment(p, new Vector2(0.08f, 0.4f), new Vector2(-0.06f, 0.0f), 0.1f);
+                float armFront = Mathf.Min(SdSegment(p, new Vector2(0.06f, 0.34f), new Vector2(0.3f, 0.18f), 0.07f), SdSegment(p, new Vector2(0.3f, 0.18f), new Vector2(0.48f, 0.32f), 0.065f));
+                float armBack = Mathf.Min(SdSegment(p, new Vector2(0.04f, 0.34f), new Vector2(-0.2f, 0.24f), 0.07f), SdSegment(p, new Vector2(-0.2f, 0.24f), new Vector2(-0.3f, 0.04f), 0.065f));
+                float legFront = Mathf.Min(SdSegment(p, new Vector2(-0.05f, 0.0f), new Vector2(0.2f, -0.24f), 0.08f), SdSegment(p, new Vector2(0.2f, -0.24f), new Vector2(0.14f, -0.6f), 0.075f));
+                float legBack = Mathf.Min(SdSegment(p, new Vector2(-0.07f, 0.0f), new Vector2(-0.26f, -0.26f), 0.08f), SdSegment(p, new Vector2(-0.26f, -0.26f), new Vector2(-0.56f, -0.3f), 0.075f));
+                float lines = Mathf.Min(SdSegment(p, new Vector2(-0.7f, 0.4f), new Vector2(-0.42f, 0.4f), 0.04f), SdSegment(p, new Vector2(-0.78f, 0.16f), new Vector2(-0.48f, 0.16f), 0.04f));
+                return Mathf.Min(Mathf.Min(Mathf.Min(head, torso), Mathf.Min(armFront, armBack)), Mathf.Min(Mathf.Min(legFront, legBack), lines));
+            },
+            ["HudSwap"] = p =>
+            {
+                // Two bold arrows chasing each other around a circle.
+                float arc = SdRing(p, Vector2.zero, 0.56f, 0.09f);
+                float angle = Mathf.Repeat(Mathf.Atan2(p.y, p.x) * Mathf.Rad2Deg, 360f);
+                if ((angle > 60f && angle < 120f) || (angle > 240f && angle < 300f)) arc = Mathf.Max(arc, 0.2f);
+                float headA = SdTriangle(p, new Vector2(0.06f, 0.82f), new Vector2(0.06f, 0.3f), new Vector2(-0.3f, 0.56f));
+                float headB = SdTriangle(p, new Vector2(-0.06f, -0.82f), new Vector2(-0.06f, -0.3f), new Vector2(0.3f, -0.56f));
+                return Mathf.Min(arc, Mathf.Min(headA, headB));
+            },
             ["Alert"] = p => Mathf.Min(SdRing(p, Vector2.zero, 0.7f, 0.08f),
                 Mathf.Min(SdSegment(p, new Vector2(0f, 0.38f), new Vector2(0f, -0.06f), 0.1f), SdCircle(p, new Vector2(0f, -0.32f), 0.1f))),
             ["Star"] = p =>
@@ -262,6 +329,12 @@ namespace WarehouseDuel.EditorTools.UI
             var tangent = new Vector2(radial.y, -radial.x);
             Vector2 c = radial * 0.5f;
             return SdTriangle(p, c + tangent * 0.26f, c - radial * 0.24f - tangent * 0.04f, c + radial * 0.24f - tangent * 0.04f);
+        }
+
+        private static Vector2 Rot(Vector2 p, float degrees)
+        {
+            float r = degrees * Mathf.Deg2Rad, cs = Mathf.Cos(r), sn = Mathf.Sin(r);
+            return new Vector2(p.x * cs - p.y * sn, p.x * sn + p.y * cs);
         }
 
         private static float SdCircle(Vector2 p, Vector2 c, float r) => (p - c).magnitude - r;

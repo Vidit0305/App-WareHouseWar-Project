@@ -57,7 +57,7 @@ namespace WarehouseDuel.EditorTools.Testing
             CaptureUiScene(GameConstants.Scenes.SplashScreen, Path.Combine(dir, "ui_splash.png"), runtimeHidden);
             CaptureUiScene(GameConstants.Scenes.MainMenu, Path.Combine(dir, "ui_mainmenu.png"), runtimeHidden);
             foreach (var (shot, show) in new[] { ("ui_profile", "Profile Screen"), ("ui_leaderboard", "Leaderboard Screen"),
-                                                 ("ui_armory", "Armory Screen"), ("ui_settings", "Settings Panel"), ("ui_online", "Online") })
+                                                 ("ui_armory", "Armory Screen"), ("ui_characters", "Character Screen"), ("ui_settings", "Settings Panel"), ("ui_online", "Online") })
             {
                 bool overHome = show == "Online";
                 CaptureUiScene(GameConstants.Scenes.MainMenu, Path.Combine(dir, shot + ".png"), runtimeHidden, show, overHome ? null : "Home");

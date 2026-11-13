@@ -35,12 +35,14 @@ namespace WarehouseDuel.Player
         private Vector3 lastPosition;
         private bool isLocal;
         private int appliedSlot = -1;
+        private SoldierLook look;
 
         private void Awake()
         {
             character = GetComponent<PlayerCharacter>();
             weapons = GetComponent<WeaponController>();
             cameraRig = GetComponentInChildren<PlayerCameraRig>(true);
+            look = bodyRoot != null ? bodyRoot.GetComponentInChildren<SoldierLook>(true) : null;
         }
 
         private void OnEnable()
@@ -111,6 +113,16 @@ namespace WarehouseDuel.Player
             float dt = Time.deltaTime;
 
             if (appliedSlot != character.Slot) ApplyTeamColor(character.Slot);
+            if (look != null)
+            {
+                int wanted = WantedCharacter();
+                if (look.Applied != wanted)
+                {
+                    look.Apply(wanted);
+                    // The local player only sees their own shadow; newly shown accessories must follow suit.
+                    if (isLocal) foreach (Renderer r in bodyRoot.GetComponentsInChildren<Renderer>(true)) r.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
+                }
+            }
             if (weapons != null && weapons.Current != shownWeapon) SwapWorldWeapon(weapons.Current);
 
             // Walk cycle from actual movement (works the same for predicted and interpolated players).
@@ -140,6 +152,18 @@ namespace WarehouseDuel.Player
                 bool shielded = character.IsAlive && character.IsProtected && !isLocal;
                 if (protectionBubble.activeSelf != shielded) protectionBubble.SetActive(shielded);
             }
+        }
+
+        /// <summary>The owner's character from the room (falls back to my own choice offline).</summary>
+        private int WantedCharacter()
+        {
+            if (WarehouseDuel.Multiplayer.RoomState.Instance != null
+                && WarehouseDuel.Multiplayer.RoomState.Instance.TryGetSlot(character.Owner, out WarehouseDuel.Multiplayer.PlayerSlot slot)
+                && slot.Occupied)
+            {
+                return slot.Character;
+            }
+            return character.IsLocal ? WarehouseDuel.Profile.PlayerProfile.CharacterIndex : 0;
         }
 
         private void ApplyTeamColor(int slot)

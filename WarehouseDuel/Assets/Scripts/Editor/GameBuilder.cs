@@ -56,6 +56,7 @@ namespace WarehouseDuel.EditorTools
                 BrandingConfigurator.Apply(report);
                 FusionConfigurator.Apply(report);
                 GameplayPrefabBuilder.BuildAll(report, catalog);
+                CharacterBuilder.Build(report);
                 ProfileArtBuilder.Build(report);
                 FusionConfigurator.RebuildPrefabTable(report);
 

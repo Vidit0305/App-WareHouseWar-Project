@@ -181,10 +181,11 @@ namespace WarehouseDuel.Player
         }
 
         /// <summary>Places the right hand on the grip and the left hand on the weapon's "Handguard" marker.</summary>
-        public static void AttachHands(Transform model, GameObject handPrefab)
+        public static void AttachHands(Transform model, GameObject handPrefab, int character = 0)
         {
             if (handPrefab == null) return;
             GameObject right = Instantiate(handPrefab, model, false);
+            WarehouseDuel.Profile.CharacterCatalog.ApplyToRenderers(right, character);
             right.transform.localPosition = new Vector3(0.005f, -0.035f, -0.01f);
             right.transform.localRotation = Quaternion.Euler(-24f, -14f, 0f);
 
@@ -192,6 +193,7 @@ namespace WarehouseDuel.Player
             GameObject left = Instantiate(handPrefab, model, false);
             left.transform.localPosition = guard != null ? guard.localPosition + new Vector3(-0.01f, -0.035f, 0f) : new Vector3(-0.03f, -0.04f, 0.05f);
             left.transform.localRotation = Quaternion.Euler(-14f, 32f, -10f);
+            WarehouseDuel.Profile.CharacterCatalog.ApplyToRenderers(left, character);
         }
 
         private void SwapViewModel(WeaponDefinition weapon)
@@ -206,7 +208,7 @@ namespace WarehouseDuel.Player
             viewModel.transform.localScale = Vector3.one * viewModelScale;
             weaponOffset = weapon.viewModelOffset;
             viewModel.transform.localPosition = weaponOffset;
-            AttachHands(viewModel.transform, handPrefab);
+            AttachHands(viewModel.transform, handPrefab, WarehouseDuel.Profile.PlayerProfile.CharacterIndex);
             foreach (Transform t in viewModel.GetComponentsInChildren<Transform>(true))
             {
                 t.gameObject.layer = firstPersonLayer;

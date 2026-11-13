@@ -45,6 +45,15 @@ namespace WarehouseDuel.UI
 
         private void Awake()
         {
+            // Set the slider ranges BEFORE any listener exists and with saving blocked: narrowing a range clamps the
+            // slider's value and fires onValueChanged, which used to overwrite the saved settings with the minimums
+            // every time the screen was first opened (it looked like settings "reset" after restarting the app).
+            initialising = true;
+            lookSensitivity.minValue = aimSensitivity.minValue = GameSettings.MinSensitivity;
+            lookSensitivity.maxValue = aimSensitivity.maxValue = GameSettings.MaxSensitivity;
+            buttonSize.minValue = 0.75f;
+            buttonSize.maxValue = 1.35f;
+
             for (int i = 0; i < tabButtons.Length; i++)
             {
                 int index = i;
@@ -70,14 +79,11 @@ namespace WarehouseDuel.UI
                 GameSettings.Vibration = v;
                 if (v) Haptics.Medium();
             });
-            quality.Changed += i => GameSettings.QualityLevel = i;
-            frameRate.Changed += i => GameSettings.TargetFrameRate = i == 0 ? 30 : 60;
-            layout.Changed += i => GameSettings.Layout = (ControlLayout)i;
+            quality.Changed += i => { if (!initialising) GameSettings.QualityLevel = i; };
+            frameRate.Changed += i => { if (!initialising) GameSettings.TargetFrameRate = i == 0 ? 30 : 60; };
+            layout.Changed += i => { if (!initialising) GameSettings.Layout = (ControlLayout)i; };
 
-            lookSensitivity.minValue = aimSensitivity.minValue = GameSettings.MinSensitivity;
-            lookSensitivity.maxValue = aimSensitivity.maxValue = GameSettings.MaxSensitivity;
-            buttonSize.minValue = 0.75f;
-            buttonSize.maxValue = 1.35f;
+            initialising = false;
         }
 
         private void OnEnable()

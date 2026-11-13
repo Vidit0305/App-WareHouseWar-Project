@@ -19,6 +19,9 @@ namespace WarehouseDuel.EditorTools.Gameplay
         public sealed class Rig
         {
             public Transform Root, Hips, LegL, LegR, Spine, Head, ArmsRig, ShoulderL, ShoulderR, WeaponSocket;
+            /// <summary>Standard helmet (with goggles and team band) and lower face mask; characters can hide them.</summary>
+            public Transform Helmet, FaceMask;
+            public WarehouseDuel.Player.SoldierLook Look;
             public readonly List<Renderer> TeamColored = new List<Renderer>();
         }
 
@@ -46,16 +49,18 @@ namespace WarehouseDuel.EditorTools.Gameplay
             // Head: skin cube, black lower mask, camo helmet with team band, blue goggles.
             rig.Head = Node(rig.Spine, "Head", new Vector3(0f, 0.5f, 0f));
             Box(rig.Head, new Vector3(0f, 0.17f, 0f), new Vector3(0.38f, 0.38f, 0.38f), skin);
-            Box(rig.Head, new Vector3(0f, 0.08f, 0.004f), new Vector3(0.4f, 0.17f, 0.4f), mask);
+            rig.FaceMask = Node(rig.Head, "FaceMask", Vector3.zero);
+            Box(rig.FaceMask, new Vector3(0f, 0.08f, 0.004f), new Vector3(0.4f, 0.17f, 0.4f), mask);
             Box(rig.Head, new Vector3(-0.08f, 0.22f, 0.192f), new Vector3(0.07f, 0.05f, 0.01f), eye);
             Box(rig.Head, new Vector3(0.08f, 0.22f, 0.192f), new Vector3(0.07f, 0.05f, 0.01f), eye);
             Box(rig.Head, new Vector3(-0.08f, 0.265f, 0.192f), new Vector3(0.09f, 0.02f, 0.01f), mask);      // brows
             Box(rig.Head, new Vector3(0.08f, 0.265f, 0.192f), new Vector3(0.09f, 0.02f, 0.01f), mask);
-            Box(rig.Head, new Vector3(0f, 0.38f, -0.01f), new Vector3(0.47f, 0.2f, 0.47f), camo);            // helmet
-            Box(rig.Head, new Vector3(0f, 0.29f, 0.02f), new Vector3(0.5f, 0.05f, 0.5f), camoDark);          // brim
-            rig.TeamColored.Add(Box(rig.Head, new Vector3(0f, 0.325f, -0.01f), new Vector3(0.48f, 0.035f, 0.48f), team));
-            Box(rig.Head, new Vector3(0f, 0.41f, -0.01f), new Vector3(0.485f, 0.05f, 0.485f), strap);        // goggle strap
-            Box(rig.Head, new Vector3(0f, 0.42f, 0.235f), new Vector3(0.32f, 0.11f, 0.05f), goggles);        // goggle lens
+            rig.Helmet = Node(rig.Head, "Helmet", Vector3.zero);
+            Box(rig.Helmet, new Vector3(0f, 0.38f, -0.01f), new Vector3(0.47f, 0.2f, 0.47f), camo);          // helmet
+            Box(rig.Helmet, new Vector3(0f, 0.29f, 0.02f), new Vector3(0.5f, 0.05f, 0.5f), camoDark);        // brim
+            rig.TeamColored.Add(Box(rig.Helmet, new Vector3(0f, 0.325f, -0.01f), new Vector3(0.48f, 0.035f, 0.48f), team));
+            Box(rig.Helmet, new Vector3(0f, 0.41f, -0.01f), new Vector3(0.485f, 0.05f, 0.485f), strap);      // goggle strap
+            Box(rig.Helmet, new Vector3(0f, 0.42f, 0.235f), new Vector3(0.32f, 0.11f, 0.05f), goggles);      // goggle lens
 
             // Arms + weapon on one rig so the hands move with the gun (aim pitch, inspection, swaps).
             rig.ArmsRig = Node(rig.Spine, "ArmsRig", new Vector3(0f, 0.42f, 0f));
@@ -67,7 +72,63 @@ namespace WarehouseDuel.EditorTools.Gameplay
 
             rig.WeaponSocket = Node(rig.ArmsRig, "WeaponSocket", new Vector3(0.17f, -0.27f, 0.47f));
             rig.WeaponSocket.localRotation = Quaternion.Euler(0f, -6f, 0f);
+
+            AddLook(rig);
             return rig;
+        }
+
+        /// <summary>
+        /// Adds <see cref="WarehouseDuel.Player.SoldierLook"/>: records which renderers use which base material slot,
+        /// then builds every character's accessories (inactive) so any soldier can be dressed as any character.
+        /// </summary>
+        private static void AddLook(Rig rig)
+        {
+            var slotRenderers = new List<Object>();
+            var slots = new List<int>();
+            foreach (Renderer r in rig.Root.GetComponentsInChildren<Renderer>(true))
+            {
+                int slot = System.Array.IndexOf(WarehouseDuel.Profile.CharacterCatalog.BaseMaterialNames, r.sharedMaterial != null ? r.sharedMaterial.name : "");
+                if (slot < 0) continue;
+                slotRenderers.Add(r);
+                slots.Add(slot);
+            }
+
+            var accessories = new List<Object>();
+            var owners = new List<int>();
+            foreach ((GameObject piece, int character) in WarehouseDuel.EditorTools.Gameplay.CharacterBuilder.BuildAccessories(rig))
+            {
+                piece.SetActive(false);
+                accessories.Add(piece);
+                owners.Add(character);
+            }
+
+            rig.Look = rig.Root.gameObject.AddComponent<WarehouseDuel.Player.SoldierLook>();
+            var so = new SerializedObject(rig.Look);
+            SetArray(so.FindProperty("slotRenderers"), slotRenderers);
+            SerializedProperty slotProperty = so.FindProperty("rendererSlots");
+            slotProperty.arraySize = slots.Count;
+            for (int i = 0; i < slots.Count; i++) slotProperty.GetArrayElementAtIndex(i).intValue = slots[i];
+            so.FindProperty("helmet").objectReferenceValue = rig.Helmet.gameObject;
+            so.FindProperty("faceMask").objectReferenceValue = rig.FaceMask.gameObject;
+            SetArray(so.FindProperty("accessories"), accessories);
+            SerializedProperty ownerProperty = so.FindProperty("accessoryCharacter");
+            ownerProperty.arraySize = owners.Count;
+            for (int i = 0; i < owners.Count; i++) ownerProperty.GetArrayElementAtIndex(i).intValue = owners[i];
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void SetArray(SerializedProperty property, List<Object> values)
+        {
+            property.arraySize = values.Count;
+            for (int i = 0; i < values.Count; i++) property.GetArrayElementAtIndex(i).objectReferenceValue = values[i];
+        }
+
+        /// <summary>A plain box for accessories (no collider; casts shadows if it is big enough).</summary>
+        public static GameObject Part(Transform parent, Vector3 centre, Vector3 size, Material material, Vector3? euler = null)
+        {
+            Renderer r = Box(parent, centre, size, material);
+            if (euler.HasValue) r.transform.localRotation = Quaternion.Euler(euler.Value);
+            return r.gameObject;
         }
 
         /// <summary>

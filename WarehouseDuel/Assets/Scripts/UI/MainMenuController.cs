@@ -23,7 +23,7 @@ namespace WarehouseDuel.UI
         [SerializeField] private Button onlineModeButton;
         [SerializeField] private Button practiceModeButton;
         [SerializeField] private Button profileChipButton;
-        [SerializeField] private Button profileCardButton;
+        [SerializeField] private Button characterCardButton;
         [SerializeField] private Button armoryCardButton;
         [SerializeField] private Button leaderboardButton;
         [SerializeField] private Button settingsButton;
@@ -33,6 +33,7 @@ namespace WarehouseDuel.UI
         [SerializeField] private ProfileScreen profileScreen;
         [SerializeField] private LeaderboardScreen leaderboardScreen;
         [SerializeField] private ArmoryScreen armoryScreen;
+        [SerializeField] private CharacterScreen characterScreen;
         [SerializeField] private GameObject settingsPanel;
         [SerializeField] private Button settingsCloseButton;
 
@@ -61,7 +62,11 @@ namespace WarehouseDuel.UI
         {
             session = SessionService.Instance;
             GameSettings.ApplyEngineSettings();
-            if (character != null) character.SetWeapon(GameSettings.PreferredWeapon);
+            if (character != null)
+            {
+                character.SetWeapon(GameSettings.PreferredWeapon);
+                if (character.TryGetComponent(out SoldierLook look)) look.Apply(WarehouseDuel.Profile.PlayerProfile.CharacterIndex);
+            }
 
             codeInput.characterLimit = 7;
             codeInput.onValueChanged.AddListener(_ => joinErrorText.text = string.Empty);
@@ -71,7 +76,7 @@ namespace WarehouseDuel.UI
             onlineModeButton.onClick.AddListener(() => ShowDialog(onlinePanel));
             practiceModeButton.onClick.AddListener(StartPractice);
             profileChipButton.onClick.AddListener(() => OpenScreen(profileScreen));
-            profileCardButton.onClick.AddListener(() => OpenScreen(profileScreen));
+            characterCardButton.onClick.AddListener(() => OpenScreen(characterScreen));
             armoryCardButton.onClick.AddListener(() => OpenScreen(armoryScreen));
             leaderboardButton.onClick.AddListener(() => OpenScreen(leaderboardScreen));
             settingsButton.onClick.AddListener(() =>
@@ -81,7 +86,7 @@ namespace WarehouseDuel.UI
             });
             settingsCloseButton.onClick.AddListener(CloseSettings);
 
-            foreach (MenuScreen screen in new MenuScreen[] { profileScreen, leaderboardScreen, armoryScreen })
+            foreach (MenuScreen screen in new MenuScreen[] { profileScreen, leaderboardScreen, armoryScreen, characterScreen })
             {
                 screen.Closed += () => homePanel.SetActive(true);
                 screen.gameObject.SetActive(false);
@@ -149,6 +154,7 @@ namespace WarehouseDuel.UI
             else if (profileScreen.IsOpen) profileScreen.Close();
             else if (leaderboardScreen.IsOpen) leaderboardScreen.Close();
             else if (armoryScreen.IsOpen) armoryScreen.Close();
+            else if (characterScreen.IsOpen) characterScreen.Close();
         }
 
         private void OpenScreen(MenuScreen screen)

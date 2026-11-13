@@ -48,6 +48,14 @@ namespace WarehouseDuel.Player
             if (shownWeapon < 0 && pendingWeapon < 0) ShowWeapon(startWeapon); // a screen may already have picked one
         }
 
+        /// <summary>Plays the weapon-inspection move now (e.g. when a new character is shown).</summary>
+        public void PlayInspect()
+        {
+            if (ready) return;
+            inspectStart = Time.time;
+            nextInspect = Time.time + InspectDuration + Random.Range(5f, 9f);
+        }
+
         /// <summary>Plays the lower/swap/raise animation and switches the held weapon.</summary>
         public void SetWeapon(int index)
         {

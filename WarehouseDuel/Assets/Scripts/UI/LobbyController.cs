@@ -83,6 +83,7 @@ namespace WarehouseDuel.UI
             }
 
             selectedWeapon = GameSettings.PreferredWeapon;
+            if (character != null && character.TryGetComponent(out WarehouseDuel.Player.SoldierLook look)) look.Apply(PlayerProfile.CharacterIndex);
             for (int i = 0; i < weaponButtons.Length; i++)
             {
                 int index = i;
@@ -116,7 +117,7 @@ namespace WarehouseDuel.UI
             {
                 profileSent = true;
                 RoomState.Instance.RequestProfile(GameSettings.PlayerName, (byte)selectedWeapon,
-                    (byte)PlayerProfile.AvatarIndex, (byte)PlayerProfile.BannerIndex, (byte)PlayerProfile.TitleIndex, (byte)PlayerProfile.Level);
+                    (byte)PlayerProfile.AvatarIndex, (byte)PlayerProfile.BannerIndex, (byte)PlayerProfile.TitleIndex, (byte)PlayerProfile.Level, (byte)PlayerProfile.CharacterIndex);
             }
 
             if (pingText != null && session != null)

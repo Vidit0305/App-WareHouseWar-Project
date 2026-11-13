@@ -182,14 +182,8 @@ namespace WarehouseDuel.EditorTools.UI
             }
 
             // Head pieces: helmet group sits above y = 0.28; the lower face mask is the big mask box.
-            var helmet = new List<GameObject>();
-            GameObject lowerMask = null;
-            foreach (Transform child in rig.Head)
-            {
-                if (child.localPosition.y > 0.28f) helmet.Add(child.gameObject);
-                if (child.GetComponent<Renderer>()?.sharedMaterial.name == "M_Soldier_Mask" && child.localScale.y > 0.15f) lowerMask = child.gameObject;
-            }
-            void HideHelmet() { foreach (GameObject go in helmet) go.SetActive(false); }
+            GameObject lowerMask = rig.FaceMask != null ? rig.FaceMask.gameObject : null;
+            void HideHelmet() { if (rig.Helmet != null) rig.Helmet.gameObject.SetActive(false); }
             if (lowerMask != null) lowerMask.SetActive(style.mask);
 
             Material black = Flat(new Color(0.07f, 0.07f, 0.08f));

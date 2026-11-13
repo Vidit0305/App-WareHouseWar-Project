@@ -108,7 +108,8 @@ namespace WarehouseDuel.EditorTools.UI
 
             // ---- left: feature cards
             Button armoryCard = FeatureCard(home, "Armory Card", "ARMORY", "Choose your weapon", catalog.Get(0) != null ? catalog.Get(0).icon : null, true, -200f);
-            Button profileCard = FeatureCard(home, "Profile Card", "PROFILE", "Avatar, banner & title", UiArt.Icon("Profile"), false, -390f);
+            CharacterCatalog characters = AssetDatabase.LoadAssetAtPath<CharacterCatalog>(WarehouseDuel.EditorTools.Gameplay.CharacterBuilder.CatalogPath);
+            Button characterCard = FeatureCard(home, "Character Card", "CHARACTER", "10 soldiers to choose from", UiArt.Icon("Profile"), false, -390f);
             Button leaderboard = CreateButton("Leaderboard", home, "LEADERBOARD", ButtonStyle.Secondary, new Vector2(420f, 110f), out TextMeshProUGUI leaderboardLabel, 32f);
             RectTransform leaderboardRect = Place((RectTransform)leaderboard.transform, new Vector2(0f, 0f), new Vector2(30f, 30f), new Vector2(420f, 110f), new Vector2(0f, 0f));
             leaderboard.GetComponent<Image>().color = new Color(0.12f, 0.14f, 0.19f, 0.95f);
@@ -133,6 +134,7 @@ namespace WarehouseDuel.EditorTools.UI
 
             // ---- screens
             ArmoryScreen armory = MenuScreensBuilder.Armory(safe, catalog, showcase.Animator, showcase.Turntable);
+            CharacterScreen characterScreen = MenuScreensBuilder.Characters(safe, characters, showcase.Animator, showcase.Turntable);
             ProfileScreen profile = MenuScreensBuilder.Profile(safe, profiles);
             LeaderboardScreen leaderboardScreen = MenuScreensBuilder.Leaderboard(safe, catalog, profiles);
             GameObject settingsPanel = SharedUiBuilder.Settings(safe, out Button settingsClose);
@@ -205,7 +207,7 @@ namespace WarehouseDuel.EditorTools.UI
             Wire(controller, "onlineModeButton", online);
             Wire(controller, "practiceModeButton", practice);
             Wire(controller, "profileChipButton", chip);
-            Wire(controller, "profileCardButton", profileCard);
+            Wire(controller, "characterCardButton", characterCard);
             Wire(controller, "armoryCardButton", armoryCard);
             Wire(controller, "leaderboardButton", leaderboard);
             Wire(controller, "settingsButton", settings);
@@ -213,6 +215,7 @@ namespace WarehouseDuel.EditorTools.UI
             Wire(controller, "profileScreen", profile);
             Wire(controller, "leaderboardScreen", leaderboardScreen);
             Wire(controller, "armoryScreen", armory);
+            Wire(controller, "characterScreen", characterScreen);
             Wire(controller, "settingsPanel", settingsPanel);
             Wire(controller, "settingsCloseButton", settingsClose);
             Wire(controller, "onlinePanel", onlinePanel);

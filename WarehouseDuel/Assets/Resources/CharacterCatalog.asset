@@ -1,0 +1,165 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1067ee2578b2f6245b3104e62d844a43, type: 3}
+  m_Name: CharacterCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::WarehouseDuel.Profile.CharacterCatalog
+  characters:
+  - name: Ranger
+    role: Frontline rifleman
+    description: 'The classic infantry soldier: woodland camo, combat helmet and
+      tactical goggles. Ready for anything.'
+    portrait: {fileID: 21300000, guid: bcc35591fbbc5974a9913b5f4d83c9cf, type: 3}
+    materials:
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    - {fileID: 0}
+    helmet: 1
+    faceMask: 1
+  - name: Desert Fox
+    role: Dune raider
+    description: Fights where the sun is merciless. Boonie hat, shemagh scarf and
+      dark shades.
+    portrait: {fileID: 21300000, guid: 07b2255d0846786488c43d6da0cfcbeb, type: 3}
+    materials:
+    - {fileID: 2100000, guid: 733712d15231f4c479fe22cc4a236946, type: 2}
+    - {fileID: 2100000, guid: 26989660d07e57244aa353b812143038, type: 2}
+    - {fileID: 2100000, guid: b0a3a498e9f4307438fbf64ba15b0143, type: 2}
+    - {fileID: 2100000, guid: 01a84b706f648f143b6c60b8fba4a181, type: 2}
+    - {fileID: 2100000, guid: 743ef3bdd7d543f4296abc14f797d33e, type: 2}
+    - {fileID: 2100000, guid: 9fe25f5a1a0cadc4eaa6a95a01821ba2, type: 2}
+    - {fileID: 2100000, guid: 0feb824edbb8afb4db4478d1c2bb826f, type: 2}
+    helmet: 0
+    faceMask: 0
+  - name: Ghost
+    role: Night infiltrator
+    description: Never seen, only heard once. Black ops gear, balaclava and night-vision
+      goggles.
+    portrait: {fileID: 21300000, guid: cfec899af18f04e4f8df6bc67ea7f819, type: 3}
+    materials:
+    - {fileID: 2100000, guid: 1b81a4b73f08ec04a88630ef99b31d29, type: 2}
+    - {fileID: 2100000, guid: 7b3583cd4999bfa44a65fe68b86eda00, type: 2}
+    - {fileID: 2100000, guid: ad8f3054f3af0b048b29ffc185109999, type: 2}
+    - {fileID: 2100000, guid: fa3e9fc0094b7344c985a3f8b3d2641d, type: 2}
+    - {fileID: 2100000, guid: d4802de89313cd14596142da88ddeb77, type: 2}
+    - {fileID: 2100000, guid: 9b11bde5d384d6d4484633a10a509c6f, type: 2}
+    - {fileID: 2100000, guid: dfdd88f09f9362a46899a5e00be558b3, type: 2}
+    helmet: 1
+    faceMask: 0
+  - name: Frost
+    role: Arctic scout
+    description: 'Snow camo and a white helmet: invisible in the blizzard, deadly
+      in the warehouse.'
+    portrait: {fileID: 21300000, guid: 4b9c5f1e9c432744ea5bc6472e43eada, type: 3}
+    materials:
+    - {fileID: 2100000, guid: 732c1c6860c815346a6839f8f7fa2f97, type: 2}
+    - {fileID: 2100000, guid: 148dfcd3fa680ab4bb2819fca54a2ca1, type: 2}
+    - {fileID: 2100000, guid: 17cfb271c1b638545a47b4ecba8d71f1, type: 2}
+    - {fileID: 2100000, guid: 1109b5749c46cdc4399fd0e5ddfe235e, type: 2}
+    - {fileID: 2100000, guid: c26d636a4eb4c4b499d306b30479061b, type: 2}
+    - {fileID: 2100000, guid: c5bb8d7a5bbd61c43bee02131b8f8fe6, type: 2}
+    - {fileID: 2100000, guid: c26f9c477e1ea6d488b2946cd0bcf937, type: 2}
+    helmet: 1
+    faceMask: 1
+  - name: Commando
+    role: Jungle raider
+    description: Tiger stripes, red bandana, war paint and a belt of ammo across
+      the chest.
+    portrait: {fileID: 21300000, guid: 4b67f838df431de42ac76e9467606995, type: 3}
+    materials:
+    - {fileID: 2100000, guid: b2c725621940b9a4c8ff281370846bc7, type: 2}
+    - {fileID: 2100000, guid: 0b74cf8e8c5ff7d48b61977961b38880, type: 2}
+    - {fileID: 2100000, guid: 13aad249628af374b903834630ac89e1, type: 2}
+    - {fileID: 2100000, guid: dce051de57813f448bb99ac3a9a11a7f, type: 2}
+    - {fileID: 2100000, guid: c3f118efc4f1025418829c0301f8b796, type: 2}
+    - {fileID: 2100000, guid: 3fb947a6701aa8c42b580e4e0639164a, type: 2}
+    - {fileID: 2100000, guid: 2175a3376bbcedb4cba5a8b2042300e1, type: 2}
+    helmet: 0
+    faceMask: 0
+  - name: Urban Ops
+    role: City enforcer
+    description: Grey urban camo, black beret and shades. Built for tight corners
+      and fast clears.
+    portrait: {fileID: 21300000, guid: 4a5c87a2b567988499865aab0ec5e816, type: 3}
+    materials:
+    - {fileID: 2100000, guid: 157e9334101481843ad6cec923517c64, type: 2}
+    - {fileID: 2100000, guid: c3c2eb9ef41266a46b7adc00b9d60eb5, type: 2}
+    - {fileID: 2100000, guid: f313a15ed69534c4ea283af26fc5b65d, type: 2}
+    - {fileID: 2100000, guid: d362eccc664867543a71a5b7710cba47, type: 2}
+    - {fileID: 2100000, guid: 132a6721a1baaa2429b716356b153731, type: 2}
+    - {fileID: 2100000, guid: 73d7c2278583dad448c73a1d9155f8e3, type: 2}
+    - {fileID: 2100000, guid: 8c3b47b9b2bb5744aa52796568f4e95b, type: 2}
+    helmet: 0
+    faceMask: 1
+  - name: Hazmat
+    role: Chemical unit
+    description: Sealed yellow suit, hood and gas mask. Walks through smoke like
+      it is fresh air.
+    portrait: {fileID: 21300000, guid: a93b36f96e731ae40a3b9b68de606fe5, type: 3}
+    materials:
+    - {fileID: 2100000, guid: 05aeb0a74e70b6f479b663f2cd8c1159, type: 2}
+    - {fileID: 2100000, guid: ccc16cd69864fdc40933410272bf3a09, type: 2}
+    - {fileID: 2100000, guid: 3b98a5fa3742db946bb76f9dae345c0f, type: 2}
+    - {fileID: 2100000, guid: 017fca2e7709e424e91aa19f114ee4bc, type: 2}
+    - {fileID: 2100000, guid: 5a6049f6339850e408c79b841099dc45, type: 2}
+    - {fileID: 2100000, guid: 83a4622d7b3ba9a4d88ee2d0f4e925d8, type: 2}
+    - {fileID: 2100000, guid: e679dd9f73b652a42b7be289f89aa927, type: 2}
+    helmet: 0
+    faceMask: 0
+  - name: Officer
+    role: Field commander
+    description: Navy uniform, peaked cap, gold epaulettes and a chest full of medals.
+      Leads from the front.
+    portrait: {fileID: 21300000, guid: 90d858b1461896a45a50ecd0cd5e1945, type: 3}
+    materials:
+    - {fileID: 2100000, guid: bf4a8537ef31a604ea0e26d59739e15c, type: 2}
+    - {fileID: 2100000, guid: 764d6994bb2190746884dd8e68355394, type: 2}
+    - {fileID: 2100000, guid: 727355701f06a1640a6326a38af669d5, type: 2}
+    - {fileID: 2100000, guid: 3679529a572c18f4baaa4e42fce2c022, type: 2}
+    - {fileID: 2100000, guid: 238efca8db9f2604686261fa748fdcbe, type: 2}
+    - {fileID: 2100000, guid: 6654610770daca644a41db990fd6de77, type: 2}
+    - {fileID: 2100000, guid: a5f7c65a5fbb81b4e8343598bfd85640, type: 2}
+    helmet: 0
+    faceMask: 0
+  - name: Sniper
+    role: Ghillie marksman
+    description: Covered in leaves and burlap. If you can see the Sniper, you are
+      already too late.
+    portrait: {fileID: 21300000, guid: 0c148c06b3b6f05498a058ba9baf652e, type: 3}
+    materials:
+    - {fileID: 2100000, guid: a5c710126f46fca469319c53a930d3c7, type: 2}
+    - {fileID: 2100000, guid: 5468e622b1ae31249968431d75b36217, type: 2}
+    - {fileID: 2100000, guid: c2b5af9ca35175d4f94da85873e3c5e9, type: 2}
+    - {fileID: 2100000, guid: 79b8fefa7a51a9341b4cc7c813d00f74, type: 2}
+    - {fileID: 2100000, guid: 4a660d6b52d1a7b498fe4b124826b69e, type: 2}
+    - {fileID: 2100000, guid: 4405487fc1ed8b441b07300b4364a174, type: 2}
+    - {fileID: 2100000, guid: 7d9c7f4ce6baefe4fb0589aff940af4b, type: 2}
+    helmet: 0
+    faceMask: 0
+  - name: Juggernaut
+    role: Heavy assault
+    description: Heavy armour plates and a sealed helmet with a glowing visor. Slow
+      to fall, hard to stop.
+    portrait: {fileID: 21300000, guid: e6354ed50431dc74392dc9b6e0ab0236, type: 3}
+    materials:
+    - {fileID: 2100000, guid: 5452490c4824f854fa540bb724d1fc8d, type: 2}
+    - {fileID: 2100000, guid: 7973c7ef18bee544c93e122a87b6bd1d, type: 2}
+    - {fileID: 2100000, guid: d8915b886509ee44bbdecd460ce587cc, type: 2}
+    - {fileID: 2100000, guid: fbf17266f7d80ff488955263d4f0a24a, type: 2}
+    - {fileID: 2100000, guid: 911b95114f1e3ec4b928265699985287, type: 2}
+    - {fileID: 2100000, guid: 7ec64e9012c7bc74ea319c3cb9c977e1, type: 2}
+    - {fileID: 2100000, guid: c4a6e31f84607f9478a4cc08f013f0f7, type: 2}
+    helmet: 0
+    faceMask: 1

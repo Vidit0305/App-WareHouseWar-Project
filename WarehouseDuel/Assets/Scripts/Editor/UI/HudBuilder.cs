@@ -210,13 +210,13 @@ namespace WarehouseDuel.EditorTools.UI
         /// <summary>Button layout, in canvas units from the zone's bottom corner (reference 1920×1080). Shared with the self-test.</summary>
         internal static readonly (string name, string icon, float size, Vector2 position, bool left)[] ButtonLayout =
         {
-            ("Fire", "Bullets", 230f, new Vector2(-280f, 320f), false),
-            ("Jump", "Jump", 160f, new Vector2(-95f, 140f), false),
-            ("Aim", "Aim", 150f, new Vector2(-560f, 200f), false),
-            ("Reload", "Reload", 130f, new Vector2(-120f, 560f), false),
-            ("Switch Weapon", "Swap", 120f, new Vector2(-520f, 440f), false),
-            ("Sprint", "Sprint", 130f, new Vector2(560f, 500f), true),
-            ("Fire Left", "Bullets", 160f, new Vector2(190f, 640f), true),
+            ("Fire", "HudFire", 230f, new Vector2(-280f, 320f), false),
+            ("Jump", "HudJump", 160f, new Vector2(-95f, 140f), false),
+            ("Aim", "HudAim", 150f, new Vector2(-560f, 200f), false),
+            ("Reload", "HudReload", 130f, new Vector2(-120f, 560f), false),
+            ("Switch Weapon", "HudSwap", 120f, new Vector2(-520f, 440f), false),
+            ("Sprint", "HudSprint", 130f, new Vector2(560f, 500f), true),
+            ("Fire Left", "HudFire", 160f, new Vector2(190f, 640f), true),
         };
 
         internal const float StickSize = 300f, StickRest = 300f, HandleSize = 130f;
@@ -259,11 +259,15 @@ namespace WarehouseDuel.EditorTools.UI
             {
                 Transform parent = spec.left ? leftZone.transform : rightZone.transform;
                 Vector2 anchor = spec.left ? new Vector2(0f, 0f) : new Vector2(1f, 0f);
-                Image disc = CreateImage(spec.name, parent, new Color(0f, 0f, 0f, 0.38f), UiArt.Circle, raycast: true);
+                bool isFire = spec.name == "Fire" || spec.name == "Fire Left";
+                Color idle = isFire ? new Color(0.55f, 0.08f, 0.05f, 0.5f) : new Color(0.03f, 0.04f, 0.06f, 0.5f);
+                Image disc = CreateImage(spec.name, parent, idle, UiArt.Circle, raycast: true);
                 Place(disc.rectTransform, anchor, spec.position, new Vector2(spec.size, spec.size), new Vector2(0.5f, 0.5f));
-                Image ring = CreateImage("Ring", disc.transform, new Color(1f, 1f, 1f, 0.85f), UiArt.Ring);
+                Image ring = CreateImage("Ring", disc.transform, isFire ? new Color(1f, 0.55f, 0.45f, 0.9f) : new Color(1f, 1f, 1f, 0.8f), UiArt.Ring);
                 Stretch(ring.rectTransform);
-                float pad = spec.size * 0.22f;
+                Image inner = CreateImage("Inner Ring", disc.transform, new Color(1f, 1f, 1f, 0.12f), UiArt.Ring);
+                Stretch(inner.rectTransform, spec.size * 0.1f, spec.size * 0.1f, spec.size * 0.1f, spec.size * 0.1f);
+                float pad = spec.size * 0.2f;
                 Image glyph = CreateImage("Icon", disc.transform, Color.white, UiArt.Icon(spec.icon));
                 Stretch(glyph.rectTransform, pad, pad, pad, pad);
                 var shadow = glyph.gameObject.AddComponent<Shadow>();
@@ -271,12 +275,11 @@ namespace WarehouseDuel.EditorTools.UI
                 shadow.effectDistance = new Vector2(2f, -2f);
 
                 TouchButton button = disc.gameObject.AddComponent<TouchButton>();
-                bool isFire = spec.icon == "Bullets" || spec.name == "Aim";
                 SetEnum(button, "mode", spec.name == "Sprint" ? (int)TouchButton.ButtonMode.Toggle : (int)TouchButton.ButtonMode.Hold);
-                if (isFire) Wire(button, "forwardDragTo", look);
+                if (isFire || spec.name == "Aim") Wire(button, "forwardDragTo", look);
                 Wire(button, "highlight", disc);
-                SetColor(button, "normalColor", new Color(0f, 0f, 0f, 0.38f));
-                SetColor(button, "activeColor", spec.icon == "Bullets" ? new Color(0.92f, 0.25f, 0.18f, 0.85f) : new Color(1f, 0.69f, 0.13f, 0.85f));
+                SetColor(button, "normalColor", idle);
+                SetColor(button, "activeColor", isFire ? new Color(0.95f, 0.25f, 0.15f, 0.9f) : new Color(1f, 0.69f, 0.13f, 0.85f));
                 buttons[spec.name] = button;
             }
 

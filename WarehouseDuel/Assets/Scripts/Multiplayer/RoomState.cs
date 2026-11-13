@@ -18,6 +18,7 @@ namespace WarehouseDuel.Multiplayer
         public byte Banner;
         public byte Title;
         public byte Level;
+        public byte Character;
         public NetworkBool Occupied;
         public NetworkBool Ready;
         public NetworkBool WantsRematch;
@@ -210,11 +211,11 @@ namespace WarehouseDuel.Multiplayer
         public static readonly ReliableKey RequestKey = ReliableKey.FromInts(0x57_44_52_51, 1, 0, 0);
 
         /// <summary>Any player: set my display name, lobby weapon and profile look (avatar, banner, title, level).</summary>
-        public void RequestProfile(string playerName, byte weapon, byte avatar = 0, byte banner = 0, byte title = 0, byte level = 1)
+        public void RequestProfile(string playerName, byte weapon, byte avatar = 0, byte banner = 0, byte title = 0, byte level = 1, byte character = 0)
         {
             byte[] name = Encoding.UTF8.GetBytes(GameSettings.SanitizeName(playerName ?? string.Empty));
             int length = Mathf.Min(name.Length, 64);
-            var payload = new byte[3 + length + 4];
+            var payload = new byte[3 + length + 5];
             payload[0] = (byte)Request.Profile;
             payload[1] = weapon;
             payload[2] = (byte)length;
@@ -223,6 +224,7 @@ namespace WarehouseDuel.Multiplayer
             payload[4 + length] = banner;
             payload[5 + length] = title;
             payload[6 + length] = level;
+            payload[7 + length] = character;
             Send(payload);
         }
 
@@ -260,6 +262,7 @@ namespace WarehouseDuel.Multiplayer
                     byte banner = hasLook ? (byte)Mathf.Min(data[4 + length], 63) : (byte)0;
                     byte title = hasLook ? (byte)Mathf.Min(data[5 + length], 31) : (byte)0;
                     byte level = hasLook ? (byte)Mathf.Clamp(data[6 + length], 1, 99) : (byte)1;
+                    byte character = data.Length >= 3 + length + 5 ? (byte)Mathf.Min(data[7 + length], 31) : (byte)0;
                     Modify(index, (ref PlayerSlot s) =>
                     {
                         s.Name = clean;
@@ -268,6 +271,7 @@ namespace WarehouseDuel.Multiplayer
                         s.Banner = banner;
                         s.Title = title;
                         s.Level = level;
+                        s.Character = character;
                     });
                     break;
                 }

@@ -483,6 +483,81 @@ namespace WarehouseDuel.EditorTools.UI
             return row;
         }
 
+        // ------------------------------------------------------------------ characters
+
+        public static CharacterScreen Characters(RectTransform safe, CharacterCatalog catalog, SoldierAnimator character, Transform turntable)
+        {
+            RectTransform content = Frame("Character Screen", safe, "CHARACTERS", true, out GameObject root, out Button back);
+
+            // Drag the soldier in the middle.
+            Image drag = CreateImage("Character Drag Area", content, new Color(0f, 0f, 0f, 0f), raycast: true);
+            Place(drag.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(620f, 760f), new Vector2(0.5f, 0.5f));
+            Wire(drag.gameObject.AddComponent<DragRotate>(), "target", turntable);
+
+            // ---- left: two columns of character cards
+            int count = catalog != null ? catalog.Count : 0;
+            var cards = new Button[count];
+            var frames = new Image[count];
+            var portraits = new Image[count];
+            var names = new TMP_Text[count];
+            var tags = new GameObject[count];
+            const float cardW = 236f, cardH = 158f, gap = 14f;
+            for (int i = 0; i < count; i++)
+            {
+                CharacterCatalog.Entry entry = catalog.Get(i);
+                float x = (i % 2) * (cardW + gap), y = -(i / 2) * (cardH + gap);
+                Button card = CreateButton($"Character {i + 1}", content, "", ButtonStyle.Secondary, new Vector2(cardW, cardH));
+                At((RectTransform)card.transform, x, y, cardW, cardH);
+                frames[i] = card.GetComponent<Image>();
+                frames[i].color = i == 0 ? Accent : new Color(1f, 1f, 1f, 0.08f);
+                portraits[i] = Masked(card.transform, "Portrait", UiArt.Rounded, entry != null ? entry.portrait : null, out RectTransform mask);
+                At(mask, 10f, -10f, 104f, 104f);
+                names[i] = Label(card.transform, "Name", entry != null ? entry.name.ToUpperInvariant() : "", 22f, i == 0 ? AccentDark : TextPrimary, 10f, -118f, cardW - 20f, 32f, display: true);
+                ((TextMeshProUGUI)names[i]).enableAutoSizing = true;
+                ((TextMeshProUGUI)names[i]).fontSizeMin = 14f;
+                ((TextMeshProUGUI)names[i]).fontSizeMax = 22f;
+                Image tag = CreateImage("Selected", card.transform, Success, UiArt.RoundedSmall);
+                At(tag.rectTransform, 122f, -14f, 104f, 30f);
+                TextMeshProUGUI tagText = CreateText("Text", tag.transform, "IN USE", 16f, new Color(0.05f, 0.1f, 0.06f), TextAlignmentOptions.Center, display: true);
+                Stretch(tagText.rectTransform);
+                tag.gameObject.SetActive(i == 0);
+                tags[i] = tag.gameObject;
+                cards[i] = card;
+            }
+
+            // ---- right: details
+            Image details = CreateImage("Details", content, CardDark, UiArt.Rounded);
+            Place(details.rectTransform, new Vector2(1f, 1f), Vector2.zero, new Vector2(560f, 880f), new Vector2(1f, 1f));
+            CharacterCatalog.Entry first = catalog != null ? catalog.Get(0) : null;
+            TextMeshProUGUI name = Label(details.transform, "Name", first != null ? first.name.ToUpperInvariant() : "", 56f, Accent, 36f, -32f, 490f, 74f, display: true);
+            TextMeshProUGUI role = Label(details.transform, "Role", first != null ? first.role.ToUpperInvariant() : "", 24f, TextMuted, 38f, -110f, 490f, 36f, display: true);
+            role.characterSpacing = 6f;
+            Image line = CreateImage("Line", details.transform, new Color(1f, 1f, 1f, 0.12f));
+            At(line.rectTransform, 36f, -162f, 488f, 3f);
+            TextMeshProUGUI description = Label(details.transform, "Description", first != null ? first.description : "", 26f, TextPrimary, 36f, -186f, 490f, 260f);
+            description.alignment = TextAlignmentOptions.TopLeft;
+            Label(details.transform, "Hint", "Your character is shown in the menu, the lobby and to your opponent in the match.", 21f, TextMuted, 36f, -620f, 490f, 80f);
+            Button select = CreateButton("Select", details.transform, "SELECTED", ButtonStyle.Primary, new Vector2(488f, 120f), out TextMeshProUGUI selectLabel, 44f);
+            Place((RectTransform)select.transform, new Vector2(0.5f, 0f), new Vector2(0f, 36f), new Vector2(488f, 120f), new Vector2(0.5f, 0f));
+
+            CharacterScreen screen = root.AddComponent<CharacterScreen>();
+            Wire(screen, "backButton", back);
+            Wire(screen, "preview", character != null ? character.GetComponent<SoldierLook>() : null);
+            Wire(screen, "previewAnimator", character);
+            WireArray(screen, "cards", cards);
+            WireArray(screen, "cardFrames", frames);
+            WireArray(screen, "portraits", portraits);
+            WireArray(screen, "cardNames", names);
+            WireArray(screen, "selectedTags", tags);
+            Wire(screen, "characterName", name);
+            Wire(screen, "characterRole", role);
+            Wire(screen, "characterDescription", description);
+            Wire(screen, "selectButton", select);
+            Wire(screen, "selectLabel", selectLabel);
+            root.SetActive(false);
+            return screen;
+        }
+
         // ------------------------------------------------------------------ armory
 
         public static ArmoryScreen Armory(RectTransform safe, WeaponCatalog catalog, SoldierAnimator character, Transform turntable)

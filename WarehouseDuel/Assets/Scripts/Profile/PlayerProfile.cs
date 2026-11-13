@@ -61,6 +61,17 @@ namespace WarehouseDuel.Profile
             }
         }
 
+        /// <summary>Chosen playable character (see <see cref="CharacterCatalog"/>).</summary>
+        public static int CharacterIndex
+        {
+            get => Mathf.Max(0, PlayerPrefs.GetInt(Prefix + "character", 0));
+            set
+            {
+                PlayerPrefs.SetInt(Prefix + "character", Mathf.Max(0, value));
+                Save();
+            }
+        }
+
         public static int BannerIndex
         {
             get => Mathf.Max(0, PlayerPrefs.GetInt(Prefix + "banner", 0));

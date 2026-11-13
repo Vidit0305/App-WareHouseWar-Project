@@ -272,9 +272,13 @@ namespace WarehouseDuel.EditorTools.UI
         /// </summary>
         public static GameObject Settings(Transform parent, out Button closeButton)
         {
+            // Full-screen page: an opaque backdrop covers everything (menu or match); the content stays centred.
             RectTransform card = Modal("Settings Panel", parent, new Vector2(1640f, 960f), out GameObject root);
-            root.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.72f);
-            card.GetComponent<Image>().color = new Color(0.08f, 0.09f, 0.13f, 0.98f);
+            root.GetComponent<Image>().color = new Color(0.06f, 0.07f, 0.1f, 1f);
+            card.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0f);
+            Image glow = CreateImage("Glow", root.transform, new Color(1f, 0.55f, 0.15f, 0.07f), UiArt.Gradient);
+            Stretch(glow.rectTransform);
+            glow.transform.SetSiblingIndex(0);
 
             Image header = CreateImage("Header", card, new Color(0f, 0f, 0f, 0.3f), UiArt.Rounded);
             MenuScreensBuilder.At(header.rectTransform, 0f, 0f, 1640f, 120f);
