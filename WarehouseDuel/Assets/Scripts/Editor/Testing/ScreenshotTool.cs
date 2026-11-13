@@ -49,8 +49,57 @@ namespace WarehouseDuel.EditorTools.Testing
             }
 
             CaptureWeapons(Path.Combine(dir, "weapons.png"));
+            CaptureFirstPerson(dir);
+
+            // UI screens (canvases are switched to camera space so they appear in the render).
+            string[] runtimeHidden = { "Online", "Join", "Busy", "Settings Panel", "Profile Panel", "Message Panel", "Death Panel",
+                                       "Countdown", "Panel", "Confirm Leave", "Centre Message", "Banner", "Copied" };
+            CaptureUiScene(GameConstants.Scenes.SplashScreen, Path.Combine(dir, "ui_splash.png"), runtimeHidden);
+            CaptureUiScene(GameConstants.Scenes.MainMenu, Path.Combine(dir, "ui_mainmenu.png"), runtimeHidden);
+            CaptureUiScene(GameConstants.Scenes.Lobby, Path.Combine(dir, "ui_lobby.png"), runtimeHidden);
+            CaptureUiScene(GameConstants.Scenes.WarehouseMap, Path.Combine(dir, "ui_hud.png"), runtimeHidden);
             Debug.Log($"[Screenshots] Saved to {dir}");
             EditorApplication.Exit(0);
+        }
+
+        private static void CaptureUiScene(string sceneName, string path, string[] hideNames)
+        {
+            EditorSceneManager.OpenScene(GameConstants.Scenes.PathOf(sceneName));
+            Camera cam = Camera.main != null ? Camera.main : Object.FindFirstObjectByType<Camera>();
+            if (cam == null) return;
+
+            foreach (Transform t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (System.Array.IndexOf(hideNames, t.name) >= 0 && t.GetComponent<RectTransform>() != null) t.gameObject.SetActive(false);
+            }
+
+            // Showcase characters only get their weapon at runtime; equip it for the picture.
+            foreach (var animator in Object.FindObjectsByType<WarehouseDuel.Player.SoldierAnimator>(FindObjectsSortMode.None))
+            {
+                int weapon = new SerializedObject(animator).FindProperty("startWeapon").intValue;
+                typeof(WarehouseDuel.Player.SoldierAnimator).GetMethod("ShowWeapon", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    ?.Invoke(animator, new object[] { weapon });
+            }
+
+            // Runtime-only states that would otherwise show in an edit-time picture.
+            foreach (CanvasGroup group in Object.FindObjectsByType<CanvasGroup>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (group.name.Contains("Vignette")) group.alpha = 0f;
+            }
+            cam.cullingMask |= 1 << LayerMask.NameToLayer("UI");
+
+            var rt = new RenderTexture(Width, Height, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4 };
+            cam.targetTexture = rt;
+            foreach (Canvas canvas in Object.FindObjectsByType<Canvas>(FindObjectsSortMode.None))
+            {
+                if (!canvas.isRootCanvas) continue;
+                canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                canvas.worldCamera = cam;
+                canvas.planeDistance = Mathf.Max(cam.nearClipPlane + 0.05f, 0.5f);
+            }
+            Canvas.ForceUpdateCanvases();
+            cam.Render(); // warm-up
+            Render(cam, path);
         }
 
         private static void Capture(string path, Vector3 position, Vector3 lookAt, float fov)
@@ -65,6 +114,43 @@ namespace WarehouseDuel.EditorTools.Testing
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.1f, 0.12f, 0.16f);
             Render(cam, path);
+            Object.DestroyImmediate(go);
+        }
+
+        /// <summary>First-person view of every weapon with the hands, framed like the in-game camera rig (hip pose).</summary>
+        private static void CaptureFirstPerson(string dir)
+        {
+            var catalog = AssetDatabase.LoadAssetAtPath<WeaponCatalog>("Assets/ScriptableObjects/Weapons/WeaponCatalog.asset");
+            var player = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Players/Player.prefab");
+            var rig = player != null ? player.GetComponentInChildren<WarehouseDuel.Player.PlayerCameraRig>(true) : null;
+            if (catalog == null || rig == null) return;
+            var so = new SerializedObject(rig);
+            float scale = so.FindProperty("viewModelScale").floatValue;
+            Vector3 hip = so.FindProperty("hipOffset").vector3Value;
+            var hands = (GameObject)so.FindProperty("handPrefab").objectReferenceValue;
+
+            var go = new GameObject("FP Camera");
+            go.transform.position = new Vector3(0f, 1.6f, -25f);
+            go.transform.LookAt(new Vector3(0f, 1.4f, 0f));
+            Camera cam = go.AddComponent<Camera>();
+            cam.fieldOfView = 72f;
+            cam.nearClipPlane = 0.03f;
+            cam.farClipPlane = 300f;
+            var socket = new GameObject("Socket").transform;
+            socket.SetParent(go.transform, false);
+            socket.localPosition = hip;
+
+            for (int i = 0; i < catalog.Count; i++)
+            {
+                WeaponDefinition def = catalog.Get(i);
+                if (def == null || def.viewModelPrefab == null) continue;
+                var model = (GameObject)Object.Instantiate(def.viewModelPrefab, socket, false);
+                model.transform.localScale = Vector3.one * scale;
+                model.transform.localPosition = def.viewModelOffset;
+                WarehouseDuel.Player.PlayerCameraRig.AttachHands(model.transform, hands);
+                Render(cam, Path.Combine(dir, $"fp_{i}_{def.name}.png"));
+                Object.DestroyImmediate(model);
+            }
             Object.DestroyImmediate(go);
         }
 

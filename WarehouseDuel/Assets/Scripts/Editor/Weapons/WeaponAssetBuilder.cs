@@ -66,6 +66,7 @@ namespace WarehouseDuel.EditorTools.Weapons
                 d.recoilPitch = 0.55f; d.recoilYaw = 0.3f; d.moveSpeedMultiplier = 1.06f; d.aimFieldOfView = 58f; d.equipSeconds = 0.3f;
                 d.viewKick = 0.025f; d.muzzleFlashScale = 0.8f;
                 d.viewModelPrefab = d.worldModelPrefab = smg;
+                d.viewModelOffset = new Vector3(-0.01f, 0.025f, 0.03f);
                 d.fireSound = AudioGenerator.Load(AudioGenerator.SfxFolder, "Fire_SMG");
                 d.reloadSound = AudioGenerator.Load(AudioGenerator.SfxFolder, "Reload_SMG");
             });
@@ -96,6 +97,7 @@ namespace WarehouseDuel.EditorTools.Weapons
                 d.recoilPitch = 2.2f; d.recoilYaw = 0.5f; d.moveSpeedMultiplier = 1.08f; d.aimFieldOfView = 56f; d.equipSeconds = 0.25f;
                 d.viewKick = 0.05f; d.muzzleFlashScale = 0.8f;
                 d.viewModelPrefab = d.worldModelPrefab = pistol;
+                d.viewModelOffset = new Vector3(-0.04f, 0.07f, 0.09f);
                 d.fireSound = AudioGenerator.Load(AudioGenerator.SfxFolder, "Fire_Pistol");
                 d.reloadSound = AudioGenerator.Load(AudioGenerator.SfxFolder, "Reload_Pistol");
             });
@@ -144,6 +146,7 @@ namespace WarehouseDuel.EditorTools.Weapons
             Part(t, new Vector3(0f, 0.115f, 0.08f), new Vector3(0.012f, 0.012f, 0.005f), glow);               // red dot
             Part(t, new Vector3(0.031f, 0.06f, 0.33f), new Vector3(0.004f, 0.02f, 0.16f), accent);            // accent stripe
             Muzzle(t, new Vector3(0f, 0.05f, 0.67f));
+            Marker(t, "Handguard", new Vector3(0f, 0.0f, 0.33f));
             return root;
         }
 
@@ -162,6 +165,7 @@ namespace WarehouseDuel.EditorTools.Weapons
             Part(t, new Vector3(0f, 0.095f, 0.03f), new Vector3(0.006f, 0.006f, 0.032f), glow);
             Part(t, new Vector3(0.0285f, 0.05f, 0.06f), new Vector3(0.004f, 0.018f, 0.2f), accent);
             Muzzle(t, new Vector3(0f, 0.05f, 0.355f));
+            Marker(t, "Handguard", new Vector3(0f, -0.04f, 0.2f));
             return root;
         }
 
@@ -178,6 +182,7 @@ namespace WarehouseDuel.EditorTools.Weapons
             Part(t, new Vector3(0f, 0.08f, 0.66f), new Vector3(0.008f, 0.012f, 0.008f), glow);                // bead sight
             Part(t, new Vector3(0.0295f, 0.05f, 0.06f), new Vector3(0.004f, 0.025f, 0.18f), accent);
             Muzzle(t, new Vector3(0f, 0.06f, 0.69f));
+            Marker(t, "Handguard", new Vector3(0f, 0.0f, 0.33f));
             return root;
         }
 
@@ -193,6 +198,7 @@ namespace WarehouseDuel.EditorTools.Weapons
             Part(t, new Vector3(0f, 0.086f, -0.01f), new Vector3(0.018f, 0.008f, 0.006f), metal);             // rear sight
             Part(t, new Vector3(0.0155f, 0.065f, 0.07f), new Vector3(0.003f, 0.012f, 0.12f), accent);
             Muzzle(t, new Vector3(0f, 0.065f, 0.17f));
+            Marker(t, "Handguard", new Vector3(-0.02f, -0.04f, 0.0f));
             return root;
         }
 
@@ -228,6 +234,14 @@ namespace WarehouseDuel.EditorTools.Weapons
             var muzzle = new GameObject("Muzzle");
             muzzle.transform.SetParent(parent, false);
             muzzle.transform.localPosition = position;
+        }
+
+        /// <summary>Empty transform used by the first-person rig to place the left hand.</summary>
+        private static void Marker(Transform parent, string name, Vector3 position)
+        {
+            var marker = new GameObject(name);
+            marker.transform.SetParent(parent, false);
+            marker.transform.localPosition = position;
         }
 
         private static GameObject Save(string name, GameObject root)

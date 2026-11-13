@@ -53,6 +53,7 @@ namespace WarehouseDuel.EditorTools
                 // Phases 1-4 content: settings, audio, UI art, effects, weapons (map is built after the prefabs).
                 WeaponCatalog catalog = ContentBuilder.BuildContent(report, buildMap: false);
                 if (catalog == null) throw new InvalidOperationException("Content build failed; see errors above.");
+                BrandingConfigurator.Apply(report);
                 FusionConfigurator.Apply(report);
                 GameplayPrefabBuilder.BuildAll(report, catalog);
                 FusionConfigurator.RebuildPrefabTable(report);
@@ -62,6 +63,7 @@ namespace WarehouseDuel.EditorTools
                 HudBuilder.Build(report, catalog);
                 MenuScenesBuilder.BuildMainMenu(report, catalog);
                 MenuScenesBuilder.BuildLobby(report, catalog);
+                SplashBuilder.Build(report);
                 BuildSettingsConfigurator.Apply(report);
                 AssetDatabase.SaveAssets();
 

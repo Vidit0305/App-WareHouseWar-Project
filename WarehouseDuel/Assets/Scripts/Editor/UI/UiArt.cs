@@ -24,6 +24,9 @@ namespace WarehouseDuel.EditorTools.UI
         public static Sprite Circle => LoadSprite(SpriteFolder, "UI_Circle");
         public static Sprite Ring => LoadSprite(SpriteFolder, "UI_Ring");
         public static Sprite Gradient => LoadSprite(SpriteFolder, "UI_Vignette");
+        public static Sprite Avatar => AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Branding/AppIcon_Round.png");
+        public static Sprite SplashBackground => AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Branding/Splash_Background.png");
+        public static Sprite BottomFade => LoadSprite(SpriteFolder, "UI_BottomFade");
         public static Sprite Icon(string name) => LoadSprite(IconFolder, $"Icon_{name}");
         public static TMP_FontAsset DisplayFont => AssetDatabase.LoadAssetAtPath<TMP_FontAsset>($"{FontFolder}/RussoOne SDF.asset");
 
@@ -37,6 +40,7 @@ namespace WarehouseDuel.EditorTools.UI
             SaveSprite(SpriteFolder, "UI_Circle", 128, (x, y) => Disc(x, y, 128, 62f));
             SaveSprite(SpriteFolder, "UI_Ring", 128, (x, y) => Mathf.Min(Disc(x, y, 128, 62f), 1f - Disc(x, y, 128, 52f)));
             SaveSprite(SpriteFolder, "UI_Vignette", 128, Vignette);
+            SaveSprite(SpriteFolder, "UI_BottomFade", 64, (x, y) => Mathf.SmoothStep(1f, 0f, y / 63f));
 
             foreach (KeyValuePair<string, Func<Vector2, float>> icon in Icons)
             {
@@ -160,16 +164,36 @@ namespace WarehouseDuel.EditorTools.UI
                           Mathf.Min(SdBox(p, new Vector2(0.75f, 0f), new Vector2(0.17f, 0.06f)), SdBox(p, new Vector2(-0.75f, 0f), new Vector2(0.17f, 0.06f)))))),
             ["Aim"] = p => Mathf.Min(SdRing(p, Vector2.zero, 0.62f, 0.07f),
                 Mathf.Min(SdBox(p, Vector2.zero, new Vector2(0.62f, 0.035f)), SdBox(p, Vector2.zero, new Vector2(0.035f, 0.62f)))),
+            ["Bullets"] = p =>
+            {
+                float d = 10f;
+                foreach (float x in new[] { -0.42f, 0f, 0.42f })
+                {
+                    float body = SdBox(p, new Vector2(x, -0.1f), new Vector2(0.125f, 0.34f));
+                    float tip = SdCircle(p, new Vector2(x, 0.24f), 0.125f);
+                    float rim = SdBox(p, new Vector2(x, -0.5f), new Vector2(0.155f, 0.05f));
+                    d = Mathf.Min(d, Mathf.Min(body, Mathf.Min(tip, rim)));
+                }
+                return d;
+            },
             ["Reload"] = p =>
             {
-                float arc = SdRing(p, Vector2.zero, 0.55f, 0.09f);
-                float angle = Mathf.Atan2(p.y, p.x) * Mathf.Rad2Deg;
-                if (angle > 35f && angle < 95f) arc = Mathf.Max(arc, 0.2f); // gap
-                float head = SdTriangle(p, new Vector2(0.38f, 0.62f), new Vector2(0.72f, 0.2f), new Vector2(0.06f, 0.2f));
-                return Mathf.Min(arc, head);
+                float arc = SdRing(p, Vector2.zero, 0.5f, 0.1f);
+                float angle = Mathf.Repeat(Mathf.Atan2(p.y, p.x) * Mathf.Rad2Deg, 360f);
+                if ((angle > 18f && angle < 75f) || (angle > 198f && angle < 255f)) arc = Mathf.Max(arc, 0.2f);
+                return Mathf.Min(arc, Mathf.Min(ArrowHead(p, 18f), ArrowHead(p, 198f)));
             },
-            ["Jump"] = p => Mathf.Min(SdChevron(p, new Vector2(0f, 0.05f), 0.6f, 0.11f), SdBox(p, new Vector2(0f, -0.45f), new Vector2(0.5f, 0.07f))),
-            ["Sprint"] = p => Mathf.Min(SdChevron(p, new Vector2(0f, 0.28f), 0.5f, 0.1f), SdChevron(p, new Vector2(0f, -0.22f), 0.5f, 0.1f)),
+            ["Jump"] = p => Mathf.Min(SdChevron(p, new Vector2(0f, 0.66f), 0.52f, 0.12f), SdBox(p, new Vector2(0f, -0.08f), new Vector2(0.1f, 0.62f))),
+            ["Sprint"] = p =>
+            {
+                float d = 10f;
+                foreach (float x in new[] { -0.2f, 0.26f })
+                {
+                    d = Mathf.Min(d, Mathf.Min(SdSegment(p, new Vector2(x - 0.24f, 0.46f), new Vector2(x + 0.16f, 0f), 0.11f),
+                                               SdSegment(p, new Vector2(x + 0.16f, 0f), new Vector2(x - 0.24f, -0.46f), 0.11f)));
+                }
+                return d;
+            },
             ["Swap"] = p => Mathf.Min(
                 Mathf.Min(SdBox(p, new Vector2(-0.1f, 0.25f), new Vector2(0.45f, 0.07f)), SdTriangle(p, new Vector2(0.65f, 0.25f), new Vector2(0.3f, 0.5f), new Vector2(0.3f, 0f))),
                 Mathf.Min(SdBox(p, new Vector2(0.1f, -0.25f), new Vector2(0.45f, 0.07f)), SdTriangle(p, new Vector2(-0.65f, -0.25f), new Vector2(-0.3f, 0f), new Vector2(-0.3f, -0.5f)))),
@@ -187,6 +211,16 @@ namespace WarehouseDuel.EditorTools.UI
             ["Profile"] = p => Mathf.Min(SdCircle(p, new Vector2(0f, 0.3f), 0.28f),
                 Mathf.Max(SdCircle(p, new Vector2(0f, -0.62f), 0.55f), -p.y - 0.62f)),
         };
+
+        /// <summary>Arrowhead at the end of a circular arc (radius 0.5) at <paramref name="degrees"/>, pointing clockwise.</summary>
+        private static float ArrowHead(Vector2 p, float degrees)
+        {
+            float a = degrees * Mathf.Deg2Rad;
+            var radial = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+            var tangent = new Vector2(radial.y, -radial.x);
+            Vector2 c = radial * 0.5f;
+            return SdTriangle(p, c + tangent * 0.26f, c - radial * 0.24f - tangent * 0.04f, c + radial * 0.24f - tangent * 0.04f);
+        }
 
         private static float SdCircle(Vector2 p, Vector2 c, float r) => (p - c).magnitude - r;
         private static float SdRing(Vector2 p, Vector2 c, float r, float thickness) => Mathf.Abs((p - c).magnitude - r) - thickness;

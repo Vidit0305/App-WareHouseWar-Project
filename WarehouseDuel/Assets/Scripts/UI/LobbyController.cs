@@ -53,7 +53,11 @@ namespace WarehouseDuel.UI
         [SerializeField] private TMP_Text startButtonText;
         [SerializeField] private Button leaveButton;
 
-        private static readonly Color Selected = new Color(1f, 0.69f, 0.13f, 1f);
+        [Header("Showcase character")]
+        [SerializeField] private WarehouseDuel.Player.SoldierAnimator character;
+        [SerializeField] private TMP_Text characterName;
+
+        private static readonly Color Selected = new Color(1f, 0.69f, 0.13f, 0.6f);
         private static readonly Color Unselected = new Color(1f, 1f, 1f, 0.12f);
         private static readonly Color ReadyColor = new Color(0.3f, 0.85f, 0.45f);
         private static readonly Color NotReadyColor = new Color(0.55f, 0.58f, 0.65f);
@@ -148,6 +152,12 @@ namespace WarehouseDuel.UI
             else roomStatusText.text = session.IsHost ? "Everyone is ready — start the match!" : "Everyone is ready — waiting for the host to start.";
 
             readyButton.interactable = me.Occupied;
+            if (character != null) character.Ready = me.Ready;
+            if (characterName != null)
+            {
+                string shownName = me.Occupied ? me.Name.ToString() : GameSettings.PlayerName;
+                characterName.text = me.Ready ? $"{shownName}  <color=#50D773>READY</color>" : shownName;
+            }
             readyButtonText.text = me.Ready ? "NOT READY" : "READY";
 
             startButton.gameObject.SetActive(session.IsHost);
@@ -194,6 +204,8 @@ namespace WarehouseDuel.UI
             {
                 if (weaponButtonFrames[i] != null) weaponButtonFrames[i].color = i == index ? Selected : Unselected;
             }
+
+            if (character != null) character.SetWeapon(index);
 
             WeaponDefinition def = catalog.Get(index);
             if (def == null) return;

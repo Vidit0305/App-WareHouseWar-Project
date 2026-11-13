@@ -60,7 +60,7 @@ namespace WarehouseDuel.Core
 
         public static ControlLayout Layout
         {
-            get => (ControlLayout)PlayerPrefs.GetInt(Prefix + "layout", (int)ControlLayout.Standard);
+            get => (ControlLayout)PlayerPrefs.GetInt(Prefix + "layout", (int)ControlLayout.DualFire);
             set => SetInt("layout", (int)value);
         }
 

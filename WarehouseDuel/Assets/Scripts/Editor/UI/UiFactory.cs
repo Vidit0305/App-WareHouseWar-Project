@@ -144,6 +144,20 @@ namespace WarehouseDuel.EditorTools.UI
             colors.fadeDuration = 0.06f;
             button.colors = colors;
             image.gameObject.AddComponent<UIButtonSound>();
+            image.gameObject.AddComponent<UIButtonFX>();
+
+            // Chunky mobile-game look: darker bevel under the face + soft gloss on the top half.
+            if (style == ButtonStyle.Primary || style == ButtonStyle.Danger || style == ButtonStyle.Secondary)
+            {
+                var bevel = image.gameObject.AddComponent<Shadow>();
+                bevel.effectColor = style == ButtonStyle.Secondary ? new Color(0f, 0f, 0f, 0.35f) : new Color(background.r * 0.55f, background.g * 0.4f, background.b * 0.3f, 1f);
+                bevel.effectDistance = new Vector2(0f, -7f);
+                Image gloss = CreateImage("Gloss", image.transform, new Color(1f, 1f, 1f, style == ButtonStyle.Secondary ? 0.05f : 0.22f), UiArt.Rounded);
+                gloss.rectTransform.anchorMin = new Vector2(0f, 0.5f);
+                gloss.rectTransform.anchorMax = new Vector2(1f, 1f);
+                gloss.rectTransform.offsetMin = new Vector2(6f, 0f);
+                gloss.rectTransform.offsetMax = new Vector2(-6f, -5f);
+            }
 
             text = CreateText("Label", image.transform, label, fontSize, foreground, TextAlignmentOptions.Center, display: true);
             Stretch(text.rectTransform, 16f, 16f, 4f, 4f);
@@ -308,6 +322,13 @@ namespace WarehouseDuel.EditorTools.UI
         {
             var serialized = new SerializedObject(target);
             serialized.FindProperty(field).floatValue = value;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        public static void SetColor(Object target, string field, Color value)
+        {
+            var serialized = new SerializedObject(target);
+            serialized.FindProperty(field).colorValue = value;
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
 

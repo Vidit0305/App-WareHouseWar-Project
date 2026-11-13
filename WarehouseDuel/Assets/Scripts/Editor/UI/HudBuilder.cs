@@ -52,35 +52,44 @@ namespace WarehouseDuel.EditorTools.UI
             RectTransform gameplay = CreateRect("Gameplay HUD", safe);
             Stretch(gameplay);
 
-            // ---- health (top-left)
-            Image healthPanel = CreatePanel("Health", gameplay, new Color(0f, 0f, 0f, 0.45f));
+            // ---- health (top-left): avatar portrait + bar
+            Image healthPanel = CreatePanel("Health", gameplay, new Color(0f, 0f, 0f, 0.42f));
             healthPanel.raycastTarget = false;
-            Place(healthPanel.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -24f), new Vector2(520f, 86f), new Vector2(0f, 1f));
-            TextMeshProUGUI hpLabel = CreateText("Label", healthPanel.transform, "HP", 26f, TextMuted, TextAlignmentOptions.Left, display: true);
-            Place(hpLabel.rectTransform, new Vector2(0f, 0.5f), new Vector2(22f, 0f), new Vector2(60f, 40f), new Vector2(0f, 0.5f));
-            Image track = CreateImage("Track", healthPanel.transform, new Color(1f, 1f, 1f, 0.12f), UiArt.RoundedSmall);
-            Place(track.rectTransform, new Vector2(0f, 0.5f), new Vector2(80f, 0f), new Vector2(320f, 26f), new Vector2(0f, 0.5f));
+            Place(healthPanel.rectTransform, new Vector2(0f, 1f), new Vector2(28f, -22f), new Vector2(500f, 96f), new Vector2(0f, 1f));
+            Image avatarRing = CreateImage("Avatar Ring", healthPanel.transform, new Color(0.25f, 0.6f, 1f), UiArt.Circle);
+            Place(avatarRing.rectTransform, new Vector2(0f, 0.5f), new Vector2(8f, 0f), new Vector2(84f, 84f), new Vector2(0f, 0.5f));
+            Image avatar = CreateImage("Avatar", avatarRing.transform, Color.white, UiArt.Avatar);
+            Stretch(avatar.rectTransform, 5f, 5f, 5f, 5f);
+            TextMeshProUGUI hpLabel = CreateText("Label", healthPanel.transform, "HP", 22f, TextMuted, TextAlignmentOptions.Left, display: true);
+            Place(hpLabel.rectTransform, new Vector2(0f, 0.5f), new Vector2(106f, 20f), new Vector2(60f, 30f), new Vector2(0f, 0.5f));
+            Image track = CreateImage("Track", healthPanel.transform, new Color(1f, 1f, 1f, 0.14f), UiArt.RoundedSmall);
+            Place(track.rectTransform, new Vector2(0f, 0.5f), new Vector2(106f, -14f), new Vector2(270f, 24f), new Vector2(0f, 0.5f));
             Image fill = CreateImage("Fill", track.transform, Success, UiArt.RoundedSmall);
             fill.rectTransform.anchorMin = Vector2.zero;
             fill.rectTransform.anchorMax = Vector2.one;
             fill.rectTransform.offsetMin = fill.rectTransform.offsetMax = Vector2.zero;
-            TextMeshProUGUI hpValue = CreateText("Value", healthPanel.transform, "100", 40f, TextPrimary, TextAlignmentOptions.Right, display: true);
-            Place(hpValue.rectTransform, new Vector2(1f, 0.5f), new Vector2(-20f, 0f), new Vector2(100f, 50f), new Vector2(1f, 0.5f));
+            TextMeshProUGUI hpValue = CreateText("Value", healthPanel.transform, "100", 44f, TextPrimary, TextAlignmentOptions.Right, display: true);
+            Place(hpValue.rectTransform, new Vector2(1f, 0.5f), new Vector2(-18f, 0f), new Vector2(100f, 56f), new Vector2(1f, 0.5f));
 
-            // ---- timer + scores (top-centre)
-            Image scorePanel = CreatePanel("Scoreboard", safe, new Color(0f, 0f, 0f, 0.45f));
-            scorePanel.raycastTarget = false;
-            Place(scorePanel.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -18f), new Vector2(720f, 120f), new Vector2(0.5f, 1f));
-            TextMeshProUGUI timer = CreateText("Timer", scorePanel.transform, "3:00", 64f, TextPrimary, TextAlignmentOptions.Center, display: true);
-            Place(timer.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(220f, 90f), new Vector2(0.5f, 0.5f));
-            TextMeshProUGUI myName = CreateText("My Name", scorePanel.transform, "YOU", 22f, new Color(0.45f, 0.7f, 1f), TextAlignmentOptions.Center);
-            Place(myName.rectTransform, new Vector2(0f, 0.5f), new Vector2(130f, 30f), new Vector2(220f, 30f), new Vector2(0.5f, 0.5f));
-            TextMeshProUGUI myKills = CreateText("My Kills", scorePanel.transform, "0", 56f, TextPrimary, TextAlignmentOptions.Center, display: true);
-            Place(myKills.rectTransform, new Vector2(0f, 0.5f), new Vector2(130f, -16f), new Vector2(220f, 64f), new Vector2(0.5f, 0.5f));
-            TextMeshProUGUI theirName = CreateText("Opponent Name", scorePanel.transform, "—", 22f, new Color(1f, 0.5f, 0.4f), TextAlignmentOptions.Center);
-            Place(theirName.rectTransform, new Vector2(1f, 0.5f), new Vector2(-130f, 30f), new Vector2(220f, 30f), new Vector2(0.5f, 0.5f));
-            TextMeshProUGUI theirKills = CreateText("Opponent Kills", scorePanel.transform, "0", 56f, TextPrimary, TextAlignmentOptions.Center, display: true);
-            Place(theirKills.rectTransform, new Vector2(1f, 0.5f), new Vector2(-130f, -16f), new Vector2(220f, 64f), new Vector2(0.5f, 0.5f));
+            // ---- team score bar (top-centre): [blue YOU score] [timer] [red opponent score]
+            RectTransform scoreBar = CreateRect("Scoreboard", safe);
+            Place(scoreBar, new Vector2(0.5f, 1f), new Vector2(0f, -16f), new Vector2(760f, 104f), new Vector2(0.5f, 1f));
+            Image blue = CreateImage("Blue", scoreBar, new Color(0.16f, 0.45f, 0.95f, 0.92f), UiArt.Rounded);
+            Place(blue.rectTransform, new Vector2(0f, 0.5f), Vector2.zero, new Vector2(270f, 84f), new Vector2(0f, 0.5f));
+            Image red = CreateImage("Red", scoreBar, new Color(0.9f, 0.22f, 0.2f, 0.92f), UiArt.Rounded);
+            Place(red.rectTransform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(270f, 84f), new Vector2(1f, 0.5f));
+            Image clock = CreateImage("Clock", scoreBar, new Color(0.06f, 0.07f, 0.1f, 0.95f), UiArt.Rounded);
+            Place(clock.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(240f, 104f), new Vector2(0.5f, 0.5f));
+            TextMeshProUGUI timer = CreateText("Timer", clock.transform, "3:00", 60f, TextPrimary, TextAlignmentOptions.Center, display: true);
+            Stretch(timer.rectTransform);
+            TextMeshProUGUI myName = CreateText("My Name", blue.transform, "YOU", 20f, new Color(1f, 1f, 1f, 0.85f), TextAlignmentOptions.Left, display: true);
+            Place(myName.rectTransform, new Vector2(0f, 0.5f), new Vector2(18f, 0f), new Vector2(120f, 30f), new Vector2(0f, 0.5f));
+            TextMeshProUGUI myKills = CreateText("My Kills", blue.transform, "0", 58f, Color.white, TextAlignmentOptions.Right, display: true);
+            Place(myKills.rectTransform, new Vector2(1f, 0.5f), new Vector2(-24f, 0f), new Vector2(120f, 70f), new Vector2(1f, 0.5f));
+            TextMeshProUGUI theirName = CreateText("Opponent Name", red.transform, "—", 20f, new Color(1f, 1f, 1f, 0.85f), TextAlignmentOptions.Right, display: true);
+            Place(theirName.rectTransform, new Vector2(1f, 0.5f), new Vector2(-18f, 0f), new Vector2(140f, 30f), new Vector2(1f, 0.5f));
+            TextMeshProUGUI theirKills = CreateText("Opponent Kills", red.transform, "0", 58f, Color.white, TextAlignmentOptions.Left, display: true);
+            Place(theirKills.rectTransform, new Vector2(0f, 0.5f), new Vector2(24f, 0f), new Vector2(120f, 70f), new Vector2(0f, 0.5f));
 
             // ---- pause + ping + weapon (top-right)
             Button pause = CreateIconButton("Pause", safe, UiArt.Icon("Pause"), 84f, new Color(0f, 0f, 0f, 0.45f));
@@ -196,7 +205,21 @@ namespace WarehouseDuel.EditorTools.UI
             else report.Error("Could not save WarehouseMap after adding the HUD.");
         }
 
-        private static GameObject BuildTouchControls(RectTransform safe)
+        /// <summary>Button layout, in canvas units from the zone's bottom corner (reference 1920×1080). Shared with the self-test.</summary>
+        internal static readonly (string name, string icon, float size, Vector2 position, bool left)[] ButtonLayout =
+        {
+            ("Fire", "Bullets", 230f, new Vector2(-280f, 320f), false),
+            ("Jump", "Jump", 160f, new Vector2(-95f, 140f), false),
+            ("Aim", "Aim", 150f, new Vector2(-560f, 200f), false),
+            ("Reload", "Reload", 130f, new Vector2(-120f, 560f), false),
+            ("Switch Weapon", "Swap", 120f, new Vector2(-520f, 440f), false),
+            ("Sprint", "Sprint", 130f, new Vector2(560f, 500f), true),
+            ("Fire Left", "Bullets", 160f, new Vector2(190f, 640f), true),
+        };
+
+        internal const float StickSize = 300f, StickRest = 300f, HandleSize = 130f;
+
+        internal static GameObject BuildTouchControls(RectTransform safe)
         {
             RectTransform root = CreateRect("Touch Controls", safe);
             Stretch(root);
@@ -204,64 +227,73 @@ namespace WarehouseDuel.EditorTools.UI
             // Left zone (joystick). Pivot on the screen centre so left-handed mode can mirror it.
             Image leftZone = CreateImage("Left Zone", root, new Color(0f, 0f, 0f, 0f), raycast: true);
             leftZone.rectTransform.anchorMin = new Vector2(0f, 0f);
-            leftZone.rectTransform.anchorMax = new Vector2(0.5f, 0.78f);
+            leftZone.rectTransform.anchorMax = new Vector2(0.5f, 0.85f);
             leftZone.rectTransform.pivot = new Vector2(1f, 0.5f);
             leftZone.rectTransform.offsetMin = leftZone.rectTransform.offsetMax = Vector2.zero;
             VirtualJoystick joystick = leftZone.gameObject.AddComponent<VirtualJoystick>();
-            Image stickBase = CreateImage("Stick Base", leftZone.transform, new Color(1f, 1f, 1f, 0.35f), UiArt.Ring);
-            Place(stickBase.rectTransform, new Vector2(0f, 0f), new Vector2(280f, 280f), new Vector2(280f, 280f), new Vector2(0.5f, 0.5f));
-            Image handle = CreateImage("Handle", stickBase.transform, new Color(1f, 1f, 1f, 0.6f), UiArt.Circle);
-            Place(handle.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(130f, 130f), new Vector2(0.5f, 0.5f));
+            Image stickBase = CreateImage("Stick Base", leftZone.transform, new Color(0f, 0f, 0f, 0.32f), UiArt.Circle);
+            Place(stickBase.rectTransform, new Vector2(0f, 0f), new Vector2(StickRest, StickRest - 20f), new Vector2(StickSize, StickSize), new Vector2(0.5f, 0.5f));
+            Image stickRing = CreateImage("Ring", stickBase.transform, new Color(1f, 1f, 1f, 0.75f), UiArt.Ring);
+            Stretch(stickRing.rectTransform);
+            Image handle = CreateImage("Handle", stickBase.transform, new Color(1f, 1f, 1f, 0.85f), UiArt.Circle);
+            Place(handle.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(HandleSize, HandleSize), new Vector2(0.5f, 0.5f));
+            Image handleDot = CreateImage("Dot", handle.transform, new Color(0.1f, 0.12f, 0.16f, 0.35f), UiArt.Ring);
+            Stretch(handleDot.rectTransform, 22f, 22f, 22f, 22f);
             Wire(joystick, "stickBase", stickBase.rectTransform);
             Wire(joystick, "handle", handle.rectTransform);
+            SetFloat(joystick, "radius", StickSize * 0.42f);
+            SetFloat(joystick, "idleAlpha", 0.65f);
 
             // Right zone (look drag + action buttons).
             Image rightZone = CreateImage("Right Zone", root, new Color(0f, 0f, 0f, 0f), raycast: true);
             rightZone.rectTransform.anchorMin = new Vector2(0.5f, 0f);
-            rightZone.rectTransform.anchorMax = new Vector2(1f, 0.82f);
+            rightZone.rectTransform.anchorMax = new Vector2(1f, 0.85f);
             rightZone.rectTransform.pivot = new Vector2(0f, 0.5f);
             rightZone.rectTransform.offsetMin = rightZone.rectTransform.offsetMax = Vector2.zero;
             TouchLookArea look = rightZone.gameObject.AddComponent<TouchLookArea>();
 
-            TouchButton MakeButton(string name, Transform parent, string icon, float size, Vector2 anchor, Vector2 position, TouchButton.ButtonMode mode, bool forwardLook)
+            var buttons = new System.Collections.Generic.Dictionary<string, TouchButton>();
+            foreach (var spec in ButtonLayout)
             {
-                Image background = CreateImage(name, parent, new Color(1f, 1f, 1f, 0.35f), UiArt.Circle, raycast: true);
-                Place(background.rectTransform, anchor, position, new Vector2(size, size), new Vector2(0.5f, 0.5f));
-                Image glyph = CreateImage("Icon", background.transform, new Color(1f, 1f, 1f, 0.95f), UiArt.Icon(icon));
-                Stretch(glyph.rectTransform, size * 0.24f, size * 0.24f, size * 0.24f, size * 0.24f);
-                TouchButton button = background.gameObject.AddComponent<TouchButton>();
-                SetEnum(button, "mode", (int)mode);
-                if (forwardLook) Wire(button, "forwardDragTo", look);
-                Wire(button, "highlight", background);
-                return button;
-            }
+                Transform parent = spec.left ? leftZone.transform : rightZone.transform;
+                Vector2 anchor = spec.left ? new Vector2(0f, 0f) : new Vector2(1f, 0f);
+                Image disc = CreateImage(spec.name, parent, new Color(0f, 0f, 0f, 0.38f), UiArt.Circle, raycast: true);
+                Place(disc.rectTransform, anchor, spec.position, new Vector2(spec.size, spec.size), new Vector2(0.5f, 0.5f));
+                Image ring = CreateImage("Ring", disc.transform, new Color(1f, 1f, 1f, 0.85f), UiArt.Ring);
+                Stretch(ring.rectTransform);
+                float pad = spec.size * 0.22f;
+                Image glyph = CreateImage("Icon", disc.transform, Color.white, UiArt.Icon(spec.icon));
+                Stretch(glyph.rectTransform, pad, pad, pad, pad);
+                var shadow = glyph.gameObject.AddComponent<Shadow>();
+                shadow.effectColor = new Color(0f, 0f, 0f, 0.55f);
+                shadow.effectDistance = new Vector2(2f, -2f);
 
-            Vector2 bottomRight = new Vector2(1f, 0f);
-            Vector2 bottomLeft = new Vector2(0f, 0f);
-            TouchButton fire = MakeButton("Fire", rightZone.transform, "Fire", 210f, bottomRight, new Vector2(-210f, 250f), TouchButton.ButtonMode.Hold, true);
-            TouchButton aim = MakeButton("Aim", rightZone.transform, "Aim", 130f, bottomRight, new Vector2(-445f, 140f), TouchButton.ButtonMode.Hold, true);
-            TouchButton reload = MakeButton("Reload", rightZone.transform, "Reload", 120f, bottomRight, new Vector2(-460f, 330f), TouchButton.ButtonMode.Hold, false);
-            TouchButton jump = MakeButton("Jump", rightZone.transform, "Jump", 140f, bottomRight, new Vector2(-170f, 500f), TouchButton.ButtonMode.Hold, false);
-            TouchButton swap = MakeButton("Switch Weapon", rightZone.transform, "Swap", 110f, bottomRight, new Vector2(-400f, 510f), TouchButton.ButtonMode.Hold, false);
-            TouchButton sprint = MakeButton("Sprint", leftZone.transform, "Sprint", 120f, bottomLeft, new Vector2(530f, 470f), TouchButton.ButtonMode.Toggle, false);
-            TouchButton fireLeft = MakeButton("Fire Left", leftZone.transform, "Fire", 150f, bottomLeft, new Vector2(170f, 620f), TouchButton.ButtonMode.Hold, false);
+                TouchButton button = disc.gameObject.AddComponent<TouchButton>();
+                bool isFire = spec.icon == "Bullets" || spec.name == "Aim";
+                SetEnum(button, "mode", spec.name == "Sprint" ? (int)TouchButton.ButtonMode.Toggle : (int)TouchButton.ButtonMode.Hold);
+                if (isFire) Wire(button, "forwardDragTo", look);
+                Wire(button, "highlight", disc);
+                SetColor(button, "normalColor", new Color(0f, 0f, 0f, 0.38f));
+                SetColor(button, "activeColor", spec.icon == "Bullets" ? new Color(0.92f, 0.25f, 0.18f, 0.85f) : new Color(1f, 0.69f, 0.13f, 0.85f));
+                buttons[spec.name] = button;
+            }
 
             TouchControlsView view = root.gameObject.AddComponent<TouchControlsView>();
             Wire(view, "joystick", joystick);
             Wire(view, "lookArea", look);
-            Wire(view, "fire", fire);
-            Wire(view, "fireLeft", fireLeft);
-            Wire(view, "aim", aim);
-            Wire(view, "reload", reload);
-            Wire(view, "jump", jump);
-            Wire(view, "sprint", sprint);
-            Wire(view, "switchWeapon", swap);
+            Wire(view, "fire", buttons["Fire"]);
+            Wire(view, "fireLeft", buttons["Fire Left"]);
+            Wire(view, "aim", buttons["Aim"]);
+            Wire(view, "reload", buttons["Reload"]);
+            Wire(view, "jump", buttons["Jump"]);
+            Wire(view, "sprint", buttons["Sprint"]);
+            Wire(view, "switchWeapon", buttons["Switch Weapon"]);
             Wire(view, "leftZone", leftZone.rectTransform);
             Wire(view, "rightZone", rightZone.rectTransform);
-            WireArray(view, "scalableButtons",
-                (RectTransform)fire.transform, (RectTransform)aim.transform, (RectTransform)reload.transform,
-                (RectTransform)jump.transform, (RectTransform)swap.transform, (RectTransform)sprint.transform,
-                (RectTransform)fireLeft.transform, stickBase.rectTransform);
+            var scalable = new System.Collections.Generic.List<Object>();
+            foreach (TouchButton b in buttons.Values) scalable.Add(b.transform);
+            scalable.Add(stickBase.rectTransform);
+            WireArray(view, "scalableButtons", scalable.ToArray());
             return root.gameObject;
         }
 

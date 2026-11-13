@@ -6,6 +6,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using WarehouseDuel.Core;
 using WarehouseDuel.UI;
+using WarehouseDuel.UI.Widgets;
 using WarehouseDuel.Weapons;
 using static WarehouseDuel.EditorTools.UI.UiFactory;
 
@@ -19,9 +20,10 @@ namespace WarehouseDuel.EditorTools.UI
             // Reload: lighting bakes refresh assets, which can leave a previously loaded catalog object stale.
             catalog = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseDuel.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            SharedUiBuilder.Diorama(catalog, 0);
+            SharedUiBuilder.SoldierAnimatorHandle showcase = SharedUiBuilder.Diorama(catalog, 0, SharedUiBuilder.MenuStaging);
             BakeBackdrop(scene, GameConstants.Scenes.MainMenu, report);
             catalog = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseDuel.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
+            Wire(showcase.Animator, "catalog", catalog);
             SharedUiBuilder.SessionBootstrap();
             CreateEventSystem();
 
@@ -146,101 +148,103 @@ namespace WarehouseDuel.EditorTools.UI
 
         public static void BuildLobby(SetupReport report, WeaponCatalog catalog)
         {
-            // Reload: lighting bakes refresh assets, which can leave a previously loaded catalog object stale.
-            catalog = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseDuel.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            SharedUiBuilder.Diorama(catalog, 2);
+            SharedUiBuilder.SoldierAnimatorHandle showcase = SharedUiBuilder.Diorama(catalog, 0, SharedUiBuilder.LobbyStaging);
             BakeBackdrop(scene, GameConstants.Scenes.Lobby, report);
+            // Reload: the lighting bake refreshes assets and can leave earlier asset references stale.
             catalog = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseDuel.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
+            Wire(showcase.Animator, "catalog", catalog);
             SharedUiBuilder.SessionBootstrap();
             CreateEventSystem();
 
             Canvas canvas = CreateCanvas("Lobby Canvas", 0, out RectTransform safe);
-            Image shade = CreateImage("Shade", canvas.transform, new Color(0.04f, 0.05f, 0.08f, 0.78f));
-            shade.rectTransform.SetAsFirstSibling();
-            Stretch(shade.rectTransform);
+
+            // Drag anywhere in the middle to spin the character (behind all other UI).
+            Image dragArea = CreateImage("Character Drag Area", safe, new Color(0f, 0f, 0f, 0f), raycast: true);
+            Place(dragArea.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 20f), new Vector2(760f, 760f), new Vector2(0.5f, 0.5f));
+            var drag = dragArea.gameObject.AddComponent<DragRotate>();
+            Wire(drag, "target", showcase.Turntable);
 
             // ---- top bar
-            Button leave = CreateButton("Leave", safe, "LEAVE", ButtonStyle.Ghost, new Vector2(220f, 80f));
-            Place((RectTransform)leave.transform, new Vector2(0f, 1f), new Vector2(40f, -40f), new Vector2(220f, 80f), new Vector2(0f, 1f));
-            TextMeshProUGUI ping = CreateText("Ping", safe, "", 26f, TextMuted, TextAlignmentOptions.Right);
-            Place(ping.rectTransform, new Vector2(1f, 1f), new Vector2(-40f, -50f), new Vector2(240f, 50f), new Vector2(1f, 1f));
+            RectTransform top = CreateRect("Top Bar", safe);
+            Place(top, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(1920f, 150f), new Vector2(0.5f, 1f));
+            AddTransition(top, new Vector2(0f, 140f), 0f);
+            Button leave = CreateIconButton("Leave", top, UiArt.Icon("Back"), 88f, new Color(0f, 0f, 0f, 0.5f));
+            Place((RectTransform)leave.transform, new Vector2(0f, 1f), new Vector2(40f, -30f), new Vector2(88f, 88f), new Vector2(0f, 1f));
+            TextMeshProUGUI title = CreateText("Title", top, "LOBBY", 56f, TextPrimary, TextAlignmentOptions.Left, display: true);
+            Place(title.rectTransform, new Vector2(0f, 1f), new Vector2(150f, -36f), new Vector2(400f, 76f), new Vector2(0f, 1f));
 
-            TextMeshProUGUI codeLabel = CreateText("Code Label", safe, "ROOM CODE", 24f, TextMuted, TextAlignmentOptions.Center);
-            codeLabel.characterSpacing = 10f;
-            Place(codeLabel.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -30f), new Vector2(500f, 40f), new Vector2(0.5f, 1f));
-            TextMeshProUGUI code = CreateText("Code", safe, "-----", 84f, Accent, TextAlignmentOptions.Center, display: true);
-            code.characterSpacing = 14f;
-            Place(code.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -70f), new Vector2(620f, 100f), new Vector2(0.5f, 1f));
-            Button copy = CreateIconButton("Copy", safe, UiArt.Icon("Copy"), 84f, new Color(1f, 1f, 1f, 0.14f));
-            Place((RectTransform)copy.transform, new Vector2(0.5f, 1f), new Vector2(370f, -78f), new Vector2(84f, 84f), new Vector2(0.5f, 1f));
-            TextMeshProUGUI copied = CreateText("Copied", safe, "Copied!", 24f, Success, TextAlignmentOptions.Left);
-            Place(copied.rectTransform, new Vector2(0.5f, 1f), new Vector2(430f, -100f), new Vector2(200f, 40f), new Vector2(0f, 1f));
+            Image codeChip = CreatePanel("Room Code", top, new Color(0.04f, 0.05f, 0.08f, 0.85f));
+            Place(codeChip.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -22f), new Vector2(600f, 116f), new Vector2(0.5f, 1f));
+            TextMeshProUGUI codeLabel = CreateText("Label", codeChip.transform, "ROOM CODE", 20f, TextMuted, TextAlignmentOptions.Left, display: true);
+            codeLabel.characterSpacing = 8f;
+            Place(codeLabel.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -12f), new Vector2(300f, 30f), new Vector2(0f, 1f));
+            TextMeshProUGUI code = CreateText("Code", codeChip.transform, "-----", 64f, Accent, TextAlignmentOptions.Left, display: true);
+            code.characterSpacing = 12f;
+            Place(code.rectTransform, new Vector2(0f, 0f), new Vector2(28f, 4f), new Vector2(440f, 80f), new Vector2(0f, 0f));
+            Button copy = CreateIconButton("Copy", codeChip.transform, UiArt.Icon("Copy"), 80f, new Color(1f, 0.69f, 0.13f, 0.95f));
+            Place((RectTransform)copy.transform, new Vector2(1f, 0.5f), new Vector2(-18f, 0f), new Vector2(80f, 80f), new Vector2(1f, 0.5f));
+            TextMeshProUGUI copied = CreateText("Copied", top, "Copied!", 24f, Success, TextAlignmentOptions.Center, display: true);
+            Place(copied.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -144f), new Vector2(300f, 36f), new Vector2(0.5f, 1f));
             copied.gameObject.SetActive(false);
-            TextMeshProUGUI status = CreateText("Status", safe, "Connecting…", 30f, TextPrimary, TextAlignmentOptions.Center);
-            Place(status.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -180f), new Vector2(1500f, 50f), new Vector2(0.5f, 1f));
+            TextMeshProUGUI ping = CreateText("Ping", top, "", 24f, TextMuted, TextAlignmentOptions.Right, display: true);
+            Place(ping.rectTransform, new Vector2(1f, 1f), new Vector2(-40f, -50f), new Vector2(260f, 40f), new Vector2(1f, 1f));
 
-            // ---- player cards
+            // ---- left: squad (both player cards)
+            RectTransform left = CreateRect("Squad", safe);
+            Place(left, new Vector2(0f, 1f), new Vector2(40f, -190f), new Vector2(520f, 420f), new Vector2(0f, 1f));
+            AddTransition(left, new Vector2(-260f, 0f), 0.1f);
+            TextMeshProUGUI squadHeader = CreateText("Header", left, "SQUAD", 26f, TextMuted, TextAlignmentOptions.Left, display: true);
+            squadHeader.characterSpacing = 10f;
+            Place(squadHeader.rectTransform, new Vector2(0f, 1f), Vector2.zero, new Vector2(400f, 36f), new Vector2(0f, 1f));
             var cards = new LobbyController.PlayerCard[2];
+            Color[] slotColors = { new Color(0.2f, 0.55f, 1f), new Color(1f, 0.35f, 0.25f) };
             for (int i = 0; i < 2; i++)
             {
-                Image card = CreatePanel($"Player Card {i + 1}", safe);
-                Place(card.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(i == 0 ? -330f : 330f, 150f), new Vector2(580f, 250f), new Vector2(0.5f, 0.5f));
-                Image avatar = CreateImage("Avatar", card.transform, Color.white, UiArt.Circle);
-                Place(avatar.rectTransform, new Vector2(0f, 0.5f), new Vector2(40f, 20f), new Vector2(120f, 120f), new Vector2(0f, 0.5f));
-                Image avatarIcon = CreateImage("Icon", avatar.transform, new Color(0f, 0f, 0f, 0.55f), UiArt.Icon("Profile"));
-                Stretch(avatarIcon.rectTransform, 22f, 22f, 22f, 22f);
-                TextMeshProUGUI name = CreateText("Name", card.transform, "Waiting…", 40f, TextPrimary, TextAlignmentOptions.Left, display: true);
-                Place(name.rectTransform, new Vector2(0f, 1f), new Vector2(190f, -36f), new Vector2(370f, 56f), new Vector2(0f, 1f));
-                TextMeshProUGUI state = CreateText("Status", card.transform, "", 24f, TextMuted, TextAlignmentOptions.Left);
-                Place(state.rectTransform, new Vector2(0f, 1f), new Vector2(190f, -96f), new Vector2(370f, 36f), new Vector2(0f, 1f));
-                TextMeshProUGUI weapon = CreateText("Weapon", card.transform, "", 28f, Accent, TextAlignmentOptions.Left);
-                Place(weapon.rectTransform, new Vector2(0f, 1f), new Vector2(190f, -136f), new Vector2(370f, 40f), new Vector2(0f, 1f));
+                Image card = CreatePanel($"Player Card {i + 1}", left, new Color(0.04f, 0.05f, 0.08f, 0.82f));
+                Place(card.rectTransform, new Vector2(0f, 1f), new Vector2(0f, -50f - i * 180f), new Vector2(520f, 160f), new Vector2(0f, 1f));
+                Image stripe = CreateImage("Team Stripe", card.transform, slotColors[i], UiArt.RoundedSmall);
+                Place(stripe.rectTransform, new Vector2(0f, 0.5f), new Vector2(8f, 0f), new Vector2(10f, 132f), new Vector2(0f, 0.5f));
+                Image avatar = CreateImage("Avatar", card.transform, slotColors[i], UiArt.Circle);
+                Place(avatar.rectTransform, new Vector2(0f, 0.5f), new Vector2(32f, 0f), new Vector2(108f, 108f), new Vector2(0f, 0.5f));
+                Image portrait = CreateImage("Portrait", avatar.transform, Color.white, UiArt.Avatar);
+                Stretch(portrait.rectTransform, 6f, 6f, 6f, 6f);
+                TextMeshProUGUI name = CreateText("Name", card.transform, "Waiting…", 36f, TextPrimary, TextAlignmentOptions.Left, display: true);
+                Place(name.rectTransform, new Vector2(0f, 1f), new Vector2(158f, -20f), new Vector2(340f, 48f), new Vector2(0f, 1f));
+                TextMeshProUGUI state = CreateText("Status", card.transform, "", 21f, TextMuted, TextAlignmentOptions.Left);
+                Place(state.rectTransform, new Vector2(0f, 1f), new Vector2(158f, -70f), new Vector2(340f, 30f), new Vector2(0f, 1f));
+                TextMeshProUGUI weapon = CreateText("Weapon", card.transform, "", 24f, Accent, TextAlignmentOptions.Left, display: true);
+                Place(weapon.rectTransform, new Vector2(0f, 0f), new Vector2(158f, 18f), new Vector2(200f, 34f), new Vector2(0f, 0f));
                 Image badge = CreateImage("Ready Badge", card.transform, Color.gray, UiArt.Rounded);
-                Place(badge.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 22f), new Vector2(520f, 50f), new Vector2(0.5f, 0f));
-                TextMeshProUGUI readyText = CreateText("Text", badge.transform, "—", 26f, new Color(0.05f, 0.06f, 0.08f), TextAlignmentOptions.Center, display: true);
+                Place(badge.rectTransform, new Vector2(1f, 0f), new Vector2(-16f, 16f), new Vector2(150f, 42f), new Vector2(1f, 0f));
+                TextMeshProUGUI readyText = CreateText("Text", badge.transform, "—", 22f, new Color(0.05f, 0.06f, 0.08f), TextAlignmentOptions.Center, display: true);
                 Stretch(readyText.rectTransform);
                 cards[i] = new LobbyController.PlayerCard { nameText = name, statusText = state, weaponText = weapon, readyBadge = badge, readyText = readyText, avatar = avatar };
             }
-            TextMeshProUGUI vs = CreateText("VS", safe, "VS", 64f, Accent, TextAlignmentOptions.Center, display: true);
-            Place(vs.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 150f), new Vector2(120f, 90f), new Vector2(0.5f, 0.5f));
 
-            // ---- weapon selection
-            TextMeshProUGUI chooseLabel = CreateText("Choose Label", safe, "CHOOSE YOUR WEAPON", 26f, TextMuted, TextAlignmentOptions.Left);
-            chooseLabel.characterSpacing = 8f;
-            Place(chooseLabel.rectTransform, new Vector2(0.5f, 0f), new Vector2(-750f, 430f), new Vector2(600f, 40f), new Vector2(0f, 0f));
-            var weaponButtons = new Button[4];
-            var frames = new Image[4];
-            for (int i = 0; i < 4; i++)
-            {
-                Button button = CreateButton($"Weapon {i + 1}", safe, "", ButtonStyle.Ghost, new Vector2(240f, 170f), 24f);
-                Place((RectTransform)button.transform, new Vector2(0.5f, 0f), new Vector2(-620f + i * 260f, 330f), new Vector2(240f, 170f), new Vector2(0.5f, 0.5f));
-                TextMeshProUGUI label = button.GetComponentInChildren<TextMeshProUGUI>();
-                Place(label.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 14f), new Vector2(230f, 40f), new Vector2(0.5f, 0f));
-                Image icon = CreateImage("Icon", button.transform, TextPrimary);
-                icon.preserveAspect = true;
-                Place(icon.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -18f), new Vector2(200f, 100f), new Vector2(0.5f, 1f));
-                Image frame = CreateImage("Frame", button.transform, new Color(1f, 1f, 1f, 0.12f), UiArt.RoundedSmall);
-                Place(frame.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 4f), new Vector2(200f, 6f), new Vector2(0.5f, 0f));
-                weaponButtons[i] = button;
-                frames[i] = frame;
-            }
+            // ---- right: loadout (weapon details + 2×2 weapon tiles)
+            RectTransform right = CreateRect("Loadout", safe);
+            Place(right, new Vector2(1f, 1f), new Vector2(-40f, -190f), new Vector2(540f, 720f), new Vector2(1f, 1f));
+            AddTransition(right, new Vector2(260f, 0f), 0.15f);
+            TextMeshProUGUI loadoutHeader = CreateText("Header", right, "LOADOUT", 26f, TextMuted, TextAlignmentOptions.Left, display: true);
+            loadoutHeader.characterSpacing = 10f;
+            Place(loadoutHeader.rectTransform, new Vector2(0f, 1f), Vector2.zero, new Vector2(400f, 36f), new Vector2(0f, 1f));
 
-            Image details = CreatePanel("Weapon Details", safe);
-            Place(details.rectTransform, new Vector2(1f, 0f), new Vector2(-40f, 200f), new Vector2(560f, 320f), new Vector2(1f, 0f));
-            TextMeshProUGUI weaponName = CreateText("Name", details.transform, "", 40f, Accent, TextAlignmentOptions.Left, display: true);
-            Place(weaponName.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -22f), new Vector2(500f, 56f), new Vector2(0f, 1f));
-            TextMeshProUGUI weaponDescription = CreateText("Description", details.transform, "", 22f, TextMuted, TextAlignmentOptions.TopLeft);
-            Place(weaponDescription.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -80f), new Vector2(500f, 60f), new Vector2(0f, 1f));
+            Image details = CreatePanel("Weapon Details", right, new Color(0.04f, 0.05f, 0.08f, 0.82f));
+            Place(details.rectTransform, new Vector2(0f, 1f), new Vector2(0f, -50f), new Vector2(540f, 300f), new Vector2(0f, 1f));
+            TextMeshProUGUI weaponName = CreateText("Name", details.transform, "", 42f, Accent, TextAlignmentOptions.Left, display: true);
+            Place(weaponName.rectTransform, new Vector2(0f, 1f), new Vector2(28f, -18f), new Vector2(490f, 56f), new Vector2(0f, 1f));
+            TextMeshProUGUI weaponDescription = CreateText("Description", details.transform, "", 21f, TextMuted, TextAlignmentOptions.TopLeft);
+            Place(weaponDescription.rectTransform, new Vector2(0f, 1f), new Vector2(28f, -76f), new Vector2(490f, 56f), new Vector2(0f, 1f));
             string[] statNames = { "DAMAGE", "FIRE RATE", "RANGE", "MAGAZINE" };
             var bars = new RectTransform[4];
             for (int i = 0; i < 4; i++)
             {
-                float y = -150f - i * 40f;
-                TextMeshProUGUI statLabel = CreateText(statNames[i], details.transform, statNames[i], 20f, TextMuted, TextAlignmentOptions.Left);
-                Place(statLabel.rectTransform, new Vector2(0f, 1f), new Vector2(30f, y), new Vector2(160f, 30f), new Vector2(0f, 1f));
+                float y = -146f - i * 36f;
+                TextMeshProUGUI statLabel = CreateText(statNames[i], details.transform, statNames[i], 19f, TextMuted, TextAlignmentOptions.Left, display: true);
+                Place(statLabel.rectTransform, new Vector2(0f, 1f), new Vector2(28f, y), new Vector2(160f, 28f), new Vector2(0f, 1f));
                 Image track = CreateImage("Track", details.transform, new Color(1f, 1f, 1f, 0.12f), UiArt.RoundedSmall);
-                Place(track.rectTransform, new Vector2(0f, 1f), new Vector2(200f, y - 6f), new Vector2(320f, 16f), new Vector2(0f, 1f));
+                Place(track.rectTransform, new Vector2(0f, 1f), new Vector2(200f, y - 6f), new Vector2(310f, 16f), new Vector2(0f, 1f));
                 Image fill = CreateImage("Fill", track.transform, Accent, UiArt.RoundedSmall);
                 fill.rectTransform.anchorMin = Vector2.zero;
                 fill.rectTransform.anchorMax = new Vector2(0.5f, 1f);
@@ -248,11 +252,44 @@ namespace WarehouseDuel.EditorTools.UI
                 bars[i] = fill.rectTransform;
             }
 
-            // ---- actions
-            Button ready = CreateButton("Ready", safe, "READY", ButtonStyle.Secondary, new Vector2(520f, 110f), out TextMeshProUGUI readyLabel, 42f);
-            Place((RectTransform)ready.transform, new Vector2(0.5f, 0f), new Vector2(-290f, 40f), new Vector2(520f, 110f), new Vector2(0.5f, 0f));
-            Button start = CreateButton("Start", safe, "START MATCH", ButtonStyle.Primary, new Vector2(520f, 110f), out TextMeshProUGUI startLabel, 42f);
-            Place((RectTransform)start.transform, new Vector2(0.5f, 0f), new Vector2(290f, 40f), new Vector2(520f, 110f), new Vector2(0.5f, 0f));
+            var weaponButtons = new Button[4];
+            var frames = new Image[4];
+            for (int i = 0; i < 4; i++)
+            {
+                int column = i % 2, row = i / 2;
+                Button tile = CreateButton($"Weapon {i + 1}", right, "", ButtonStyle.Ghost, new Vector2(262f, 160f), 22f);
+                Place((RectTransform)tile.transform, new Vector2(0f, 1f), new Vector2(column * 278f, -372f - row * 176f), new Vector2(262f, 160f), new Vector2(0f, 1f));
+                Image frame = CreateImage("Frame", tile.transform, new Color(1f, 1f, 1f, 0.1f), UiArt.Rounded);
+                Stretch(frame.rectTransform);
+                frame.transform.SetAsFirstSibling();
+                Image icon = CreateImage("Icon", tile.transform, TextPrimary);
+                icon.preserveAspect = true;
+                Place(icon.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -16f), new Vector2(220f, 92f), new Vector2(0.5f, 1f));
+                TextMeshProUGUI label = tile.GetComponentInChildren<TextMeshProUGUI>();
+                Place(label.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(250f, 36f), new Vector2(0.5f, 0f));
+                weaponButtons[i] = tile;
+                frames[i] = frame;
+            }
+
+            // ---- centre: name plate under the character
+            Image plate = CreatePanel("Name Plate", safe, new Color(0.04f, 0.05f, 0.08f, 0.8f));
+            Place(plate.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 196f), new Vector2(460f, 74f), new Vector2(0.5f, 0f));
+            AddTransition(plate.rectTransform, new Vector2(0f, -60f), 0.25f);
+            TextMeshProUGUI plateName = CreateText("Name", plate.transform, "", 34f, TextPrimary, TextAlignmentOptions.Center, display: true);
+            Stretch(plateName.rectTransform, 12f, 12f, 4f, 4f);
+
+            // ---- bottom: status + actions
+            RectTransform bottom = CreateRect("Actions", safe);
+            Place(bottom, new Vector2(0.5f, 0f), Vector2.zero, new Vector2(1920f, 190f), new Vector2(0.5f, 0f));
+            AddTransition(bottom, new Vector2(0f, -170f), 0.2f);
+            TextMeshProUGUI status = CreateText("Status", bottom, "Connecting…", 26f, TextPrimary, TextAlignmentOptions.Center, display: true);
+            Place(status.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 158f), new Vector2(1100f, 36f), new Vector2(0.5f, 0f));
+            Button ready = CreateButton("Ready", bottom, "READY", ButtonStyle.Primary, new Vector2(480f, 112f), out TextMeshProUGUI readyLabel, 46f);
+            Place((RectTransform)ready.transform, new Vector2(0.5f, 0f), new Vector2(0f, 30f), new Vector2(480f, 112f), new Vector2(0.5f, 0f));
+            SetPulse(ready);
+            Button start = CreateButton("Start", bottom, "START MATCH", ButtonStyle.Danger, new Vector2(400f, 112f), out TextMeshProUGUI startLabel, 38f);
+            Place((RectTransform)start.transform, new Vector2(0.5f, 0f), new Vector2(470f, 30f), new Vector2(400f, 112f), new Vector2(0.5f, 0f));
+            SetPulse(start);
 
             var controller = canvas.gameObject.AddComponent<LobbyController>();
             Wire(controller, "catalog", catalog);
@@ -271,9 +308,29 @@ namespace WarehouseDuel.EditorTools.UI
             Wire(controller, "startButton", start);
             Wire(controller, "startButtonText", startLabel);
             Wire(controller, "leaveButton", leave);
+            Wire(controller, "character", showcase.Animator);
+            Wire(controller, "characterName", plateName);
             WireCards(controller, cards);
 
             Save(scene, GameConstants.Scenes.Lobby, report);
+        }
+
+        private static void AddTransition(RectTransform rect, Vector2 fromOffset, float delay)
+        {
+            var transition = rect.gameObject.AddComponent<UiTransition>();
+            var so = new SerializedObject(transition);
+            so.FindProperty("fromOffset").vector2Value = fromOffset;
+            so.FindProperty("delay").floatValue = delay;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void SetPulse(Button button)
+        {
+            var fx = button.GetComponent<UIButtonFX>();
+            if (fx == null) return;
+            var so = new SerializedObject(fx);
+            so.FindProperty("pulse").boolValue = true;
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         // ------------------------------------------------------------------ helpers
@@ -283,6 +340,7 @@ namespace WarehouseDuel.EditorTools.UI
             RectTransform column = CreateRect(name, parent);
             Place(column, new Vector2(0f, 1f), new Vector2(90f, -400f), new Vector2(620f, 640f), new Vector2(0f, 1f));
             UiFactory.Column(column, 18f, null, TextAnchor.UpperLeft);
+            AddTransition(column, new Vector2(-160f, 0f), 0f);
             return column;
         }
 

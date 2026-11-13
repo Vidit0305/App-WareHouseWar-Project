@@ -18,13 +18,16 @@ namespace WarehouseDuel.Player
         [SerializeField] private Camera playerCamera;
         [SerializeField] private Transform viewModelSocket;
         [SerializeField] private float baseFieldOfView = 72f;
-        [SerializeField] private float viewModelScale = 0.45f;
-        [SerializeField] private Vector3 hipOffset = new Vector3(0.13f, -0.13f, 0.2f);
-        [SerializeField] private Vector3 aimOffset = new Vector3(0f, -0.085f, 0.17f);
+        [SerializeField] private float viewModelScale = 0.58f;
+        [SerializeField] private Vector3 hipOffset = new Vector3(0.15f, -0.17f, 0.21f);
+        [SerializeField] private Vector3 aimOffset = new Vector3(0f, -0.11f, 0.16f);
+        [Tooltip("First-person hand + sleeve, placed on the grip and on the weapon's 'Handguard' marker.")]
+        [SerializeField] private GameObject handPrefab;
 
         private PlayerCharacter character;
         private WeaponController weapons;
         private GameObject viewModel;
+        private Vector3 weaponOffset;
         private Transform viewMuzzle;
         private WeaponDefinition shownWeapon;
 
@@ -37,6 +40,8 @@ namespace WarehouseDuel.Player
         private Vector2 sway;
         private float lastYaw, lastPitch;
         private float deathBlend;
+        private float tuck;
+        private int environmentMask;
         private Vector3 smoothedPosition;
         private int firstPersonLayer;
 
@@ -48,6 +53,7 @@ namespace WarehouseDuel.Player
             character = GetComponentInParent<PlayerCharacter>();
             weapons = GetComponentInParent<WeaponController>();
             firstPersonLayer = LayerMask.NameToLayer(GameConstants.Layers.FirstPersonView);
+            environmentMask = LayerMask.GetMask(GameConstants.Layers.Environment);
             if (playerCamera != null) playerCamera.gameObject.SetActive(false);
             enabled = false; // only the local player's rig runs (see Activate)
         }
@@ -156,12 +162,36 @@ namespace WarehouseDuel.Player
 
             bool visible = character.IsAlive;
             if (viewModel.activeSelf != visible) viewModel.SetActive(visible);
+            viewModel.transform.localPosition = weaponOffset * (1f - aimBlend);
+
+            // Weapon tuck: when a wall is right in front of the camera, pull the gun back and down
+            // instead of letting the (larger) view model poke through it.
+            Transform camT = playerCamera.transform;
+            float wallDistance = Physics.SphereCast(camT.position, 0.06f, camT.forward, out RaycastHit wall, 0.8f, environmentMask, QueryTriggerInteraction.Ignore)
+                ? wall.distance : 0.8f;
+            tuck = Mathf.MoveTowards(tuck, Mathf.Clamp01(1f - wallDistance / 0.8f), dt * 5f);
 
             Vector3 offset = Vector3.Lerp(hipOffset, aimOffset, aimBlend);
+            offset.z -= tuck * 0.22f;
+            offset.y -= tuck * 0.05f;
             offset += new Vector3(sway.x, sway.y, -kick) + bob * 0.6f;
             offset.y -= (reloadDip * 0.08f) + (equipDip * 0.15f);
             viewModelSocket.localPosition = offset;
-            viewModelSocket.localRotation = Quaternion.Euler(-kick * 120f + reloadDip * 25f + equipDip * 30f, 0f, reloadDip * -20f);
+            viewModelSocket.localRotation = Quaternion.Euler(-kick * 120f + reloadDip * 25f + equipDip * 30f + tuck * 40f, tuck * -15f, reloadDip * -20f);
+        }
+
+        /// <summary>Places the right hand on the grip and the left hand on the weapon's "Handguard" marker.</summary>
+        public static void AttachHands(Transform model, GameObject handPrefab)
+        {
+            if (handPrefab == null) return;
+            GameObject right = Instantiate(handPrefab, model, false);
+            right.transform.localPosition = new Vector3(0.005f, -0.035f, -0.01f);
+            right.transform.localRotation = Quaternion.Euler(-24f, -14f, 0f);
+
+            Transform guard = model.Find("Handguard");
+            GameObject left = Instantiate(handPrefab, model, false);
+            left.transform.localPosition = guard != null ? guard.localPosition + new Vector3(-0.01f, -0.035f, 0f) : new Vector3(-0.03f, -0.04f, 0.05f);
+            left.transform.localRotation = Quaternion.Euler(-14f, 32f, -10f);
         }
 
         private void SwapViewModel(WeaponDefinition weapon)
@@ -174,6 +204,9 @@ namespace WarehouseDuel.Player
 
             viewModel = Instantiate(weapon.viewModelPrefab, viewModelSocket, false);
             viewModel.transform.localScale = Vector3.one * viewModelScale;
+            weaponOffset = weapon.viewModelOffset;
+            viewModel.transform.localPosition = weaponOffset;
+            AttachHands(viewModel.transform, handPrefab);
             foreach (Transform t in viewModel.GetComponentsInChildren<Transform>(true))
             {
                 t.gameObject.layer = firstPersonLayer;

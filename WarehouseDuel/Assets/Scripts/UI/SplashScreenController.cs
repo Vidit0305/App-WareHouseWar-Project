@@ -20,6 +20,10 @@ namespace WarehouseDuel.UI
         [SerializeField] private RectTransform progressFill;
         [SerializeField] private TMP_Text statusLabel;
         [SerializeField] private TMP_Text versionLabel;
+        [Tooltip("Optional: shows the real loading percentage.")]
+        [SerializeField] private TMP_Text percentLabel;
+        [Tooltip("Optional: a narrow highlight that sweeps across the filled part of the bar.")]
+        [SerializeField] private RectTransform shine;
 
         [Header("Timing")]
         [Tooltip("The splash stays visible at least this long, even if loading finishes sooner.")]
@@ -38,6 +42,7 @@ namespace WarehouseDuel.UI
 
         private float shownProgress;
         private int lastFrameIndex = -1;
+        private int lastPercent = -1;
         private bool failed;
 
         private void Awake()
@@ -83,6 +88,15 @@ namespace WarehouseDuel.UI
 
         private void Update()
         {
+            if (shine != null)
+            {
+                // Sweep a highlight across the filled part of the bar every ~1.2 s.
+                float x = Mathf.Repeat(Time.unscaledTime * 0.85f, 1.3f) - 0.15f;
+                shine.anchorMin = new Vector2(Mathf.Clamp01(x - 0.08f), 0f);
+                shine.anchorMax = new Vector2(Mathf.Clamp01(x + 0.08f), 1f);
+                shine.offsetMin = shine.offsetMax = Vector2.zero;
+            }
+
             if (failed || statusLabel == null) return;
 
             int frameIndex = (int)(Time.unscaledTime * DotsPerSecond) % LoadingFrames.Length;
@@ -97,6 +111,13 @@ namespace WarehouseDuel.UI
             Vector2 max = progressFill.anchorMax;
             max.x = Mathf.Clamp01(fraction);
             progressFill.anchorMax = max;
+
+            int percent = Mathf.RoundToInt(Mathf.Clamp01(fraction) * 100f);
+            if (percentLabel != null && percent != lastPercent)
+            {
+                lastPercent = percent;
+                percentLabel.text = percent + "%";
+            }
         }
 
         private IEnumerator Fade(float from, float to)

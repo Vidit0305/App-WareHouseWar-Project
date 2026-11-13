@@ -16,8 +16,39 @@ namespace WarehouseDuel.EditorTools.UI
     /// <summary>Pieces shared by several scenes: the menu diorama, the settings panel and the session bootstrap.</summary>
     internal static class SharedUiBuilder
     {
-        /// <summary>A small lit warehouse corner with a spinning weapon on a pedestal, behind the menu UI.</summary>
-        public static void Diorama(WeaponCatalog catalog, int showcaseWeapon)
+        /// <summary>Where the showcase soldier stands and how the camera frames it.</summary>
+        public struct Staging
+        {
+            public Vector3 Character;
+            public float CharacterYaw;
+            public Vector3 Camera;
+            public Vector3 LookAt;
+            public float FieldOfView;
+        }
+
+        public static readonly Staging LobbyStaging = new Staging
+        {
+            Character = new Vector3(0f, 0f, 0f), CharacterYaw = 148f,
+            Camera = new Vector3(0f, 1.45f, -6.2f), LookAt = new Vector3(0f, 1.05f, 0f), FieldOfView = 34f,
+        };
+
+        public static readonly Staging MenuStaging = new Staging
+        {
+            Character = new Vector3(1.55f, 0f, 0.4f), CharacterYaw = 218f,
+            Camera = new Vector3(0f, 1.35f, -4.6f), LookAt = new Vector3(0.5f, 0.95f, 0f), FieldOfView = 40f,
+        };
+
+        public struct SoldierAnimatorHandle
+        {
+            public WarehouseDuel.Player.SoldierAnimator Animator;
+            public Transform Turntable;
+        }
+
+        /// <summary>
+        /// Lit warehouse corner with the voxel soldier on a podium (idle-animated, holding a weapon),
+        /// a spotlight and floating dust. Returns the animator and the turntable (for drag-to-rotate).
+        /// </summary>
+        public static SoldierAnimatorHandle Diorama(WeaponCatalog catalog, int weapon, Staging staging)
         {
             GameObject Prefab(string name) => AssetDatabase.LoadAssetAtPath<GameObject>($"{EnvironmentKit.PrefabFolder}/{name}.prefab");
             void Place(string name, Vector3 position, float rotationY)
@@ -39,28 +70,50 @@ namespace WarehouseDuel.EditorTools.UI
             Place("ContainerRed", new Vector3(-6.5f, 0f, 8f), 90f);
             Place("ContainerBlue", new Vector3(-6.5f, 2.6f, 8.2f), 92f);
             Place("ContainerGreen", new Vector3(7.5f, 0f, 9f), 90f);
-            Place("Crate", new Vector3(3.2f, 0f, 4.5f), 12f);
-            Place("Crate", new Vector3(4.5f, 0f, 5.2f), -8f);
-            Place("CrateSmall", new Vector3(3.7f, 1.2f, 4.8f), 30f);
-            Place("BarrelRed", new Vector3(-2.8f, 0f, 5.5f), 0f);
-            Place("BarrelBlue", new Vector3(-2.1f, 0f, 6f), 0f);
+            Place("Crate", new Vector3(3.6f, 0f, 5.5f), 12f);
+            Place("Crate", new Vector3(4.9f, 0f, 6.2f), -8f);
+            Place("CrateSmall", new Vector3(4.1f, 1.2f, 5.8f), 30f);
+            Place("BarrelRed", new Vector3(-3.4f, 0f, 5.5f), 0f);
+            Place("BarrelBlue", new Vector3(-2.7f, 0f, 6f), 0f);
             Place("StorageRack", new Vector3(11f, 0f, 6f), 0f);
             Place("Pillar", new Vector3(-10f, 0f, 4f), 0f);
-            Place("HangingLamp", new Vector3(1.5f, 6.5f, 4f), 0f);
+            Place("HangingLamp", new Vector3(0f, 6.5f, 3f), 0f);
             Place("RollUpDoor", new Vector3(1f, 0f, 11.7f), 180f);
 
-            // Pedestal + showcase weapon.
-            EnvironmentKit.Box(root.transform, "Pedestal", new Vector3(1.6f, 0.45f, 3f), new Vector3(1.4f, 0.9f, 1.4f), EnvironmentPalette.Id.MachineDark, false);
-            EnvironmentKit.NoShadow(EnvironmentKit.Box(root.transform, "PedestalTrim", new Vector3(1.6f, 0.91f, 3f), new Vector3(1.42f, 0.04f, 1.42f), EnvironmentPalette.Id.Hazard, false));
-            var showcase = new GameObject("Showcase");
-            showcase.transform.position = new Vector3(1.6f, 1.45f, 3f);
-            WeaponDefinition weapon = catalog != null ? catalog.Get(showcaseWeapon) : null;
-            if (weapon != null && weapon.worldModelPrefab != null)
-            {
-                var model = (GameObject)PrefabUtility.InstantiatePrefab(weapon.worldModelPrefab, showcase.transform);
-                model.transform.localScale = Vector3.one * 1.6f;
-                model.transform.localPosition = new Vector3(0f, 0f, -0.25f);
-            }
+            // Podium + character on a turntable.
+            var podium = new GameObject("Podium");
+            podium.transform.position = staging.Character;
+            EnvironmentKit.Cylinder(podium.transform, "Base", new Vector3(0f, 0.06f, 0f), 2.3f, 0.12f, EnvironmentPalette.Id.MachineDark);
+            EnvironmentKit.NoShadow(EnvironmentKit.Cylinder(podium.transform, "Ring", new Vector3(0f, 0.125f, 0f), 2.38f, 0.02f, EnvironmentPalette.Id.Hazard));
+            EnvironmentKit.NoShadow(EnvironmentKit.Cylinder(podium.transform, "Top", new Vector3(0f, 0.13f, 0f), 2.1f, 0.02f, EnvironmentPalette.Id.Steel));
+
+            var turntable = new GameObject("Turntable");
+            turntable.transform.SetPositionAndRotation(staging.Character + Vector3.up * 0.14f, Quaternion.Euler(0f, staging.CharacterYaw, 0f));
+            SoldierModelBuilder.Rig soldier = SoldierModelBuilder.Build(turntable.transform, "Soldier");
+            Material blue = TeamMaterial();
+            foreach (Renderer r in soldier.TeamColored) r.sharedMaterial = blue;
+            var animator = soldier.Root.gameObject.AddComponent<WarehouseDuel.Player.SoldierAnimator>();
+            Wire(animator, "hips", soldier.Hips);
+            Wire(animator, "spine", soldier.Spine);
+            Wire(animator, "head", soldier.Head);
+            Wire(animator, "armsRig", soldier.ArmsRig);
+            Wire(animator, "weaponSocket", soldier.WeaponSocket);
+            Wire(animator, "catalog", catalog);
+            var so = new SerializedObject(animator);
+            so.FindProperty("startWeapon").intValue = weapon;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            // Lighting: warm key spotlight on the character, sun for shadows, bright trilight ambient.
+            var spotObject = new GameObject("Key Spotlight");
+            spotObject.transform.position = staging.Character + new Vector3(-0.6f, 4.4f, -2.2f);
+            spotObject.transform.LookAt(staging.Character + Vector3.up * 1.1f);
+            Light spot = spotObject.AddComponent<Light>();
+            spot.type = LightType.Spot;
+            spot.range = 10f;
+            spot.spotAngle = 48f;
+            spot.intensity = 9f;
+            spot.color = new Color(1f, 0.92f, 0.8f);
+            spot.shadows = LightShadows.None;
 
             var sunObject = new GameObject("Sun");
             sunObject.transform.rotation = Quaternion.Euler(42f, -40f, 0f);
@@ -70,27 +123,79 @@ namespace WarehouseDuel.EditorTools.UI
             sun.color = new Color(1f, 0.93f, 0.82f);
             sun.shadows = LightShadows.Soft;
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.5f, 0.56f, 0.68f);
-            RenderSettings.ambientEquatorColor = new Color(0.42f, 0.4f, 0.4f);
-            RenderSettings.ambientGroundColor = new Color(0.25f, 0.23f, 0.21f);
+            RenderSettings.ambientSkyColor = new Color(0.62f, 0.68f, 0.8f);
+            RenderSettings.ambientEquatorColor = new Color(0.5f, 0.48f, 0.47f);
+            RenderSettings.ambientGroundColor = new Color(0.32f, 0.3f, 0.28f);
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
             RenderSettings.fogColor = new Color(0.12f, 0.14f, 0.18f);
-            RenderSettings.fogStartDistance = 8f;
-            RenderSettings.fogEndDistance = 40f;
+            RenderSettings.fogStartDistance = 9f;
+            RenderSettings.fogEndDistance = 42f;
+
+            Dust(staging.Character);
 
             var camObject = new GameObject("Main Camera") { tag = "MainCamera" };
-            camObject.transform.SetPositionAndRotation(new Vector3(-0.6f, 1.9f, -3.2f), Quaternion.Euler(8f, 12f, 0f));
+            camObject.transform.position = staging.Camera;
+            camObject.transform.LookAt(staging.LookAt);
             Camera cam = camObject.AddComponent<Camera>();
-            cam.fieldOfView = 50f;
+            cam.fieldOfView = staging.FieldOfView;
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.12f, 0.14f, 0.18f);
             cam.farClipPlane = 60f;
             camObject.AddComponent<AudioListener>();
 
             var backdrop = root.AddComponent<MenuBackdrop>();
-            Wire(backdrop, "showcase", showcase.transform);
             Wire(backdrop, "cameraTransform", camObject.transform);
+            SetFloat(backdrop, "driftAmplitude", 0.12f);
+
+            return new SoldierAnimatorHandle { Animator = animator, Turntable = turntable.transform };
+        }
+
+        private static Material TeamMaterial()
+        {
+            const string path = "Assets/Art/Materials/Characters/M_Soldier_TeamBlue.mat";
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                material = new Material(Shader.Find("Universal Render Pipeline/Simple Lit"));
+                AssetDatabase.CreateAsset(material, path);
+            }
+            material.SetColor("_BaseColor", new Color(0.2f, 0.55f, 1f));
+            material.SetFloat("_Smoothness", 0.2f);
+            EditorUtility.SetDirty(material);
+            return material;
+        }
+
+        /// <summary>Slow floating dust motes in the spotlight (cheap: ~30 particles).</summary>
+        private static void Dust(Vector3 centre)
+        {
+            var go = new GameObject("Dust");
+            go.transform.position = centre + new Vector3(0f, 1.6f, 0.5f);
+            var ps = go.AddComponent<ParticleSystem>();
+            var main = ps.main;
+            main.loop = true;
+            main.duration = 10f;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(6f, 10f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.02f, 0.08f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.025f, 0.06f);
+            main.startColor = new Color(1f, 0.92f, 0.75f, 0.45f);
+            main.maxParticles = 40;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.prewarm = true;
+            var emission = ps.emission;
+            emission.rateOverTime = 4f;
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.scale = new Vector3(5f, 3f, 3f);
+            var color = ps.colorOverLifetime;
+            color.enabled = true;
+            var gradient = new Gradient();
+            gradient.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.3f), new GradientAlphaKey(1f, 0.7f), new GradientAlphaKey(0f, 1f) });
+            color.color = gradient;
+            var renderer = go.GetComponent<ParticleSystemRenderer>();
+            renderer.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Art/Materials/Effects/M_FX_Glow.mat");
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
         }
 
         public static void SessionBootstrap()

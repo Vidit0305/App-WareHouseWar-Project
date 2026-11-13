@@ -229,6 +229,13 @@ namespace WarehouseDuel.EditorTools.Map
             EnvironmentKit.NoShadow(EnvironmentKit.Box(parent, "KickPlate", new Vector3(-w + 0.05f, 0.6f, 0f), new Vector3(0.1f, 1.2f, l * 2f), Id.ConcreteDark));
             EnvironmentKit.NoShadow(EnvironmentKit.Box(parent, "KickPlate", new Vector3(w - 0.05f, 0.6f, 0f), new Vector3(0.1f, 1.2f, l * 2f), Id.ConcreteDark));
 
+            // Skylights: glowing daylight strips in the roof (visual only; the roof slab still seals the map).
+            foreach (float x in new[] { -10.5f, 0f, 10.5f })
+            {
+                EnvironmentKit.NoShadow(EnvironmentKit.Box(parent, "Skylight", new Vector3(x, h - 0.07f, 0f), new Vector3(3.2f, 0.04f, l * 2f - 6f), Id.Skylight));
+                EnvironmentKit.NoShadow(EnvironmentKit.Box(parent, "SkylightFrame", new Vector3(x, h - 0.03f, 0f), new Vector3(3.5f, 0.03f, l * 2f - 5.6f), Id.Steel));
+            }
+
             // Roof trusses: cast striped shadows across the floor.
             for (float z = -l + 2f; z <= l - 1.9f; z += 6f)
             {

@@ -57,6 +57,8 @@ namespace WarehouseDuel.Weapons
 
         [Header("Presentation")]
         public GameObject viewModelPrefab;
+        [Tooltip("Extra first-person hip offset for this weapon (m, camera space). Fades out while aiming.")]
+        public Vector3 viewModelOffset;
         public GameObject worldModelPrefab;
         public AudioClip fireSound;
         public AudioClip reloadSound;

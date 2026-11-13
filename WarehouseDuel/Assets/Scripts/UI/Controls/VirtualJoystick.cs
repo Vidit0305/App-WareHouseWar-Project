@@ -28,8 +28,14 @@ namespace WarehouseDuel.UI.Controls
         public Vector2 Value { get; private set; }
         public bool IsActive => pointerId != int.MinValue;
 
-        private void Awake()
+        private bool initialised;
+
+        private void Awake() => Init();
+
+        private void Init()
         {
+            if (initialised) return;
+            initialised = true;
             zone = (RectTransform)transform;
             if (stickBase != null)
             {
@@ -45,13 +51,16 @@ namespace WarehouseDuel.UI.Controls
 
         public void OnPointerDown(PointerEventData eventData)
         {
+            Init();
             if (IsActive) return;
             pointerId = eventData.pointerId;
 
-            if (stickBase != null && RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    (RectTransform)stickBase.parent, eventData.position, eventData.pressEventCamera, out Vector2 local))
+            // Centre the stick under the thumb. Converting to a WORLD position is correct for any canvas mode,
+            // anchor setup and the mirrored (left-handed) layout. Kept a little inside the zone so it never clips off-screen.
+            if (stickBase != null && RectTransformUtility.ScreenPointToWorldPointInRectangle(
+                    (RectTransform)stickBase.parent, eventData.position, eventData.pressEventCamera, out Vector3 world))
             {
-                stickBase.anchoredPosition = local;
+                stickBase.position = ClampInsideZone(world);
             }
             if (baseGroup != null) baseGroup.alpha = 1f;
             UpdateHandle(eventData);
@@ -81,6 +90,18 @@ namespace WarehouseDuel.UI.Controls
             Vector2 normalized = clamped / radius;
             float magnitude = normalized.magnitude;
             Value = magnitude < deadZone ? Vector2.zero : normalized * Mathf.InverseLerp(deadZone, 1f, magnitude) / magnitude;
+        }
+
+        private Vector3 ClampInsideZone(Vector3 world)
+        {
+            var corners = new Vector3[4];
+            zone.GetWorldCorners(corners); // 0 = bottom-left, 2 = top-right
+            float margin = radius * Mathf.Abs(stickBase.lossyScale.x) * 0.9f;
+            float minX = Mathf.Min(corners[0].x, corners[2].x) + margin, maxX = Mathf.Max(corners[0].x, corners[2].x) - margin;
+            float minY = corners[0].y + margin, maxY = corners[2].y - margin;
+            if (minX < maxX) world.x = Mathf.Clamp(world.x, minX, maxX);
+            if (minY < maxY) world.y = Mathf.Clamp(world.y, minY, maxY);
+            return world;
         }
 
         private void Release()

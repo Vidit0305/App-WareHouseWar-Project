@@ -98,32 +98,9 @@ namespace WarehouseDuel.EditorTools.Gameplay
 
             HitboxRoot hitboxRoot = root.AddComponent<HitboxRoot>();
 
-            // --- body (pivot at the feet)
-            Material team = CharacterMaterial("M_Char_Team", Color.white, 0.2f);
-            Material suit = CharacterMaterial("M_Char_Suit", new Color32(52, 56, 64, 255), 0.15f);
-            Material boots = CharacterMaterial("M_Char_Boots", new Color32(28, 30, 34, 255), 0.1f);
-            Material visor = CharacterMaterial("M_Char_Visor", new Color32(90, 230, 255, 255), 0.6f, emissive: true);
-
-            Transform body = Child(root.transform, "Body", Vector3.zero);
-            Transform legL = Child(body, "LegL", new Vector3(-0.13f, 0.85f, 0f));
-            Transform legR = Child(body, "LegR", new Vector3(0.13f, 0.85f, 0f));
-            Cube(legL, new Vector3(0f, -0.38f, 0f), new Vector3(0.17f, 0.76f, 0.2f), suit);
-            Cube(legL, new Vector3(0f, -0.8f, 0.04f), new Vector3(0.19f, 0.1f, 0.28f), boots);
-            Cube(legR, new Vector3(0f, -0.38f, 0f), new Vector3(0.17f, 0.76f, 0.2f), suit);
-            Cube(legR, new Vector3(0f, -0.8f, 0.04f), new Vector3(0.19f, 0.1f, 0.28f), boots);
-
-            Renderer torso = Cube(body, new Vector3(0f, 1.15f, 0f), new Vector3(0.52f, 0.62f, 0.3f), team);
-            Cube(body, new Vector3(0f, 0.86f, 0f), new Vector3(0.48f, 0.08f, 0.28f), boots);               // belt
-            Cube(body, new Vector3(0f, 1.18f, -0.2f), new Vector3(0.36f, 0.42f, 0.12f), suit);             // backpack
-            Renderer helmet = Sphere(body, new Vector3(0f, 1.62f, 0f), new Vector3(0.34f, 0.32f, 0.34f), team);
-            Cube(body, new Vector3(0f, 1.62f, 0.13f), new Vector3(0.26f, 0.09f, 0.1f), visor);
-
-            Transform arms = Child(body, "ArmPivot", new Vector3(0f, 1.38f, 0f));
-            Renderer armL = Cube(arms, new Vector3(-0.2f, -0.08f, 0.2f), new Vector3(0.12f, 0.12f, 0.42f), team);
-            Renderer armR = Cube(arms, new Vector3(0.22f, -0.08f, 0.16f), new Vector3(0.12f, 0.12f, 0.36f), team);
-            Cube(arms, new Vector3(-0.08f, -0.1f, 0.42f), new Vector3(0.1f, 0.1f, 0.1f), boots);            // gloves
-            Cube(arms, new Vector3(0.14f, -0.12f, 0.33f), new Vector3(0.1f, 0.1f, 0.1f), boots);
-            Transform weaponSocket = Child(arms, "WeaponSocket", new Vector3(0.12f, -0.16f, 0.32f));
+            // --- body: voxel soldier (same model as the menu/lobby character), pivot at the feet
+            SoldierModelBuilder.Rig soldier = SoldierModelBuilder.Build(root.transform, "Body");
+            Transform body = soldier.Root;
 
             // --- hitboxes (Fusion lag-compensated; not physics colliders)
             Transform hitboxes = Child(root.transform, "Hitboxes", Vector3.zero);
@@ -166,15 +143,16 @@ namespace WarehouseDuel.EditorTools.Gameplay
             Transform viewSocket = Child(cameraObject.transform, "ViewModelSocket", new Vector3(0.13f, -0.13f, 0.2f));
             UiFactory.Wire(rig, "playerCamera", cam);
             UiFactory.Wire(rig, "viewModelSocket", viewSocket);
+            UiFactory.Wire(rig, "handPrefab", SoldierModelBuilder.BuildFirstPersonHandPrefab($"{PlayerFolder}/FP_Hand.prefab"));
 
             // --- presentation components
             PlayerVisuals visuals = root.AddComponent<PlayerVisuals>();
             UiFactory.Wire(visuals, "bodyRoot", body);
-            UiFactory.Wire(visuals, "legLeft", legL);
-            UiFactory.Wire(visuals, "legRight", legR);
-            UiFactory.Wire(visuals, "armPivot", arms);
-            UiFactory.Wire(visuals, "weaponSocket", weaponSocket);
-            UiFactory.WireArray(visuals, "teamColored", torso, helmet, armL, armR);
+            UiFactory.Wire(visuals, "legLeft", soldier.LegL);
+            UiFactory.Wire(visuals, "legRight", soldier.LegR);
+            UiFactory.Wire(visuals, "armPivot", soldier.ArmsRig);
+            UiFactory.Wire(visuals, "weaponSocket", soldier.WeaponSocket);
+            UiFactory.WireArray(visuals, "teamColored", soldier.TeamColored.ToArray());
             UiFactory.Wire(visuals, "protectionBubble", bubble);
             root.AddComponent<PlayerAudio>();
 

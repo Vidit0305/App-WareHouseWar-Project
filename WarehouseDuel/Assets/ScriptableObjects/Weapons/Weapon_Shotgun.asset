@@ -35,6 +35,7 @@ MonoBehaviour:
   aimFieldOfView: 60
   equipSeconds: 0.45
   viewModelPrefab: {fileID: 6252735400322187833, guid: 329f5a3b906f3104b887f1baf7afe98c, type: 3}
+  viewModelOffset: {x: 0, y: 0, z: 0}
   worldModelPrefab: {fileID: 6252735400322187833, guid: 329f5a3b906f3104b887f1baf7afe98c, type: 3}
   fireSound: {fileID: 8300000, guid: 0bb09d551a08e09419ddb318196ef5f9, type: 3}
   reloadSound: {fileID: 8300000, guid: 45cd6ef0f9fd59b41ae24ec021098c32, type: 3}

@@ -22,7 +22,7 @@ namespace WarehouseDuel.EditorTools.Map
             ContainerRed, ContainerBlue, ContainerGreen, ContainerOrange,
             Wood, WoodDark, Cardboard, BarrelRed, BarrelBlue, RackOrange, RackBlue,
             Machine, MachineDark, Grating, FloorPaint, FloorPaintWhite,
-            LampGlow, PanelGreen, PanelRed, SpawnBlue, SpawnRed,
+            LampGlow, PanelGreen, PanelRed, SpawnBlue, SpawnRed, Skylight,
         }
 
         private static readonly Dictionary<Id, Material> Cache = new Dictionary<Id, Material>();
@@ -56,14 +56,14 @@ namespace WarehouseDuel.EditorTools.Map
             switch (id)
             {
                 case Id.ConcreteFloor:
-                    Base(m, Hex(0x8C8B86));
+                    Base(m, Hex(0xA3A19A));
                     m.SetTexture("_BaseMap", FloorTexture());
                     m.SetTextureScale("_BaseMap", new Vector2(18f, 28f)); // 2 m tiles on a 36 × 56 m floor
                     break;
                 case Id.Concrete: Base(m, Hex(0xA19E96)); break;
                 case Id.ConcreteDark: Base(m, Hex(0x6A6A68)); break;
-                case Id.MetalWall: Base(m, Hex(0x56708A)); break;
-                case Id.MetalWallRib: Base(m, Hex(0x465D74)); break;
+                case Id.MetalWall: Base(m, Hex(0x5F8AB0)); break;
+                case Id.MetalWallRib: Base(m, Hex(0x4C7092)); break;
                 case Id.Roof: Base(m, Hex(0x3A3F47)); break;
                 case Id.Steel: Base(m, Hex(0x33383F)); break;
                 case Id.Hazard: Base(m, Hex(0xF5B71A)); break;
@@ -88,6 +88,7 @@ namespace WarehouseDuel.EditorTools.Map
                 case Id.PanelRed: Emissive(m, Hex(0xFF4A3A), 1.6f); break;
                 case Id.SpawnBlue: Emissive(m, Hex(0x3C9BFF), 1.2f); break;
                 case Id.SpawnRed: Emissive(m, Hex(0xFF5A3C), 1.2f); break;
+                case Id.Skylight: Emissive(m, Hex(0xCFE8FF), 1.35f); break;
             }
         }
 
