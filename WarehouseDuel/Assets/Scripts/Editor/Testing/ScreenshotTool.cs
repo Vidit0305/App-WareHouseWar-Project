@@ -56,13 +56,19 @@ namespace WarehouseDuel.EditorTools.Testing
                                        "Countdown", "Panel", "Confirm Leave", "Centre Message", "Banner", "Copied" };
             CaptureUiScene(GameConstants.Scenes.SplashScreen, Path.Combine(dir, "ui_splash.png"), runtimeHidden);
             CaptureUiScene(GameConstants.Scenes.MainMenu, Path.Combine(dir, "ui_mainmenu.png"), runtimeHidden);
+            foreach (var (shot, show) in new[] { ("ui_profile", "Profile Screen"), ("ui_leaderboard", "Leaderboard Screen"),
+                                                 ("ui_armory", "Armory Screen"), ("ui_settings", "Settings Panel"), ("ui_online", "Online") })
+            {
+                bool overHome = show == "Online";
+                CaptureUiScene(GameConstants.Scenes.MainMenu, Path.Combine(dir, shot + ".png"), runtimeHidden, show, overHome ? null : "Home");
+            }
             CaptureUiScene(GameConstants.Scenes.Lobby, Path.Combine(dir, "ui_lobby.png"), runtimeHidden);
             CaptureUiScene(GameConstants.Scenes.WarehouseMap, Path.Combine(dir, "ui_hud.png"), runtimeHidden);
             Debug.Log($"[Screenshots] Saved to {dir}");
             EditorApplication.Exit(0);
         }
 
-        private static void CaptureUiScene(string sceneName, string path, string[] hideNames)
+        private static void CaptureUiScene(string sceneName, string path, string[] hideNames, string show = null, string alsoHide = null)
         {
             EditorSceneManager.OpenScene(GameConstants.Scenes.PathOf(sceneName));
             Camera cam = Camera.main != null ? Camera.main : Object.FindFirstObjectByType<Camera>();
@@ -71,6 +77,13 @@ namespace WarehouseDuel.EditorTools.Testing
             foreach (Transform t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
                 if (System.Array.IndexOf(hideNames, t.name) >= 0 && t.GetComponent<RectTransform>() != null) t.gameObject.SetActive(false);
+            }
+
+            foreach (Transform t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (t.GetComponent<RectTransform>() == null) continue;
+                if (show != null && t.name == show && t.parent != null && t.parent.name == "Safe Area") t.gameObject.SetActive(true);
+                if (alsoHide != null && t.name == alsoHide && t.parent != null && t.parent.name == "Safe Area") t.gameObject.SetActive(false);
             }
 
             // Showcase characters only get their weapon at runtime; equip it for the picture.

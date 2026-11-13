@@ -144,6 +144,16 @@ namespace WarehouseDuel.Core
             return chars.ToString().Trim();
         }
 
+        /// <summary>Restores audio, camera and control settings to their defaults (graphics and profile are kept).</summary>
+        public static void ResetToDefaults()
+        {
+            foreach (string key in new[] { "music", "sfx", "look", "aim", "invertY", "layout", "buttonScale" })
+            {
+                PlayerPrefs.DeleteKey(Prefix + key);
+            }
+            Save();
+        }
+
         /// <summary>Re-applies stored values that live in engine state (quality level, frame rate).</summary>
         public static void ApplyEngineSettings()
         {

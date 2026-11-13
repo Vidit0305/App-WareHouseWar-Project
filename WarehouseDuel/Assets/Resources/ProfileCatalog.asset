@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed7f954649d9b104fb6608d25f9e4a9b, type: 3}
+  m_Name: ProfileCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::WarehouseDuel.Profile.ProfileCatalog
+  avatars:
+  - {fileID: 21300000, guid: 2680dedc52d58a84cbfd038bd7c526e9, type: 3}
+  - {fileID: 21300000, guid: 506aedc091376fc419316b217ed96a22, type: 3}
+  - {fileID: 21300000, guid: fefde85e9d73bb543bdc34e085147b05, type: 3}
+  - {fileID: 21300000, guid: f7bb3e21a43db4442a21d1ebbc6f8184, type: 3}
+  - {fileID: 21300000, guid: c261e8dd291b42341900b9843fe7fe3a, type: 3}
+  - {fileID: 21300000, guid: c958f6200cb066d4a9760b85ea5adc39, type: 3}
+  - {fileID: 21300000, guid: 45266640ee5d1714092ff5caebddcb61, type: 3}
+  - {fileID: 21300000, guid: 53279b90480ab2f4dba1f11e11671077, type: 3}
+  - {fileID: 21300000, guid: 4399f0365f74d9543a56afefd2a31d01, type: 3}
+  - {fileID: 21300000, guid: 2bb0ad4aa1b3f2e41b624e733f6a3928, type: 3}
+  banners:
+  - {fileID: 21300000, guid: 7bd6e0f3bca02ca499b12c4d733b8dca, type: 3}
+  - {fileID: 21300000, guid: dc09cda047b045044b22fcb304b70c38, type: 3}
+  - {fileID: 21300000, guid: f6565625c40378e41940fea050e700ef, type: 3}
+  - {fileID: 21300000, guid: 073a550939b61d542abed9280f6b941c, type: 3}
+  - {fileID: 21300000, guid: 08ebe542eb48a7b419e296bf87273808, type: 3}
+  - {fileID: 21300000, guid: 0a136b7ac81e6a742b79d36594b54acc, type: 3}
+  - {fileID: 21300000, guid: 5ab2b93d9f391df4992c4de73de1e9e3, type: 3}
+  - {fileID: 21300000, guid: b9da31421e54cec4d9759d85eee29e7b, type: 3}
+  bannerNames:
+  - Steel
+  - Hazard
+  - Woodland
+  - Desert
+  - Sunset
+  - Arctic
+  - Inferno
+  - Neon

@@ -45,7 +45,7 @@ namespace WarehouseDuel.Player
             if (hips != null) { hipsBasePos = hips.localPosition; hipsBaseRot = hips.localRotation; }
             if (head != null) headBaseRot = head.localRotation;
             if (armsRig != null) armsBaseRot = armsRig.localRotation;
-            ShowWeapon(startWeapon);
+            if (shownWeapon < 0 && pendingWeapon < 0) ShowWeapon(startWeapon); // a screen may already have picked one
         }
 
         /// <summary>Plays the lower/swap/raise animation and switches the held weapon.</summary>

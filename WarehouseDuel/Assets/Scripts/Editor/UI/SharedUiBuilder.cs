@@ -34,8 +34,8 @@ namespace WarehouseDuel.EditorTools.UI
 
         public static readonly Staging MenuStaging = new Staging
         {
-            Character = new Vector3(1.55f, 0f, 0.4f), CharacterYaw = 218f,
-            Camera = new Vector3(0f, 1.35f, -4.6f), LookAt = new Vector3(0.5f, 0.95f, 0f), FieldOfView = 40f,
+            Character = new Vector3(0f, 0f, 0f), CharacterYaw = 158f,
+            Camera = new Vector3(0f, 1.4f, -6.6f), LookAt = new Vector3(0f, 1.0f, 0f), FieldOfView = 33f,
         };
 
         public struct SoldierAnimatorHandle
@@ -216,57 +216,122 @@ namespace WarehouseDuel.EditorTools.UI
             return card.rectTransform;
         }
 
-        /// <summary>Settings modal. Returns the root object and its Close button.</summary>
+        /// <summary>
+        /// Settings screen (main menu and pause menu): tabs on the left (Controls, Camera, Graphics, Audio, About),
+        /// one card per setting with a short description, switches for on/off options, value labels, and a
+        /// reset button. Returns the root object and its Done button.
+        /// </summary>
         public static GameObject Settings(Transform parent, out Button closeButton)
         {
-            RectTransform card = Modal("Settings Panel", parent, new Vector2(1200f, 900f), out GameObject root);
-            TextMeshProUGUI title = CreateText("Title", card, "SETTINGS", 56f, Accent, TextAlignmentOptions.Center, display: true);
-            Place(title.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -30f), new Vector2(800f, 80f), new Vector2(0.5f, 1f));
+            RectTransform card = Modal("Settings Panel", parent, new Vector2(1640f, 960f), out GameObject root);
+            root.GetComponent<Image>().color = new Color(0f, 0f, 0f, 0.72f);
+            card.GetComponent<Image>().color = new Color(0.08f, 0.09f, 0.13f, 0.98f);
 
-            float y = -130f;
-            const float rowHeight = 80f;
-            RectTransform Row(string label)
+            Image header = CreateImage("Header", card, new Color(0f, 0f, 0f, 0.3f), UiArt.Rounded);
+            MenuScreensBuilder.At(header.rectTransform, 0f, 0f, 1640f, 120f);
+            Image gear = CreateImage("Icon", header.transform, Accent, UiArt.Icon("Settings"));
+            MenuScreensBuilder.At(gear.rectTransform, 44f, -30f, 60f, 60f);
+            MenuScreensBuilder.Label(header.transform, "Title", "SETTINGS", 54f, TextPrimary, 124f, -22f, 700f, 76f, display: true);
+
+            string[] tabNames = { "CONTROLS", "CAMERA", "GRAPHICS", "AUDIO", "ABOUT" };
+            MenuScreensBuilder.Tabs(card, tabNames, 40f, -150f, 320f, 92f, 14f, true,
+                out Button[] tabButtons, out Image[] tabBackgrounds, out TMP_Text[] tabLabels);
+
+            var pages = new GameObject[tabNames.Length];
+            RectTransform Page(int index)
             {
-                TextMeshProUGUI text = CreateText(label, card, label, 32f, TextPrimary, TextAlignmentOptions.Left);
-                Place(text.rectTransform, new Vector2(0f, 1f), new Vector2(80f, y), new Vector2(460f, 60f), new Vector2(0f, 1f));
-                RectTransform slot = CreateRect(label + " Control", card);
-                Place(slot, new Vector2(0f, 1f), new Vector2(560f, y), new Vector2(560f, 60f), new Vector2(0f, 1f));
-                y -= rowHeight;
+                RectTransform page = MenuScreensBuilder.At(CreateRect(tabNames[index] + " Page", card), 400f, -150f, 1200f, 640f);
+                pages[index] = page.gameObject;
+                page.gameObject.SetActive(index == 0);
+                return page;
+            }
+
+            float y = 0f;
+            RectTransform Row(RectTransform page, string label, string description)
+            {
+                Image row = MenuScreensBuilder.Panel(page, label, 0f, y, 1200f, 136f, new Color(1f, 1f, 1f, 0.06f));
+                MenuScreensBuilder.Label(row.transform, "Label", label, 32f, TextPrimary, 36f, -24f, 600f, 44f, display: true);
+                MenuScreensBuilder.Label(row.transform, "Description", description, 21f, TextMuted, 36f, -74f, 600f, 50f);
+                RectTransform slot = CreateRect("Control", row.transform);
+                Place(slot, new Vector2(1f, 0.5f), new Vector2(-36f, 0f), new Vector2(500f, 80f), new Vector2(1f, 0.5f));
+                y -= 152f;
                 return slot;
             }
 
-            Slider SliderRow(string label, out TextMeshProUGUI value)
+            Slider SliderRow(RectTransform page, string label, string description, out TextMeshProUGUI value)
             {
-                RectTransform slot = Row(label);
-                Slider slider = CreateSlider("Slider", slot, new Vector2(440f, 44f));
-                Place((RectTransform)slider.transform, new Vector2(0f, 0.5f), Vector2.zero, new Vector2(440f, 44f), new Vector2(0f, 0.5f));
-                value = CreateText("Value", slot, "", 28f, TextMuted, TextAlignmentOptions.Right);
-                Place(value.rectTransform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(100f, 50f), new Vector2(1f, 0.5f));
+                RectTransform slot = Row(page, label, description);
+                Slider slider = CreateSlider("Slider", slot, new Vector2(370f, 52f));
+                Place((RectTransform)slider.transform, new Vector2(0f, 0.5f), Vector2.zero, new Vector2(370f, 52f), new Vector2(0f, 0.5f));
+                value = CreateText("Value", slot, "", 30f, Accent, TextAlignmentOptions.Right, display: true);
+                Place(value.rectTransform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(110f, 50f), new Vector2(1f, 0.5f));
                 return slider;
             }
 
-            OptionSelector SelectorRow(string label)
+            OptionSelector SelectorRow(RectTransform page, string label, string description)
             {
-                RectTransform slot = Row(label);
-                OptionSelector selector = CreateSelector("Selector", slot, new Vector2(560f, 60f));
-                Place((RectTransform)selector.transform, new Vector2(0f, 0.5f), Vector2.zero, new Vector2(560f, 60f), new Vector2(0f, 0.5f));
+                RectTransform slot = Row(page, label, description);
+                OptionSelector selector = CreateSelector("Selector", slot, new Vector2(500f, 76f));
+                Place((RectTransform)selector.transform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(500f, 76f), new Vector2(1f, 0.5f));
                 return selector;
             }
 
-            Slider music = SliderRow("Music volume", out _);
-            Slider sfx = SliderRow("Sound effects volume", out _);
-            Slider look = SliderRow("Camera sensitivity", out TextMeshProUGUI lookValue);
-            Slider aim = SliderRow("Aim sensitivity", out TextMeshProUGUI aimValue);
-            RectTransform invertSlot = Row("Invert vertical look");
-            Toggle invert = CreateToggle("Toggle", invertSlot, 52f);
-            Place((RectTransform)invert.transform, new Vector2(0f, 0.5f), Vector2.zero, new Vector2(52f, 52f), new Vector2(0f, 0.5f));
-            OptionSelector quality = SelectorRow("Graphics quality");
-            OptionSelector fps = SelectorRow("Frame rate limit");
-            OptionSelector layout = SelectorRow("Control layout");
-            Slider buttonSize = SliderRow("Touch button size", out _);
+            Toggle SwitchRow(RectTransform page, string label, string description)
+            {
+                RectTransform slot = Row(page, label, description);
+                RectTransform switchRoot = CreateRect("Switch", slot);
+                Place(switchRoot, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(130f, 64f), new Vector2(1f, 0.5f));
+                Toggle toggle = switchRoot.gameObject.AddComponent<Toggle>();
+                Image track = CreateImage("Track", switchRoot, new Color(1f, 1f, 1f, 0.18f), UiArt.Rounded, raycast: true);
+                Stretch(track.rectTransform);
+                Image knob = CreateImage("Knob", track.transform, Color.white, UiArt.Circle);
+                knob.rectTransform.sizeDelta = new Vector2(52f, 52f);
+                knob.rectTransform.anchorMin = knob.rectTransform.anchorMax = new Vector2(0.27f, 0.5f);
+                toggle.targetGraphic = track;
+                toggle.transition = Selectable.Transition.None;
+                switchRoot.gameObject.AddComponent<UIButtonSound>();
+                ToggleSwitch view = switchRoot.gameObject.AddComponent<ToggleSwitch>();
+                Wire(view, "track", track);
+                Wire(view, "knob", knob.rectTransform);
+                return toggle;
+            }
 
-            closeButton = CreateButton("Close", card, "DONE", ButtonStyle.Primary, new Vector2(360f, 90f));
-            Place((RectTransform)closeButton.transform, new Vector2(0.5f, 0f), new Vector2(0f, 30f), new Vector2(360f, 90f), new Vector2(0.5f, 0f));
+            RectTransform controls = Page(0);
+            y = 0f;
+            OptionSelector layout = SelectorRow(controls, "Button layout", "Where the joystick and fire buttons sit on screen.");
+            Slider buttonSize = SliderRow(controls, "Button size", "Make the touch buttons bigger or smaller.", out TextMeshProUGUI buttonSizeValue);
+            Toggle invert = SwitchRow(controls, "Invert look", "Swipe up to look down (flight-style controls).");
+
+            RectTransform camera = Page(1);
+            y = 0f;
+            Slider look = SliderRow(camera, "Look sensitivity", "How fast the camera turns when you swipe.", out TextMeshProUGUI lookValue);
+            Slider aim = SliderRow(camera, "Aim sensitivity", "Turn speed while aiming down sights.", out TextMeshProUGUI aimValue);
+
+            RectTransform graphics = Page(2);
+            y = 0f;
+            OptionSelector quality = SelectorRow(graphics, "Graphics quality", "Lower it if your phone gets hot or stutters.");
+            OptionSelector fps = SelectorRow(graphics, "Frame rate", "60 FPS is smoother; 30 FPS saves battery.");
+
+            RectTransform audio = Page(3);
+            y = 0f;
+            Slider music = SliderRow(audio, "Music", "Menu and match music volume.", out TextMeshProUGUI musicValue);
+            Slider sfx = SliderRow(audio, "Sound effects", "Gunshots, footsteps and interface sounds.", out TextMeshProUGUI sfxValue);
+
+            RectTransform about = Page(4);
+            Image aboutCard = MenuScreensBuilder.Panel(about, "About Card", 0f, 0f, 1200f, 420f, new Color(1f, 1f, 1f, 0.06f));
+            MenuScreensBuilder.Label(aboutCard.transform, "Game", "WAREHOUSE <color=#FFB020>DUEL</color>", 64f, TextPrimary, 40f, -36f, 1100f, 84f, display: true);
+            TextMeshProUGUI version = MenuScreensBuilder.Label(aboutCard.transform, "Version", "Version", 28f, Accent, 44f, -128f, 1100f, 40f, display: true);
+            MenuScreensBuilder.Label(aboutCard.transform, "Text",
+                "1v1 online arena shooter. Create a room, share the code with a friend and duel in the warehouse.\n\nBuilt with Unity and Photon Fusion.",
+                26f, TextMuted, 44f, -190f, 1100f, 200f).alignment = TextAlignmentOptions.TopLeft;
+
+            Button reset = CreateButton("Reset", card, "RESET TO DEFAULTS", ButtonStyle.Ghost, new Vector2(400f, 96f), 28f);
+            Place((RectTransform)reset.transform, new Vector2(0f, 0f), new Vector2(40f, 36f), new Vector2(400f, 96f), new Vector2(0f, 0f));
+            closeButton = CreateButton("Close", card, "DONE", ButtonStyle.Primary, new Vector2(360f, 100f), 40f);
+            Place((RectTransform)closeButton.transform, new Vector2(1f, 0f), new Vector2(-40f, 36f), new Vector2(360f, 100f), new Vector2(1f, 0f));
+
+            tabBackgrounds[0].color = Accent;
+            tabLabels[0].color = AccentDark;
 
             SettingsPanel panel = root.AddComponent<SettingsPanel>();
             Wire(panel, "musicVolume", music);
@@ -280,6 +345,15 @@ namespace WarehouseDuel.EditorTools.UI
             Wire(panel, "layout", layout);
             Wire(panel, "lookValue", lookValue);
             Wire(panel, "aimValue", aimValue);
+            Wire(panel, "musicValue", musicValue);
+            Wire(panel, "sfxValue", sfxValue);
+            Wire(panel, "buttonSizeValue", buttonSizeValue);
+            WireArray(panel, "tabButtons", tabButtons);
+            WireArray(panel, "tabBackgrounds", tabBackgrounds);
+            WireArray(panel, "tabLabels", tabLabels);
+            WireArray(panel, "pages", pages);
+            Wire(panel, "resetButton", reset);
+            Wire(panel, "versionText", version);
             return root;
         }
     }

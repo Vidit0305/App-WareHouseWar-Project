@@ -4,51 +4,55 @@ using UnityEngine.UI;
 using WarehouseDuel.Audio;
 using WarehouseDuel.Core;
 using WarehouseDuel.Multiplayer;
+using WarehouseDuel.Player;
 
 namespace WarehouseDuel.UI
 {
     /// <summary>
-    /// Main menu: player name, Play Online (Create / Join room), offline Practice, Settings and Profile.
-    /// Room creation and joining go through <see cref="SessionService"/>; on success Fusion loads the lobby.
+    /// Main menu hub: the soldier stands centre stage; around him the profile chip, Armory / Profile cards,
+    /// game-mode cards (Online Duel, Practice), Leaderboard and Settings, and the big PLAY button.
+    /// Play Online opens Create / Join dialogs; room creation and joining go through <see cref="SessionService"/>.
     /// </summary>
     public sealed class MainMenuController : MonoBehaviour
     {
-        [Header("Panels")]
-        [SerializeField] private GameObject homePanel;
-        [SerializeField] private GameObject onlinePanel;
-        [SerializeField] private GameObject joinPanel;
-        [SerializeField] private GameObject busyPanel;
-        [SerializeField] private GameObject settingsPanel;
-        [SerializeField] private GameObject profilePanel;
-        [SerializeField] private GameObject messagePanel;
-
         [Header("Home")]
-        [SerializeField] private TMP_InputField nameInput;
-        [SerializeField] private Button playOnlineButton;
-        [SerializeField] private Button practiceButton;
+        [SerializeField] private GameObject homePanel;
+        [SerializeField] private SoldierAnimator character;
+        [SerializeField] private Button playButton;
+        [SerializeField] private Button onlineModeButton;
+        [SerializeField] private Button practiceModeButton;
+        [SerializeField] private Button profileChipButton;
+        [SerializeField] private Button profileCardButton;
+        [SerializeField] private Button armoryCardButton;
+        [SerializeField] private Button leaderboardButton;
         [SerializeField] private Button settingsButton;
-        [SerializeField] private Button profileButton;
+        [SerializeField] private TMP_Text winsText;
 
-        [Header("Online")]
+        [Header("Screens")]
+        [SerializeField] private ProfileScreen profileScreen;
+        [SerializeField] private LeaderboardScreen leaderboardScreen;
+        [SerializeField] private ArmoryScreen armoryScreen;
+        [SerializeField] private GameObject settingsPanel;
+        [SerializeField] private Button settingsCloseButton;
+
+        [Header("Online dialogs")]
+        [SerializeField] private GameObject onlinePanel;
         [SerializeField] private Button createRoomButton;
         [SerializeField] private Button joinRoomButton;
         [SerializeField] private Button onlineBackButton;
-
-        [Header("Join")]
+        [SerializeField] private GameObject joinPanel;
         [SerializeField] private TMP_InputField codeInput;
         [SerializeField] private Button joinConfirmButton;
         [SerializeField] private Button joinBackButton;
         [SerializeField] private TMP_Text joinErrorText;
 
         [Header("Busy / messages")]
+        [SerializeField] private GameObject busyPanel;
         [SerializeField] private TMP_Text busyText;
         [SerializeField] private RectTransform busySpinner;
+        [SerializeField] private GameObject messagePanel;
         [SerializeField] private TMP_Text messageText;
         [SerializeField] private Button messageOkButton;
-
-        [Header("Close buttons")]
-        [SerializeField] private Button settingsCloseButton;
-        [SerializeField] private Button profileCloseButton;
 
         private SessionService session;
 
@@ -56,37 +60,49 @@ namespace WarehouseDuel.UI
         {
             session = SessionService.Instance;
             GameSettings.ApplyEngineSettings();
-
-            nameInput.characterLimit = GameSettings.MaxNameLength;
-            nameInput.text = GameSettings.PlayerName;
-            nameInput.onEndEdit.AddListener(OnNameEdited);
+            if (character != null) character.SetWeapon(GameSettings.PreferredWeapon);
 
             codeInput.characterLimit = 7;
             codeInput.onValueChanged.AddListener(_ => joinErrorText.text = string.Empty);
             codeInput.onSubmit.AddListener(_ => JoinRoom());
 
-            playOnlineButton.onClick.AddListener(() => Show(onlinePanel));
-            practiceButton.onClick.AddListener(StartPractice);
-            settingsButton.onClick.AddListener(() => settingsPanel.SetActive(true));
-            profileButton.onClick.AddListener(() => profilePanel.SetActive(true));
-            settingsCloseButton.onClick.AddListener(() => settingsPanel.SetActive(false));
-            profileCloseButton.onClick.AddListener(() => profilePanel.SetActive(false));
+            playButton.onClick.AddListener(() => ShowDialog(onlinePanel));
+            onlineModeButton.onClick.AddListener(() => ShowDialog(onlinePanel));
+            practiceModeButton.onClick.AddListener(StartPractice);
+            profileChipButton.onClick.AddListener(() => OpenScreen(profileScreen));
+            profileCardButton.onClick.AddListener(() => OpenScreen(profileScreen));
+            armoryCardButton.onClick.AddListener(() => OpenScreen(armoryScreen));
+            leaderboardButton.onClick.AddListener(() => OpenScreen(leaderboardScreen));
+            settingsButton.onClick.AddListener(() =>
+            {
+                settingsPanel.SetActive(true);
+                homePanel.SetActive(false);
+            });
+            settingsCloseButton.onClick.AddListener(CloseSettings);
+
+            foreach (MenuScreen screen in new MenuScreen[] { profileScreen, leaderboardScreen, armoryScreen })
+            {
+                screen.Closed += () => homePanel.SetActive(true);
+                screen.gameObject.SetActive(false);
+            }
 
             createRoomButton.onClick.AddListener(CreateRoom);
             joinRoomButton.onClick.AddListener(() =>
             {
                 joinErrorText.text = string.Empty;
-                Show(joinPanel);
+                ShowDialog(joinPanel);
             });
-            onlineBackButton.onClick.AddListener(() => Show(homePanel));
+            onlineBackButton.onClick.AddListener(() => ShowDialog(null));
             joinConfirmButton.onClick.AddListener(JoinRoom);
-            joinBackButton.onClick.AddListener(() => Show(onlinePanel));
+            joinBackButton.onClick.AddListener(() => ShowDialog(onlinePanel));
             messageOkButton.onClick.AddListener(() => messagePanel.SetActive(false));
 
             settingsPanel.SetActive(false);
-            profilePanel.SetActive(false);
             messagePanel.SetActive(false);
-            Show(homePanel);
+            homePanel.SetActive(true);
+            ShowDialog(null);
+            RefreshWins();
+            GameSettings.Changed += RefreshWins;
 
             if (session != null)
             {
@@ -102,23 +118,57 @@ namespace WarehouseDuel.UI
         private void OnDestroy()
         {
             if (session != null) session.StatusChanged -= OnSessionStatus;
+            GameSettings.Changed -= RefreshWins;
         }
 
         private void Update()
         {
             if (busyPanel.activeSelf && busySpinner != null) busySpinner.Rotate(0f, 0f, -300f * Time.unscaledDeltaTime);
+            if (BackPressed()) HandleBack();
         }
 
-        private void OnNameEdited(string value)
+        private static bool BackPressed()
         {
-            GameSettings.PlayerName = value;
-            nameInput.text = GameSettings.PlayerName; // show the sanitised version
+#if ENABLE_INPUT_SYSTEM
+            return UnityEngine.InputSystem.Keyboard.current != null && UnityEngine.InputSystem.Keyboard.current.escapeKey.wasPressedThisFrame;
+#else
+            return Input.GetKeyDown(KeyCode.Escape);
+#endif
+        }
+
+        /// <summary>Android back: closes the top-most dialog or screen.</summary>
+        private void HandleBack()
+        {
+            if (messagePanel.activeSelf) messagePanel.SetActive(false);
+            else if (busyPanel.activeSelf) return;
+            else if (joinPanel.activeSelf) ShowDialog(onlinePanel);
+            else if (onlinePanel.activeSelf) ShowDialog(null);
+            else if (settingsPanel.activeSelf) CloseSettings();
+            else if (profileScreen.IsOpen) profileScreen.Close();
+            else if (leaderboardScreen.IsOpen) leaderboardScreen.Close();
+            else if (armoryScreen.IsOpen) armoryScreen.Close();
+        }
+
+        private void OpenScreen(MenuScreen screen)
+        {
+            homePanel.SetActive(false);
+            screen.Open();
+        }
+
+        private void CloseSettings()
+        {
+            settingsPanel.SetActive(false);
+            homePanel.SetActive(true);
+        }
+
+        private void RefreshWins()
+        {
+            if (winsText != null) winsText.text = GameSettings.MatchesWon.ToString();
         }
 
         private async void CreateRoom()
         {
             if (!EnsureSession()) return;
-            OnNameEdited(nameInput.text);
             ShowBusy("Connecting to Photon…");
             bool ok = await session.CreateRoomAsync();
             if (!ok) ShowFailure(onlinePanel);
@@ -134,12 +184,11 @@ namespace WarehouseDuel.UI
                 return;
             }
 
-            OnNameEdited(nameInput.text);
             ShowBusy("Joining room…");
             bool ok = await session.JoinRoomAsync(codeInput.text);
             if (!ok)
             {
-                Show(joinPanel);
+                ShowDialog(joinPanel);
                 joinErrorText.text = session.LastError;
             }
         }
@@ -149,7 +198,7 @@ namespace WarehouseDuel.UI
             if (!EnsureSession()) return;
             ShowBusy("Loading the warehouse…");
             bool ok = await session.StartPracticeAsync();
-            if (!ok) ShowFailure(homePanel);
+            if (!ok) ShowFailure(null);
         }
 
         private bool EnsureSession()
@@ -171,12 +220,12 @@ namespace WarehouseDuel.UI
         private void ShowBusy(string text)
         {
             busyText.text = text;
-            Show(busyPanel);
+            ShowDialog(busyPanel);
         }
 
         private void ShowFailure(GameObject returnTo)
         {
-            Show(returnTo);
+            ShowDialog(returnTo);
             ShowMessage(string.IsNullOrEmpty(session.LastError) ? "Something went wrong. Please try again." : session.LastError);
         }
 
@@ -186,12 +235,12 @@ namespace WarehouseDuel.UI
             messagePanel.SetActive(true);
         }
 
-        private void Show(GameObject panel)
+        /// <summary>Shows one of the online dialogs over the home screen (null = none).</summary>
+        private void ShowDialog(GameObject dialog)
         {
-            homePanel.SetActive(panel == homePanel);
-            onlinePanel.SetActive(panel == onlinePanel);
-            joinPanel.SetActive(panel == joinPanel);
-            busyPanel.SetActive(panel == busyPanel);
+            onlinePanel.SetActive(dialog == onlinePanel);
+            joinPanel.SetActive(dialog == joinPanel);
+            busyPanel.SetActive(dialog == busyPanel);
         }
     }
 }

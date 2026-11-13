@@ -58,8 +58,10 @@ namespace WarehouseDuel.EditorTools.UI
             Place(healthPanel.rectTransform, new Vector2(0f, 1f), new Vector2(28f, -22f), new Vector2(500f, 96f), new Vector2(0f, 1f));
             Image avatarRing = CreateImage("Avatar Ring", healthPanel.transform, new Color(0.25f, 0.6f, 1f), UiArt.Circle);
             Place(avatarRing.rectTransform, new Vector2(0f, 0.5f), new Vector2(8f, 0f), new Vector2(84f, 84f), new Vector2(0f, 0.5f));
-            Image avatar = CreateImage("Avatar", avatarRing.transform, Color.white, UiArt.Avatar);
-            Stretch(avatar.rectTransform, 5f, 5f, 5f, 5f);
+            var profiles = AssetDatabase.LoadAssetAtPath<WarehouseDuel.Profile.ProfileCatalog>(ProfileArtBuilder.CatalogPath);
+            Image avatar = MenuScreensBuilder.Masked(avatarRing.transform, "Avatar", UiArt.Circle, profiles != null ? profiles.Avatar(0) : UiArt.Avatar, out RectTransform avatarMask);
+            Stretch(avatarMask, 5f, 5f, 5f, 5f);
+            Wire(avatarRing.gameObject.AddComponent<ProfileCard>(), "avatar", avatar); // shows the player's chosen avatar
             TextMeshProUGUI hpLabel = CreateText("Label", healthPanel.transform, "HP", 22f, TextMuted, TextAlignmentOptions.Left, display: true);
             Place(hpLabel.rectTransform, new Vector2(0f, 0.5f), new Vector2(106f, 20f), new Vector2(60f, 30f), new Vector2(0f, 0.5f));
             Image track = CreateImage("Track", healthPanel.transform, new Color(1f, 1f, 1f, 0.14f), UiArt.RoundedSmall);

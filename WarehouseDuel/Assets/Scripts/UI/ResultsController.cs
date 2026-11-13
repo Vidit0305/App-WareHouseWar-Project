@@ -140,7 +140,7 @@ namespace WarehouseDuel.UI
             if (firstTime)
             {
                 if (sting != null) AudioManager.Instance.Play2D(sting);
-                if (!practice) RecordStats(won, mine);
+                if (!practice) RecordStats(won, mine, theirs, match);
             }
         }
 
@@ -190,12 +190,29 @@ namespace WarehouseDuel.UI
             else if (RoomState.Instance != null) RoomState.Instance.RequestLobby();
         }
 
-        private static void RecordStats(bool won, PlayerSlot mine)
+        private static void RecordStats(bool won, PlayerSlot mine, PlayerSlot theirs, MatchManager match)
         {
             GameSettings.MatchesPlayed++;
             if (won) GameSettings.MatchesWon++;
             GameSettings.TotalKills += mine.Kills;
             GameSettings.TotalDeaths += mine.Deaths;
+
+            WarehouseDuel.Profile.MatchHistory.Record(new WarehouseDuel.Profile.MatchHistory.Entry
+            {
+                opponent = theirs.Occupied || theirs.Name.Length > 0 ? theirs.Name.ToString() : "Unknown",
+                opponentAvatar = theirs.Avatar,
+                opponentBanner = theirs.Banner,
+                opponentLevel = Mathf.Max(1, (int)theirs.Level),
+                kills = mine.Kills,
+                deaths = mine.Deaths,
+                opponentKills = theirs.Kills,
+                opponentDeaths = theirs.Deaths,
+                result = (int)(match.IsDraw ? WarehouseDuel.Profile.MatchHistory.Result.Draw
+                    : won ? WarehouseDuel.Profile.MatchHistory.Result.Win : WarehouseDuel.Profile.MatchHistory.Result.Loss),
+                weapon = mine.Weapon,
+                seconds = match.PlayedSeconds,
+            });
+            WarehouseDuel.Profile.PlayerProfile.NotifyChanged();
         }
     }
 }

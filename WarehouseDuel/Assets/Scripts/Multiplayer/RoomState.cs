@@ -13,6 +13,11 @@ namespace WarehouseDuel.Multiplayer
         public PlayerRef Player;
         public NetworkString<_16> Name;
         public byte Weapon;
+        /// <summary>Preset avatar / banner / title index and level, for the opponent's player card.</summary>
+        public byte Avatar;
+        public byte Banner;
+        public byte Title;
+        public byte Level;
         public NetworkBool Occupied;
         public NetworkBool Ready;
         public NetworkBool WantsRematch;
@@ -204,16 +209,20 @@ namespace WarehouseDuel.Multiplayer
 
         public static readonly ReliableKey RequestKey = ReliableKey.FromInts(0x57_44_52_51, 1, 0, 0);
 
-        /// <summary>Any player: set my display name and lobby weapon.</summary>
-        public void RequestProfile(string playerName, byte weapon)
+        /// <summary>Any player: set my display name, lobby weapon and profile look (avatar, banner, title, level).</summary>
+        public void RequestProfile(string playerName, byte weapon, byte avatar = 0, byte banner = 0, byte title = 0, byte level = 1)
         {
             byte[] name = Encoding.UTF8.GetBytes(GameSettings.SanitizeName(playerName ?? string.Empty));
             int length = Mathf.Min(name.Length, 64);
-            var payload = new byte[3 + length];
+            var payload = new byte[3 + length + 4];
             payload[0] = (byte)Request.Profile;
             payload[1] = weapon;
             payload[2] = (byte)length;
             Array.Copy(name, 0, payload, 3, length);
+            payload[3 + length] = avatar;
+            payload[4 + length] = banner;
+            payload[5 + length] = title;
+            payload[6 + length] = level;
             Send(payload);
         }
 
@@ -246,7 +255,20 @@ namespace WarehouseDuel.Multiplayer
                     string clean = GameSettings.SanitizeName(Encoding.UTF8.GetString(data.Slice(3, length).ToArray()));
                     if (clean.Length == 0) clean = $"Player {index + 1}";
                     byte weapon = ClampWeapon(data[1]);
-                    Modify(index, (ref PlayerSlot s) => { s.Name = clean; s.Weapon = weapon; });
+                    bool hasLook = data.Length >= 3 + length + 4;
+                    byte avatar = hasLook ? (byte)Mathf.Min(data[3 + length], 63) : (byte)0;
+                    byte banner = hasLook ? (byte)Mathf.Min(data[4 + length], 63) : (byte)0;
+                    byte title = hasLook ? (byte)Mathf.Min(data[5 + length], 31) : (byte)0;
+                    byte level = hasLook ? (byte)Mathf.Clamp(data[6 + length], 1, 99) : (byte)1;
+                    Modify(index, (ref PlayerSlot s) =>
+                    {
+                        s.Name = clean;
+                        s.Weapon = weapon;
+                        s.Avatar = avatar;
+                        s.Banner = banner;
+                        s.Title = title;
+                        s.Level = level;
+                    });
                     break;
                 }
                 case Request.Weapon when data.Length >= 2:

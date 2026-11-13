@@ -76,14 +76,11 @@ namespace WarehouseDuel.EditorTools.UI
             Image shine = CreateImage("Shine", fill.transform, new Color(1f, 1f, 1f, 0.45f), UiArt.RoundedSmall);
             Stretch(shine.rectTransform);
 
-            TextMeshProUGUI version = CreateText("Version", safe, "v0.0.0", 20f, new Color(1f, 1f, 1f, 0.6f), TextAlignmentOptions.BottomRight);
-            Place(version.rectTransform, new Vector2(1f, 0f), new Vector2(-28f, 18f), new Vector2(300f, 32f), new Vector2(1f, 0f));
 
             var controller = new GameObject("Splash Controller").AddComponent<SplashScreenController>();
             Wire(controller, "canvasGroup", group);
             Wire(controller, "progressFill", fillRect);
             Wire(controller, "statusLabel", status);
-            Wire(controller, "versionLabel", version);
             Wire(controller, "percentLabel", percent);
             Wire(controller, "shine", shine.rectTransform);
 

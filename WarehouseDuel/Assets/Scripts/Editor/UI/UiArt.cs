@@ -210,6 +210,36 @@ namespace WarehouseDuel.EditorTools.UI
             },
             ["Profile"] = p => Mathf.Min(SdCircle(p, new Vector2(0f, 0.3f), 0.28f),
                 Mathf.Max(SdCircle(p, new Vector2(0f, -0.62f), 0.55f), -p.y - 0.62f)),
+            ["Trophy"] = p =>
+            {
+                float bowl = Mathf.Max(SdCircle(p, new Vector2(0f, 0.55f), 0.44f), p.y - 0.55f);
+                float rim = SdBox(p, new Vector2(0f, 0.6f), new Vector2(0.48f, 0.07f));
+                float handleL = Mathf.Max(SdRing(p, new Vector2(-0.44f, 0.38f), 0.17f, 0.055f), p.x + 0.4f);
+                float handleR = Mathf.Max(SdRing(p, new Vector2(0.44f, 0.38f), 0.17f, 0.055f), 0.4f - p.x);
+                float stem = SdBox(p, new Vector2(0f, -0.08f), new Vector2(0.075f, 0.22f));
+                float neck = SdBox(p, new Vector2(0f, -0.32f), new Vector2(0.2f, 0.05f));
+                float foot = SdBox(p, new Vector2(0f, -0.48f), new Vector2(0.36f, 0.1f));
+                return Mathf.Min(Mathf.Min(Mathf.Min(bowl, rim), Mathf.Min(handleL, handleR)), Mathf.Min(stem, Mathf.Min(neck, foot)));
+            },
+            ["Plus"] = p => Mathf.Min(SdBox(p, Vector2.zero, new Vector2(0.52f, 0.1f)), SdBox(p, Vector2.zero, new Vector2(0.1f, 0.52f))),
+            ["Lock"] = p => Mathf.Min(SdBox(p, new Vector2(0f, -0.22f), new Vector2(0.42f, 0.32f)) - 0.04f,
+                Mathf.Min(Mathf.Max(SdRing(p, new Vector2(0f, 0.2f), 0.26f, 0.08f), 0.2f - p.y),
+                          Mathf.Min(SdBox(p, new Vector2(-0.26f, 0.12f), new Vector2(0.08f, 0.1f)), SdBox(p, new Vector2(0.26f, 0.12f), new Vector2(0.08f, 0.1f))))),
+            ["Play"] = p => SdTriangle(p, new Vector2(-0.38f, 0.55f), new Vector2(-0.38f, -0.55f), new Vector2(0.55f, 0f)) - 0.04f,
+            ["Upload"] = p => Mathf.Min(Mathf.Min(SdChevron(p, new Vector2(0f, 0.62f), 0.36f, 0.1f), SdBox(p, new Vector2(0f, 0.12f), new Vector2(0.09f, 0.45f))),
+                Mathf.Min(SdBox(p, new Vector2(0f, -0.58f), new Vector2(0.6f, 0.08f)),
+                          Mathf.Min(SdBox(p, new Vector2(-0.6f, -0.42f), new Vector2(0.08f, 0.2f)), SdBox(p, new Vector2(0.6f, -0.42f), new Vector2(0.08f, 0.2f))))),
+            ["Podium"] = p => Mathf.Min(SdBox(p, new Vector2(0f, -0.12f), new Vector2(0.2f, 0.52f)),
+                Mathf.Min(SdBox(p, new Vector2(-0.46f, -0.3f), new Vector2(0.2f, 0.34f)), SdBox(p, new Vector2(0.46f, -0.42f), new Vector2(0.2f, 0.22f)))),
+            ["Close"] = p => Mathf.Min(SdSegment(p, new Vector2(-0.42f, -0.42f), new Vector2(0.42f, 0.42f), 0.1f),
+                SdSegment(p, new Vector2(-0.42f, 0.42f), new Vector2(0.42f, -0.42f), 0.1f)),
+            ["Star"] = p =>
+            {
+                // Tips every 72°, starting straight up; radius blends from the valley (0.3) to the tip (0.68).
+                float angle = Mathf.Atan2(p.x, p.y);
+                float sector = Mathf.Abs(Mathf.Repeat(angle, Mathf.PI * 2f / 5f) - Mathf.PI / 5f) / (Mathf.PI / 5f);
+                return p.magnitude - Mathf.Lerp(0.3f, 0.68f, sector * sector);
+            },
         };
 
         /// <summary>Arrowhead at the end of a circular arc (radius 0.5) at <paramref name="degrees"/>, pointing clockwise.</summary>

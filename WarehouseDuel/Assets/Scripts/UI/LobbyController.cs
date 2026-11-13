@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using WarehouseDuel.Audio;
 using WarehouseDuel.Core;
 using WarehouseDuel.Multiplayer;
+using WarehouseDuel.Profile;
 using WarehouseDuel.Weapons;
 
 namespace WarehouseDuel.UI
@@ -25,6 +26,9 @@ namespace WarehouseDuel.UI
             public Image readyBadge;
             public TMP_Text readyText;
             public Image avatar;
+            public Image portrait;
+            public Image banner;
+            public TMP_Text levelText;
         }
 
         [SerializeField] private WeaponCatalog catalog;
@@ -111,7 +115,8 @@ namespace WarehouseDuel.UI
             if (!profileSent && RoomState.Instance != null && RoomState.Instance.Object != null && RoomState.Instance.SlotOf(LocalPlayer) >= 0)
             {
                 profileSent = true;
-                RoomState.Instance.RequestProfile(GameSettings.PlayerName, (byte)selectedWeapon);
+                RoomState.Instance.RequestProfile(GameSettings.PlayerName, (byte)selectedWeapon,
+                    (byte)PlayerProfile.AvatarIndex, (byte)PlayerProfile.BannerIndex, (byte)PlayerProfile.TitleIndex, (byte)PlayerProfile.Level);
             }
 
             if (pingText != null && session != null)
@@ -169,6 +174,19 @@ namespace WarehouseDuel.UI
         {
             if (card == null) return;
             if (card.avatar != null) card.avatar.color = slot.Occupied ? SlotColors[index] : new Color(1f, 1f, 1f, 0.1f);
+            bool mine = slot.Occupied && slot.Player == LocalPlayer;
+            ProfileCatalog profiles = ProfileCatalog.Instance;
+            if (card.portrait != null)
+            {
+                card.portrait.enabled = slot.Occupied;
+                card.portrait.sprite = mine ? PlayerProfile.MyAvatar : profiles != null ? profiles.Avatar(slot.Avatar) : null;
+            }
+            if (card.banner != null)
+            {
+                card.banner.enabled = slot.Occupied && profiles != null;
+                if (profiles != null) card.banner.sprite = profiles.Banner(mine ? PlayerProfile.BannerIndex : slot.Banner);
+            }
+            if (card.levelText != null) card.levelText.text = slot.Occupied ? $"LV {Mathf.Max(1, (int)slot.Level)}" : string.Empty;
 
             if (!slot.Occupied)
             {
@@ -183,7 +201,8 @@ namespace WarehouseDuel.UI
             bool isMe = slot.Player == LocalPlayer;
             string role = index == 0 ? "HOST" : "GUEST";
             card.nameText.text = isMe ? $"{slot.Name} <size=70%>(you)</size>" : slot.Name.ToString();
-            card.statusText.text = $"{role} • Connected";
+            int title = Mathf.Clamp(slot.Title, 0, PlayerProfile.Titles.Length - 1);
+            card.statusText.text = $"<color=#FFB020>{PlayerProfile.Titles[title].name}</color>  •  {role}";
             WeaponDefinition weapon = catalog.Get(slot.Weapon);
             card.weaponText.text = weapon != null ? weapon.displayName : string.Empty;
             card.readyBadge.color = slot.Ready ? ReadyColor : NotReadyColor;

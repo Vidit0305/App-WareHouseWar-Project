@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using WarehouseDuel.Core;
+using WarehouseDuel.Profile;
 using WarehouseDuel.UI;
 using WarehouseDuel.UI.Widgets;
 using WarehouseDuel.Weapons;
@@ -23,89 +24,158 @@ namespace WarehouseDuel.EditorTools.UI
             SharedUiBuilder.SoldierAnimatorHandle showcase = SharedUiBuilder.Diorama(catalog, 0, SharedUiBuilder.MenuStaging);
             BakeBackdrop(scene, GameConstants.Scenes.MainMenu, report);
             catalog = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseDuel.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
+            ProfileCatalog profiles = AssetDatabase.LoadAssetAtPath<ProfileCatalog>(ProfileArtBuilder.CatalogPath);
             Wire(showcase.Animator, "catalog", catalog);
             SharedUiBuilder.SessionBootstrap();
             CreateEventSystem();
 
             Canvas canvas = CreateCanvas("Menu Canvas", 0, out RectTransform safe);
 
-            // Left-side gradient so text stays readable over the 3D scene.
-            Image shade = CreateImage("Shade", canvas.transform, new Color(0.04f, 0.05f, 0.08f, 0.82f));
-            shade.rectTransform.SetAsFirstSibling();
-            shade.rectTransform.anchorMin = new Vector2(0f, 0f);
-            shade.rectTransform.anchorMax = new Vector2(0.42f, 1f);
-            shade.rectTransform.offsetMin = shade.rectTransform.offsetMax = Vector2.zero;
+            // Soft dark edges so the HUD-style buttons read well over the 3D scene.
+            Image vignette = CreateImage("Vignette", canvas.transform, new Color(0f, 0f, 0f, 0.55f), UiArt.Gradient);
+            Stretch(vignette.rectTransform, -60f, -60f, -60f, -60f);
+            vignette.transform.SetAsFirstSibling();
 
-            TextMeshProUGUI title = CreateText("Title", safe, "WAREHOUSE\n<color=#FFB020>DUEL</color>", 110f, TextPrimary, TextAlignmentOptions.TopLeft, display: true);
-            title.lineSpacing = -18f;
-            Place(title.rectTransform, new Vector2(0f, 1f), new Vector2(90f, -70f), new Vector2(760f, 260f), new Vector2(0f, 1f));
-            TextMeshProUGUI tagline = CreateText("Tagline", safe, "1V1 ONLINE ARENA SHOOTER", 28f, TextMuted, TextAlignmentOptions.TopLeft);
+            RectTransform home = CreateRect("Home", safe);
+            Stretch(home);
+
+            // Drag the soldier to spin him (behind everything else).
+            Image drag = CreateImage("Character Drag Area", home, new Color(0f, 0f, 0f, 0f), raycast: true);
+            Place(drag.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, -20f), new Vector2(620f, 760f), new Vector2(0.5f, 0.5f));
+            Wire(drag.gameObject.AddComponent<DragRotate>(), "target", showcase.Turntable);
+
+            // ---- top centre: logo
+            TextMeshProUGUI logo = CreateText("Logo", home, "WAREHOUSE <color=#FFB020>DUEL</color>", 60f, TextPrimary, TextAlignmentOptions.Center, display: true);
+            Place(logo.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -26f), new Vector2(760f, 78f), new Vector2(0.5f, 1f));
+            TextMeshProUGUI tagline = CreateText("Tagline", home, "1V1 ONLINE ARENA SHOOTER", 20f, TextMuted, TextAlignmentOptions.Center, display: true);
             tagline.characterSpacing = 12f;
-            Place(tagline.rectTransform, new Vector2(0f, 1f), new Vector2(94f, -330f), new Vector2(760f, 40f), new Vector2(0f, 1f));
+            Place(tagline.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -100f), new Vector2(760f, 30f), new Vector2(0.5f, 1f));
+            AddTransition(logo.rectTransform, new Vector2(0f, 80f), 0f);
 
-            // ---- Home panel
-            RectTransform home = Column("Home", safe);
-            TextMeshProUGUI nameLabel = CreateText("Name Label", home, "CALLSIGN", 24f, TextMuted, TextAlignmentOptions.Left);
-            nameLabel.rectTransform.sizeDelta = new Vector2(620f, 34f);
-            TMP_InputField nameInput = CreateInputField("Name Input", home, "Enter your name", new Vector2(620f, 90f));
-            Spacer(home, 10f);
-            Button playOnline = CreateButton("Play Online", home, "PLAY ONLINE", ButtonStyle.Primary, new Vector2(620f, 120f), 46f);
-            Button practice = CreateButton("Practice", home, "PRACTICE (OFFLINE)", ButtonStyle.Secondary, new Vector2(620f, 90f));
-            RectTransform smallRow = CreateRect("Row", home);
-            smallRow.sizeDelta = new Vector2(620f, 90f);
-            Button settings = CreateButton("Settings", smallRow, "SETTINGS", ButtonStyle.Secondary, new Vector2(300f, 90f));
-            Place((RectTransform)settings.transform, new Vector2(0f, 0.5f), Vector2.zero, new Vector2(300f, 90f), new Vector2(0f, 0.5f));
-            Button profile = CreateButton("Profile", smallRow, "PROFILE", ButtonStyle.Secondary, new Vector2(300f, 90f));
-            Place((RectTransform)profile.transform, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(300f, 90f), new Vector2(1f, 0.5f));
+            // ---- top left: profile chip
+            Button chip = CreateButton("Profile Chip", home, "", ButtonStyle.Ghost, new Vector2(600f, 132f));
+            RectTransform chipRect = Place((RectTransform)chip.transform, new Vector2(0f, 1f), new Vector2(30f, -24f), new Vector2(600f, 132f), new Vector2(0f, 1f));
+            Image chipBack = chip.GetComponent<Image>();
+            chipBack.color = new Color(0.08f, 0.09f, 0.13f, 1f);
+            chip.gameObject.AddComponent<Mask>().showMaskGraphic = true;
+            Image chipBanner = CreateImage("Banner", chip.transform, Color.white, profiles.Banner(0));
+            chipBanner.type = Image.Type.Simple;
+            Stretch(chipBanner.rectTransform);
+            Image chipShade = CreateImage("Shade", chip.transform, new Color(0f, 0f, 0f, 0.45f));
+            Stretch(chipShade.rectTransform);
+            Image chipFrame = CreateImage("Avatar Frame", chip.transform, Color.white, UiArt.Circle);
+            Place(chipFrame.rectTransform, new Vector2(0f, 0.5f), new Vector2(16f, 0f), new Vector2(106f, 106f), new Vector2(0f, 0.5f));
+            Image chipAvatar = MenuScreensBuilder.Masked(chipFrame.transform, "Avatar Mask", UiArt.Circle, profiles.Avatar(0), out RectTransform chipMask);
+            Stretch(chipMask, 5f, 5f, 5f, 5f);
+            Image chipLevel = CreateImage("Level Badge", chip.transform, Accent, UiArt.Circle);
+            Place(chipLevel.rectTransform, new Vector2(0f, 0f), new Vector2(88f, 8f), new Vector2(44f, 44f), new Vector2(0f, 0f));
+            TextMeshProUGUI chipLevelText = CreateText("Level", chipLevel.transform, "1", 22f, AccentDark, TextAlignmentOptions.Center, display: true);
+            Stretch(chipLevelText.rectTransform);
+            TextMeshProUGUI chipName = MenuScreensBuilder.Label(chip.transform, "Name", "Player", 38f, TextPrimary, 140f, -14f, 440f, 50f, display: true);
+            TextMeshProUGUI chipTitle = MenuScreensBuilder.Label(chip.transform, "Title", "ROOKIE", 20f, Accent, 142f, -64f, 300f, 28f, display: true);
+            chipTitle.characterSpacing = 6f;
+            Image chipXpTrack = CreateImage("XP Track", chip.transform, new Color(0f, 0f, 0f, 0.55f), UiArt.RoundedSmall);
+            MenuScreensBuilder.At(chipXpTrack.rectTransform, 142f, -100f, 300f, 12f);
+            Image chipXp = CreateImage("XP Fill", chipXpTrack.transform, Accent, UiArt.RoundedSmall);
+            chipXp.rectTransform.anchorMin = Vector2.zero;
+            chipXp.rectTransform.anchorMax = new Vector2(0.3f, 1f);
+            chipXp.rectTransform.offsetMin = chipXp.rectTransform.offsetMax = Vector2.zero;
+            Image chipEdit = CreateImage("Open", chip.transform, new Color(1f, 1f, 1f, 0.75f), UiArt.Icon("Back"));
+            Place(chipEdit.rectTransform, new Vector2(1f, 0.5f), new Vector2(-40f, 0f), new Vector2(40f, 40f), new Vector2(0.5f, 0.5f));
+            chipEdit.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 180f);
+            ProfileCard chipCard = chip.gameObject.AddComponent<ProfileCard>();
+            Wire(chipCard, "avatar", chipAvatar);
+            Wire(chipCard, "banner", chipBanner);
+            Wire(chipCard, "nameText", chipName);
+            Wire(chipCard, "titleText", chipTitle);
+            Wire(chipCard, "levelText", chipLevelText);
+            Wire(chipCard, "xpFill", chipXp.rectTransform);
+            AddTransition(chipRect, new Vector2(-200f, 0f), 0.05f);
 
-            // ---- Online panel
-            RectTransform online = Column("Online", safe);
-            Heading(online, "PLAY ONLINE");
-            Button create = CreateButton("Create Room", online, "CREATE ROOM", ButtonStyle.Primary, new Vector2(620f, 120f), 44f);
-            Hint(online, "Host a private match and share the room code with a friend.");
-            Button join = CreateButton("Join Room", online, "JOIN ROOM", ButtonStyle.Secondary, new Vector2(620f, 120f), 44f);
-            Hint(online, "Enter the code your friend shared with you.");
-            Button onlineBack = CreateButton("Back", online, "BACK", ButtonStyle.Ghost, new Vector2(620f, 80f));
+            // ---- top right: wins + settings
+            RectTransform topRight = CreateRect("Top Right", home);
+            Place(topRight, new Vector2(1f, 1f), new Vector2(-30f, -24f), new Vector2(440f, 140f), new Vector2(1f, 1f));
+            AddTransition(topRight, new Vector2(200f, 0f), 0.05f);
+            Image winsChip = CreateImage("Wins", topRight, new Color(0.04f, 0.05f, 0.08f, 0.85f), UiArt.Rounded);
+            Place(winsChip.rectTransform, new Vector2(0f, 1f), new Vector2(0f, -14f), new Vector2(250f, 76f), new Vector2(0f, 1f));
+            Image trophy = CreateImage("Trophy", winsChip.transform, Accent, UiArt.Icon("Trophy"));
+            Place(trophy.rectTransform, new Vector2(0f, 0.5f), new Vector2(14f, 0f), new Vector2(52f, 52f), new Vector2(0f, 0.5f));
+            TextMeshProUGUI wins = CreateText("Count", winsChip.transform, "0", 38f, TextPrimary, TextAlignmentOptions.Left, display: true);
+            Place(wins.rectTransform, new Vector2(0f, 0.5f), new Vector2(78f, 2f), new Vector2(100f, 60f), new Vector2(0f, 0.5f));
+            TextMeshProUGUI winsLabel = CreateText("Label", winsChip.transform, "WINS", 18f, TextMuted, TextAlignmentOptions.Right, display: true);
+            Place(winsLabel.rectTransform, new Vector2(1f, 0.5f), new Vector2(-16f, 0f), new Vector2(80f, 40f), new Vector2(1f, 0.5f));
+            Button settings = LabelledIcon(topRight, "Settings", "SETTINGS", UiArt.Icon("Settings"), new Vector2(1f, 1f), new Vector2(0f, 0f));
 
-            // ---- Join panel
-            RectTransform joinPanel = Column("Join", safe);
-            Heading(joinPanel, "JOIN ROOM");
-            Hint(joinPanel, "Room code (e.g. K7QPM-E)");
-            TMP_InputField codeInput = CreateInputField("Code Input", joinPanel, "ROOM CODE", new Vector2(620f, 110f), 56f);
+            // ---- left: feature cards
+            Button armoryCard = FeatureCard(home, "Armory Card", "ARMORY", "Choose your weapon", catalog.Get(0) != null ? catalog.Get(0).icon : null, true, -200f);
+            Button profileCard = FeatureCard(home, "Profile Card", "PROFILE", "Avatar, banner & title", UiArt.Icon("Profile"), false, -390f);
+            Button leaderboard = CreateButton("Leaderboard", home, "LEADERBOARD", ButtonStyle.Secondary, new Vector2(420f, 110f), out TextMeshProUGUI leaderboardLabel, 32f);
+            RectTransform leaderboardRect = Place((RectTransform)leaderboard.transform, new Vector2(0f, 0f), new Vector2(30f, 30f), new Vector2(420f, 110f), new Vector2(0f, 0f));
+            leaderboard.GetComponent<Image>().color = new Color(0.12f, 0.14f, 0.19f, 0.95f);
+            Stretch(leaderboardLabel.rectTransform, 110f, 16f, 4f, 4f);
+            leaderboardLabel.alignment = TextAlignmentOptions.Left;
+            Image podium = CreateImage("Icon", leaderboard.transform, Accent, UiArt.Icon("Trophy"));
+            Place(podium.rectTransform, new Vector2(0f, 0.5f), new Vector2(28f, 0f), new Vector2(64f, 64f), new Vector2(0f, 0.5f));
+            AddTransition(leaderboardRect, new Vector2(-220f, 0f), 0.2f);
+
+            // ---- right: game modes
+            Button online = ModeCard(home, "Online Mode", "ONLINE DUEL", "Create a room or join a friend", "1V1 ONLINE", profiles.Banner(7), catalog.Get(0) != null ? catalog.Get(0).icon : null, -200f, Accent);
+            Button practice = ModeCard(home, "Practice Mode", "PRACTICE", "Offline training in the warehouse", "OFFLINE", profiles.Banner(0), catalog.Get(3) != null ? catalog.Get(3).icon : null, -420f, Success);
+
+            // ---- bottom right: PLAY
+            Button play = CreateButton("Play", home, "PLAY", ButtonStyle.Primary, new Vector2(440f, 150f), out TextMeshProUGUI playLabel, 72f);
+            RectTransform playRect = Place((RectTransform)play.transform, new Vector2(1f, 0f), new Vector2(-30f, 30f), new Vector2(440f, 150f), new Vector2(1f, 0f));
+            Stretch(playLabel.rectTransform, 30f, 110f, 4f, 4f);
+            Image playIcon = CreateImage("Icon", play.transform, AccentDark, UiArt.Icon("Play"));
+            Place(playIcon.rectTransform, new Vector2(1f, 0.5f), new Vector2(-50f, 0f), new Vector2(64f, 64f), new Vector2(1f, 0.5f));
+            SetPulse(play);
+            AddTransition(playRect, new Vector2(240f, 0f), 0.25f);
+
+            // ---- screens
+            ArmoryScreen armory = MenuScreensBuilder.Armory(safe, catalog, showcase.Animator, showcase.Turntable);
+            ProfileScreen profile = MenuScreensBuilder.Profile(safe, profiles);
+            LeaderboardScreen leaderboardScreen = MenuScreensBuilder.Leaderboard(safe, catalog, profiles);
+            GameObject settingsPanel = SharedUiBuilder.Settings(safe, out Button settingsClose);
+
+            // ---- online dialogs
+            RectTransform onlineCard = SharedUiBuilder.Modal("Online", safe, new Vector2(820f, 640f), out GameObject onlinePanel);
+            Image onlineHeader = CreateImage("Header", onlineCard, new Color(0f, 0f, 0f, 0.3f), UiArt.Rounded);
+            MenuScreensBuilder.At(onlineHeader.rectTransform, 0f, 0f, 820f, 110f);
+            MenuScreensBuilder.Label(onlineHeader.transform, "Title", "PLAY ONLINE", 50f, Accent, 0f, -18f, 820f, 76f, TextAlignmentOptions.Center, display: true);
+            Button create = CreateButton("Create Room", onlineCard, "CREATE ROOM", ButtonStyle.Primary, new Vector2(660f, 120f), 44f);
+            Place((RectTransform)create.transform, new Vector2(0.5f, 1f), new Vector2(0f, -150f), new Vector2(660f, 120f), new Vector2(0.5f, 1f));
+            DialogHint(onlineCard, "Host a private match and share the room code with a friend.", -280f);
+            Button join = CreateButton("Join Room", onlineCard, "JOIN ROOM", ButtonStyle.Secondary, new Vector2(660f, 120f), 44f);
+            Place((RectTransform)join.transform, new Vector2(0.5f, 1f), new Vector2(0f, -340f), new Vector2(660f, 120f), new Vector2(0.5f, 1f));
+            DialogHint(onlineCard, "Enter the code your friend shared with you.", -470f);
+            Button onlineBack = CreateButton("Back", onlineCard, "BACK", ButtonStyle.Ghost, new Vector2(300f, 80f));
+            Place((RectTransform)onlineBack.transform, new Vector2(0.5f, 0f), new Vector2(0f, 30f), new Vector2(300f, 80f), new Vector2(0.5f, 0f));
+
+            RectTransform joinCard = SharedUiBuilder.Modal("Join", safe, new Vector2(820f, 600f), out GameObject joinPanel);
+            Image joinHeader = CreateImage("Header", joinCard, new Color(0f, 0f, 0f, 0.3f), UiArt.Rounded);
+            MenuScreensBuilder.At(joinHeader.rectTransform, 0f, 0f, 820f, 110f);
+            MenuScreensBuilder.Label(joinHeader.transform, "Title", "JOIN ROOM", 50f, Accent, 0f, -18f, 820f, 76f, TextAlignmentOptions.Center, display: true);
+            DialogHint(joinCard, "Room code (e.g. K7QPM-E)", -136f);
+            TMP_InputField codeInput = CreateInputField("Code Input", joinCard, "ROOM CODE", new Vector2(660f, 120f), 60f);
+            Place((RectTransform)codeInput.transform, new Vector2(0.5f, 1f), new Vector2(0f, -190f), new Vector2(660f, 120f), new Vector2(0.5f, 1f));
             codeInput.characterValidation = TMP_InputField.CharacterValidation.None;
             codeInput.textComponent.characterSpacing = 18f;
             codeInput.textComponent.alignment = TextAlignmentOptions.Center;
             ((TextMeshProUGUI)codeInput.placeholder).alignment = TextAlignmentOptions.Center;
-            TextMeshProUGUI joinError = CreateText("Error", joinPanel, "", 26f, Danger, TextAlignmentOptions.Left);
-            joinError.rectTransform.sizeDelta = new Vector2(620f, 70f);
-            Button joinConfirm = CreateButton("Join", joinPanel, "JOIN", ButtonStyle.Primary, new Vector2(620f, 110f), 44f);
-            Button joinBack = CreateButton("Back", joinPanel, "BACK", ButtonStyle.Ghost, new Vector2(620f, 80f));
+            TextMeshProUGUI joinError = CreateText("Error", joinCard, "", 26f, Danger, TextAlignmentOptions.Center);
+            Place(joinError.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -320f), new Vector2(700f, 60f), new Vector2(0.5f, 1f));
+            Button joinConfirm = CreateButton("Join", joinCard, "JOIN", ButtonStyle.Primary, new Vector2(320f, 110f), 44f);
+            Place((RectTransform)joinConfirm.transform, new Vector2(0.5f, 0f), new Vector2(170f, 34f), new Vector2(320f, 110f), new Vector2(0.5f, 0f));
+            Button joinBack = CreateButton("Back", joinCard, "BACK", ButtonStyle.Ghost, new Vector2(300f, 110f));
+            Place((RectTransform)joinBack.transform, new Vector2(0.5f, 0f), new Vector2(-170f, 34f), new Vector2(300f, 110f), new Vector2(0.5f, 0f));
 
-            // ---- Busy panel
-            RectTransform busy = Column("Busy", safe);
-            Spacer(busy, 60f);
-            Image spinner = CreateImage("Spinner", busy, Accent, UiArt.Ring);
-            spinner.rectTransform.sizeDelta = new Vector2(110f, 110f);
-            Image spinnerGap = CreateImage("Gap", spinner.transform, new Color(0.06f, 0.07f, 0.1f, 1f));
-            Place(spinnerGap.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, 0f), new Vector2(30f, 40f), new Vector2(0.5f, 1f));
-            TextMeshProUGUI busyText = CreateText("Text", busy, "Connecting…", 34f, TextPrimary, TextAlignmentOptions.Center);
-            busyText.rectTransform.sizeDelta = new Vector2(620f, 120f);
-
-            // ---- Modals
-            GameObject settingsPanel = SharedUiBuilder.Settings(safe, out Button settingsClose);
-            RectTransform profileCard = SharedUiBuilder.Modal("Profile Panel", safe, new Vector2(900f, 640f), out GameObject profilePanel);
-            TextMeshProUGUI profileTitle = CreateText("Title", profileCard, "PROFILE", 56f, Accent, TextAlignmentOptions.Center, display: true);
-            Place(profileTitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -30f), new Vector2(700f, 80f), new Vector2(0.5f, 1f));
-            TextMeshProUGUI profileName = CreateText("Name", profileCard, "Player", 48f, TextPrimary, TextAlignmentOptions.Center, display: true);
-            Place(profileName.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -120f), new Vector2(760f, 70f), new Vector2(0.5f, 1f));
-            TextMeshProUGUI profileStats = CreateText("Stats", profileCard, "", 34f, TextMuted, TextAlignmentOptions.Center);
-            profileStats.lineSpacing = 20f;
-            Place(profileStats.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -210f), new Vector2(760f, 280f), new Vector2(0.5f, 1f));
-            Button profileClose = CreateButton("Close", profileCard, "DONE", ButtonStyle.Primary, new Vector2(320f, 90f));
-            Place((RectTransform)profileClose.transform, new Vector2(0.5f, 0f), new Vector2(0f, 30f), new Vector2(320f, 90f), new Vector2(0.5f, 0f));
-            ProfilePanel profileComponent = profilePanel.AddComponent<ProfilePanel>();
-            Wire(profileComponent, "nameText", profileName);
-            Wire(profileComponent, "statsText", profileStats);
+            RectTransform busyCard = SharedUiBuilder.Modal("Busy", safe, new Vector2(700f, 380f), out GameObject busyPanel);
+            Image spinner = CreateImage("Spinner", busyCard, Accent, UiArt.Ring);
+            Place(spinner.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -50f), new Vector2(110f, 110f), new Vector2(0.5f, 1f));
+            Image spinnerGap = CreateImage("Gap", spinner.transform, new Color(0.086f, 0.1f, 0.14f, 1f));
+            Place(spinnerGap.rectTransform, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(30f, 40f), new Vector2(0.5f, 1f));
+            TextMeshProUGUI busyText = CreateText("Text", busyCard, "Connecting…", 34f, TextPrimary, TextAlignmentOptions.Center);
+            Place(busyText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -190f), new Vector2(640f, 140f), new Vector2(0.5f, 1f));
 
             RectTransform messageCard = SharedUiBuilder.Modal("Message Panel", safe, new Vector2(900f, 420f), out GameObject messagePanel);
             TextMeshProUGUI messageText = CreateText("Text", messageCard, "", 34f, TextPrimary, TextAlignmentOptions.Center);
@@ -113,37 +183,99 @@ namespace WarehouseDuel.EditorTools.UI
             Button messageOk = CreateButton("OK", messageCard, "OK", ButtonStyle.Primary, new Vector2(300f, 90f));
             Place((RectTransform)messageOk.transform, new Vector2(0.5f, 0f), new Vector2(0f, 30f), new Vector2(300f, 90f), new Vector2(0.5f, 0f));
 
-            TextMeshProUGUI version = CreateText("Version", safe, $"v{Application.version}", 22f, TextMuted, TextAlignmentOptions.BottomRight);
-            Place(version.rectTransform, new Vector2(1f, 0f), new Vector2(-30f, 20f), new Vector2(300f, 40f), new Vector2(1f, 0f));
-
             var controller = canvas.gameObject.AddComponent<MainMenuController>();
             Wire(controller, "homePanel", home.gameObject);
-            Wire(controller, "onlinePanel", online.gameObject);
-            Wire(controller, "joinPanel", joinPanel.gameObject);
-            Wire(controller, "busyPanel", busy.gameObject);
-            Wire(controller, "settingsPanel", settingsPanel);
-            Wire(controller, "profilePanel", profilePanel);
-            Wire(controller, "messagePanel", messagePanel);
-            Wire(controller, "nameInput", nameInput);
-            Wire(controller, "playOnlineButton", playOnline);
-            Wire(controller, "practiceButton", practice);
+            Wire(controller, "character", showcase.Animator);
+            Wire(controller, "playButton", play);
+            Wire(controller, "onlineModeButton", online);
+            Wire(controller, "practiceModeButton", practice);
+            Wire(controller, "profileChipButton", chip);
+            Wire(controller, "profileCardButton", profileCard);
+            Wire(controller, "armoryCardButton", armoryCard);
+            Wire(controller, "leaderboardButton", leaderboard);
             Wire(controller, "settingsButton", settings);
-            Wire(controller, "profileButton", profile);
+            Wire(controller, "winsText", wins);
+            Wire(controller, "profileScreen", profile);
+            Wire(controller, "leaderboardScreen", leaderboardScreen);
+            Wire(controller, "armoryScreen", armory);
+            Wire(controller, "settingsPanel", settingsPanel);
+            Wire(controller, "settingsCloseButton", settingsClose);
+            Wire(controller, "onlinePanel", onlinePanel);
             Wire(controller, "createRoomButton", create);
             Wire(controller, "joinRoomButton", join);
             Wire(controller, "onlineBackButton", onlineBack);
+            Wire(controller, "joinPanel", joinPanel);
             Wire(controller, "codeInput", codeInput);
             Wire(controller, "joinConfirmButton", joinConfirm);
             Wire(controller, "joinBackButton", joinBack);
             Wire(controller, "joinErrorText", joinError);
+            Wire(controller, "busyPanel", busyPanel);
             Wire(controller, "busyText", busyText);
             Wire(controller, "busySpinner", spinner.rectTransform);
+            Wire(controller, "messagePanel", messagePanel);
             Wire(controller, "messageText", messageText);
             Wire(controller, "messageOkButton", messageOk);
-            Wire(controller, "settingsCloseButton", settingsClose);
-            Wire(controller, "profileCloseButton", profileClose);
 
             Save(scene, GameConstants.Scenes.MainMenu, report);
+        }
+
+        /// <summary>Big yellow (or dark) card on the left: title, subtitle and an icon on the right.</summary>
+        private static Button FeatureCard(RectTransform parent, string name, string title, string subtitle, Sprite icon, bool primary, float y)
+        {
+            Button card = CreateButton(name, parent, title, primary ? ButtonStyle.Primary : ButtonStyle.Secondary, new Vector2(420f, 170f), out TextMeshProUGUI label, 40f);
+            RectTransform rect = Place((RectTransform)card.transform, new Vector2(0f, 1f), new Vector2(30f, y), new Vector2(420f, 170f), new Vector2(0f, 1f));
+            if (!primary) card.GetComponent<Image>().color = new Color(0.12f, 0.14f, 0.19f, 0.95f);
+            Color ink = primary ? AccentDark : TextPrimary;
+            label.alignment = TextAlignmentOptions.TopLeft;
+            MenuScreensBuilder.At(label.rectTransform, 28f, -26f, 260f, 56f);
+            label.rectTransform.anchorMin = label.rectTransform.anchorMax = new Vector2(0f, 1f);
+            MenuScreensBuilder.Label(card.transform, "Subtitle", subtitle, 21f, primary ? new Color(0.15f, 0.12f, 0.05f, 0.8f) : TextMuted, 30f, -88f, 230f, 60f);
+            Image glyph = CreateImage("Icon", card.transform, ink, icon);
+            glyph.preserveAspect = true;
+            Place(glyph.rectTransform, new Vector2(1f, 0.5f), new Vector2(-20f, -4f), new Vector2(150f, 110f), new Vector2(1f, 0.5f));
+            AddTransition(rect, new Vector2(-220f, 0f), y < -300f ? 0.15f : 0.1f);
+            return card;
+        }
+
+        /// <summary>Game-mode card on the right: banner art, title, subtitle, a tag and a weapon silhouette.</summary>
+        private static Button ModeCard(RectTransform parent, string name, string title, string subtitle, string tag, Sprite art, Sprite icon, float y, Color tagColor)
+        {
+            Button card = CreateButton(name, parent, "", ButtonStyle.Ghost, new Vector2(460f, 196f));
+            RectTransform rect = Place((RectTransform)card.transform, new Vector2(1f, 1f), new Vector2(-30f, y), new Vector2(460f, 196f), new Vector2(1f, 1f));
+            card.GetComponent<Image>().color = new Color(0.08f, 0.09f, 0.13f, 1f);
+            card.gameObject.AddComponent<Mask>().showMaskGraphic = true;
+            Image artImage = CreateImage("Art", card.transform, Color.white, art);
+            artImage.type = Image.Type.Simple;
+            Stretch(artImage.rectTransform);
+            Image shade = CreateImage("Shade", card.transform, new Color(0f, 0f, 0f, 0.5f));
+            Stretch(shade.rectTransform);
+            Image weapon = CreateImage("Weapon", card.transform, new Color(1f, 1f, 1f, 0.9f), icon);
+            weapon.preserveAspect = true;
+            Place(weapon.rectTransform, new Vector2(1f, 0f), new Vector2(-16f, 14f), new Vector2(220f, 100f), new Vector2(1f, 0f));
+            MenuScreensBuilder.Label(card.transform, "Title", title, 42f, TextPrimary, 26f, -22f, 400f, 56f, display: true);
+            MenuScreensBuilder.Label(card.transform, "Subtitle", subtitle, 21f, new Color(1f, 1f, 1f, 0.8f), 28f, -80f, 260f, 60f);
+            Image tagBack = CreateImage("Tag", card.transform, tagColor, UiArt.RoundedSmall);
+            MenuScreensBuilder.At(tagBack.rectTransform, 26f, -146f, 150f, 34f);
+            TextMeshProUGUI tagText = CreateText("Text", tagBack.transform, tag, 17f, new Color(0.08f, 0.08f, 0.08f), TextAlignmentOptions.Center, display: true);
+            Stretch(tagText.rectTransform);
+            AddTransition(rect, new Vector2(240f, 0f), y < -300f ? 0.15f : 0.1f);
+            return card;
+        }
+
+        /// <summary>Round icon button with a small caption under it (top bar).</summary>
+        private static Button LabelledIcon(RectTransform parent, string name, string caption, Sprite icon, Vector2 anchor, Vector2 position)
+        {
+            Button button = CreateIconButton(name, parent, icon, 100f, new Color(0.04f, 0.05f, 0.08f, 0.85f));
+            Place((RectTransform)button.transform, anchor, position, new Vector2(100f, 100f), anchor);
+            TextMeshProUGUI text = CreateText("Caption", button.transform, caption, 17f, TextPrimary, TextAlignmentOptions.Center, display: true);
+            Place(text.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, -30f), new Vector2(160f, 26f), new Vector2(0.5f, 0f));
+            return button;
+        }
+
+        private static void DialogHint(RectTransform card, string text, float y)
+        {
+            TextMeshProUGUI hint = CreateText("Hint", card, text, 23f, TextMuted, TextAlignmentOptions.Center);
+            Place(hint.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, y), new Vector2(700f, 40f), new Vector2(0.5f, 1f));
         }
 
         public static void BuildLobby(SetupReport report, WeaponCatalog catalog)
@@ -154,6 +286,7 @@ namespace WarehouseDuel.EditorTools.UI
             // Reload: the lighting bake refreshes assets and can leave earlier asset references stale.
             catalog = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseDuel.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
             Wire(showcase.Animator, "catalog", catalog);
+            ProfileCatalog profiles = AssetDatabase.LoadAssetAtPath<ProfileCatalog>(ProfileArtBuilder.CatalogPath);
             SharedUiBuilder.SessionBootstrap();
             CreateEventSystem();
 
@@ -201,14 +334,26 @@ namespace WarehouseDuel.EditorTools.UI
             Color[] slotColors = { new Color(0.2f, 0.55f, 1f), new Color(1f, 0.35f, 0.25f) };
             for (int i = 0; i < 2; i++)
             {
-                Image card = CreatePanel($"Player Card {i + 1}", left, new Color(0.04f, 0.05f, 0.08f, 0.82f));
+                Image card = CreatePanel($"Player Card {i + 1}", left, new Color(0.04f, 0.05f, 0.08f, 0.9f));
                 Place(card.rectTransform, new Vector2(0f, 1f), new Vector2(0f, -50f - i * 180f), new Vector2(520f, 160f), new Vector2(0f, 1f));
+                card.gameObject.AddComponent<Mask>().showMaskGraphic = true;
+                Image cardBanner = CreateImage("Banner", card.transform, Color.white, profiles.Banner(0));
+                cardBanner.type = Image.Type.Simple;
+                Stretch(cardBanner.rectTransform);
+                cardBanner.enabled = false;
+                Image cardShade = CreateImage("Shade", card.transform, new Color(0f, 0f, 0f, 0.55f));
+                Stretch(cardShade.rectTransform);
                 Image stripe = CreateImage("Team Stripe", card.transform, slotColors[i], UiArt.RoundedSmall);
                 Place(stripe.rectTransform, new Vector2(0f, 0.5f), new Vector2(8f, 0f), new Vector2(10f, 132f), new Vector2(0f, 0.5f));
                 Image avatar = CreateImage("Avatar", card.transform, slotColors[i], UiArt.Circle);
                 Place(avatar.rectTransform, new Vector2(0f, 0.5f), new Vector2(32f, 0f), new Vector2(108f, 108f), new Vector2(0f, 0.5f));
-                Image portrait = CreateImage("Portrait", avatar.transform, Color.white, UiArt.Avatar);
-                Stretch(portrait.rectTransform, 6f, 6f, 6f, 6f);
+                Image portrait = MenuScreensBuilder.Masked(avatar.transform, "Portrait", UiArt.Circle, profiles.Avatar(i), out RectTransform portraitMask);
+                Stretch(portraitMask, 6f, 6f, 6f, 6f);
+                portrait.enabled = false;
+                Image levelBadge = CreateImage("Level Badge", card.transform, new Color(0f, 0f, 0f, 0.75f), UiArt.RoundedSmall);
+                Place(levelBadge.rectTransform, new Vector2(0f, 0f), new Vector2(42f, 6f), new Vector2(88f, 30f), new Vector2(0f, 0f));
+                TextMeshProUGUI levelText = CreateText("Level", levelBadge.transform, "", 18f, Accent, TextAlignmentOptions.Center, display: true);
+                Stretch(levelText.rectTransform);
                 TextMeshProUGUI name = CreateText("Name", card.transform, "Waiting…", 36f, TextPrimary, TextAlignmentOptions.Left, display: true);
                 Place(name.rectTransform, new Vector2(0f, 1f), new Vector2(158f, -20f), new Vector2(340f, 48f), new Vector2(0f, 1f));
                 TextMeshProUGUI state = CreateText("Status", card.transform, "", 21f, TextMuted, TextAlignmentOptions.Left);
@@ -219,7 +364,7 @@ namespace WarehouseDuel.EditorTools.UI
                 Place(badge.rectTransform, new Vector2(1f, 0f), new Vector2(-16f, 16f), new Vector2(150f, 42f), new Vector2(1f, 0f));
                 TextMeshProUGUI readyText = CreateText("Text", badge.transform, "—", 22f, new Color(0.05f, 0.06f, 0.08f), TextAlignmentOptions.Center, display: true);
                 Stretch(readyText.rectTransform);
-                cards[i] = new LobbyController.PlayerCard { nameText = name, statusText = state, weaponText = weapon, readyBadge = badge, readyText = readyText, avatar = avatar };
+                cards[i] = new LobbyController.PlayerCard { nameText = name, statusText = state, weaponText = weapon, readyBadge = badge, readyText = readyText, avatar = avatar, portrait = portrait, banner = cardBanner, levelText = levelText };
             }
 
             // ---- right: loadout (weapon details + 2×2 weapon tiles)
@@ -335,29 +480,6 @@ namespace WarehouseDuel.EditorTools.UI
 
         // ------------------------------------------------------------------ helpers
 
-        private static RectTransform Column(string name, RectTransform parent)
-        {
-            RectTransform column = CreateRect(name, parent);
-            Place(column, new Vector2(0f, 1f), new Vector2(90f, -400f), new Vector2(620f, 640f), new Vector2(0f, 1f));
-            UiFactory.Column(column, 18f, null, TextAnchor.UpperLeft);
-            AddTransition(column, new Vector2(-160f, 0f), 0f);
-            return column;
-        }
-
-        private static void Heading(RectTransform parent, string text)
-        {
-            TextMeshProUGUI heading = CreateText("Heading", parent, text, 44f, Accent, TextAlignmentOptions.Left, display: true);
-            heading.rectTransform.sizeDelta = new Vector2(620f, 64f);
-        }
-
-        private static void Hint(RectTransform parent, string text)
-        {
-            TextMeshProUGUI hint = CreateText("Hint", parent, text, 24f, TextMuted, TextAlignmentOptions.Left);
-            hint.rectTransform.sizeDelta = new Vector2(620f, 40f);
-        }
-
-        private static void Spacer(RectTransform parent, float height) => CreateRect("Spacer", parent).sizeDelta = new Vector2(10f, height);
-
         private static void WireCards(LobbyController controller, LobbyController.PlayerCard[] cards)
         {
             var serialized = new SerializedObject(controller);
@@ -372,6 +494,9 @@ namespace WarehouseDuel.EditorTools.UI
                 element.FindPropertyRelative("readyBadge").objectReferenceValue = cards[i].readyBadge;
                 element.FindPropertyRelative("readyText").objectReferenceValue = cards[i].readyText;
                 element.FindPropertyRelative("avatar").objectReferenceValue = cards[i].avatar;
+                element.FindPropertyRelative("portrait").objectReferenceValue = cards[i].portrait;
+                element.FindPropertyRelative("banner").objectReferenceValue = cards[i].banner;
+                element.FindPropertyRelative("levelText").objectReferenceValue = cards[i].levelText;
             }
             serialized.ApplyModifiedPropertiesWithoutUndo();
         }
