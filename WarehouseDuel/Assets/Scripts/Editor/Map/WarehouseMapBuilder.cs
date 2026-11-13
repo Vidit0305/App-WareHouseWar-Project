@@ -27,6 +27,8 @@ namespace WarehouseDuel.EditorTools.Map
         public const float HalfWidth = 18f;     // interior x extent
         public const float HalfLength = 28f;    // interior z extent
         public const float WallHeight = 9f;
+        /// <summary>Low golden-hour sun (also used to angle the skylight sunbeams).</summary>
+        public static readonly Quaternion SunRotation = Quaternion.Euler(42f, -32f, 0f);
         public const float PartitionZ = 12f;
         public const float PartitionHeight = 3f;
         public static readonly Vector3 SpawnA = new Vector3(0f, 0f, -25f);
@@ -234,6 +236,11 @@ namespace WarehouseDuel.EditorTools.Map
             {
                 EnvironmentKit.NoShadow(EnvironmentKit.Box(parent, "Skylight", new Vector3(x, h - 0.07f, 0f), new Vector3(3.2f, 0.04f, l * 2f - 6f), Id.Skylight));
                 EnvironmentKit.NoShadow(EnvironmentKit.Box(parent, "SkylightFrame", new Vector3(x, h - 0.03f, 0f), new Vector3(3.5f, 0.03f, l * 2f - 5.6f), Id.Steel));
+                // Warm sunbeam falling from the skylight (additive sheet, purely visual).
+                Vector3 sunDirection = SunRotation * Vector3.forward;
+                float beamLength = (h - 0.1f) / Mathf.Max(0.2f, -sunDirection.y);
+                AtmosphereKit.LightShaft(parent, "Sunbeam", new Vector3(x, h - 0.1f, 0f), sunDirection, Vector3.forward,
+                    beamLength, l * 2f - 8f, new Color(0.11f, 0.08f, 0.05f));
             }
 
             // Roof trusses: cast striped shadows across the floor.
@@ -325,26 +332,29 @@ namespace WarehouseDuel.EditorTools.Map
 
             var sunObject = new GameObject("Sun");
             sunObject.transform.SetParent(root, false);
-            sunObject.transform.rotation = Quaternion.Euler(58f, -32f, 0f);
+            sunObject.transform.rotation = SunRotation;
             Light sun = sunObject.AddComponent<Light>();
             sun.type = LightType.Directional;
-            sun.color = new Color(1f, 0.95f, 0.86f);
-            sun.intensity = 1.25f;
+            sun.color = new Color(1f, 0.84f, 0.64f);   // golden hour
+            sun.intensity = 1.55f;
             sun.shadows = LightShadows.Soft;
             sun.shadowStrength = 0.75f;
             RenderSettings.sun = sun;
 
-            // Cheap three-colour ambient instead of baked GI: cool from above, warm bounce from the floor.
+            // Cheap three-colour ambient instead of baked GI: cool sky light, warm bounce from the floor.
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.80f, 0.82f, 0.88f);
-            RenderSettings.ambientEquatorColor = new Color(0.68f, 0.66f, 0.62f);
-            RenderSettings.ambientGroundColor = new Color(0.52f, 0.48f, 0.42f);
+            RenderSettings.ambientSkyColor = new Color(0.62f, 0.7f, 0.86f);
+            RenderSettings.ambientEquatorColor = new Color(0.6f, 0.56f, 0.52f);
+            RenderSettings.ambientGroundColor = new Color(0.5f, 0.42f, 0.34f);
 
+            // Warm dusty haze.
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
-            RenderSettings.fogColor = new Color(0.62f, 0.62f, 0.62f);
-            RenderSettings.fogStartDistance = 35f;
-            RenderSettings.fogEndDistance = 140f;
+            RenderSettings.fogColor = new Color(0.66f, 0.56f, 0.46f);
+            RenderSettings.fogStartDistance = 18f;
+            RenderSettings.fogEndDistance = 110f;
+
+            AtmosphereKit.AddGlobalVolume(AtmosphereKit.Look.Gameplay).transform.SetParent(root, false);
         }
 
         private static void PositionOverviewCamera(Scene scene)

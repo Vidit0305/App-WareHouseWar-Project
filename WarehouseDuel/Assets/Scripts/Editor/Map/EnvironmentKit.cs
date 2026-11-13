@@ -33,6 +33,8 @@ namespace WarehouseDuel.EditorTools.Map
         public static Dictionary<Piece, GameObject> BuildAll(SetupReport report)
         {
             FolderStructure.EnsureFolder(PrefabFolder);
+            BoxMeshes.Reset();                // stale box sizes from earlier builds go away
+            EnvironmentPalette.ClearCache();
             var kit = new Dictionary<Piece, GameObject>
             {
                 [Piece.ContainerRed] = Save(Container("ContainerRed", Id.ContainerRed), Piece.ContainerRed, true),
@@ -383,6 +385,7 @@ namespace WarehouseDuel.EditorTools.Map
             go.transform.localPosition = centre;
             go.transform.localRotation = rotation ?? Quaternion.identity;
             go.transform.localScale = size;
+            go.GetComponent<MeshFilter>().sharedMesh = BoxMeshes.Get(size); // UVs in metres: textures keep their scale
             go.GetComponent<MeshRenderer>().sharedMaterial = EnvironmentPalette.Get(material);
             if (!collider) Object.DestroyImmediate(go.GetComponent<Collider>());
             return go;

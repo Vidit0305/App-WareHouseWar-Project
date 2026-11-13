@@ -6,26 +6,34 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using WarehouseDuel.EditorTools.Gameplay;
 using WarehouseDuel.Profile;
+using WarehouseDuel.Weapons;
 
 namespace WarehouseDuel.EditorTools.UI
 {
     /// <summary>
-    /// Generates the profile art: preset avatars (portraits of the voxel soldier rendered in different camo,
-    /// skin tones, team colours and gear) and procedural banners, then stores them in Resources/ProfileCatalog.
+    /// Generates the profile art and stores it in Resources/ProfileCatalog:
+    /// avatars = portraits of the voxel soldier in different war gear (helmet, beret, night vision, gas mask,
+    /// balaclava, headset, boonie hat, bandana, face paint), camo and skin tones, holding a weapon, in front of a
+    /// painted battlefield backdrop; banners = <see cref="BannerArt"/>.
     /// </summary>
     internal static class ProfileArtBuilder
     {
-        public const string AvatarFolder = "Assets/UI/Avatars";
-        public const string BannerFolder = "Assets/UI/Banners";
+        public const string AvatarFolder = "Assets/Art/UI/Avatars";
+        public const string BannerFolder = "Assets/Art/UI/Banners";
         public const string CatalogPath = "Assets/Resources/ProfileCatalog.asset";
 
         private const int AvatarSize = 256;
-        private const int BannerWidth = 640, BannerHeight = 160;
+
+        private enum Gear { Helmet, Beret, Boonie, Balaclava, Headset, NightVision, GasMask, Bandana }
+        private enum Backdrop { SunsetFire, NightOps, DesertStorm, Inferno, Arctic, SteelStorm }
 
         private struct AvatarStyle
         {
-            public Color team, camo, skin, goggles, background;
-            public bool mask;
+            public Gear gear;
+            public Color team, camo, skin, accent;
+            public bool mask, facePaint;
+            public Backdrop backdrop;
+            public int weapon;    // catalog index, -1 = none
             public float yaw;
         }
 
@@ -33,52 +41,62 @@ namespace WarehouseDuel.EditorTools.UI
         private static readonly Color Desert = new Color(1f, 0.82f, 0.58f);
         private static readonly Color Urban = new Color(0.72f, 0.76f, 0.8f);
         private static readonly Color Navy = new Color(0.6f, 0.7f, 0.95f);
-        private static readonly Color Night = new Color(0.5f, 0.52f, 0.55f);
+        private static readonly Color Night = new Color(0.45f, 0.47f, 0.5f);
+        private static readonly Color Snow = new Color(1.25f, 1.3f, 1.35f);
         private static readonly Color SkinLight = new Color32(236, 182, 140, 255);
         private static readonly Color SkinMedium = new Color32(198, 134, 90, 255);
-        private static readonly Color SkinDark = new Color32(132, 82, 52, 255);
-        private static readonly Color LensBlue = new Color32(60, 170, 255, 255);
-        private static readonly Color LensAmber = new Color32(255, 170, 40, 255);
-        private static readonly Color LensGreen = new Color32(80, 230, 120, 255);
-        private static readonly Color LensRed = new Color32(255, 70, 60, 255);
+        private static readonly Color SkinDark = new Color32(122, 76, 48, 255);
+        private static readonly Color Blue = new Color(0.2f, 0.55f, 1f), Red = new Color(1f, 0.3f, 0.25f), Green = new Color(0.35f, 0.8f, 0.35f);
+        private static readonly Color Orange = new Color(1f, 0.55f, 0.15f), Black = new Color(0.14f, 0.14f, 0.16f), Olive = new Color(0.36f, 0.4f, 0.24f);
+        private static readonly Color Maroon = new Color(0.45f, 0.08f, 0.1f), Tan = new Color(0.7f, 0.58f, 0.4f);
 
         private static readonly AvatarStyle[] Avatars =
         {
-            new AvatarStyle { team = new Color(0.2f, 0.55f, 1f), camo = Woodland, skin = SkinLight, goggles = LensBlue, mask = true, yaw = -14f, background = new Color32(28, 70, 140, 255) },
-            new AvatarStyle { team = new Color(1f, 0.3f, 0.25f), camo = Desert, skin = SkinMedium, goggles = LensAmber, mask = false, yaw = 12f, background = new Color32(140, 40, 34, 255) },
-            new AvatarStyle { team = new Color(0.3f, 0.85f, 0.4f), camo = Woodland, skin = SkinDark, goggles = LensGreen, mask = true, yaw = -8f, background = new Color32(30, 100, 52, 255) },
-            new AvatarStyle { team = new Color(1f, 0.6f, 0.15f), camo = Urban, skin = SkinLight, goggles = LensAmber, mask = false, yaw = 16f, background = new Color32(150, 80, 20, 255) },
-            new AvatarStyle { team = new Color(0.65f, 0.4f, 1f), camo = Navy, skin = SkinMedium, goggles = LensBlue, mask = true, yaw = -16f, background = new Color32(72, 40, 130, 255) },
-            new AvatarStyle { team = new Color(0.2f, 0.9f, 0.95f), camo = Urban, skin = SkinDark, goggles = LensBlue, mask = false, yaw = 10f, background = new Color32(20, 100, 112, 255) },
-            new AvatarStyle { team = new Color(1f, 0.85f, 0.2f), camo = Desert, skin = SkinLight, goggles = LensRed, mask = true, yaw = -10f, background = new Color32(140, 110, 20, 255) },
-            new AvatarStyle { team = new Color(1f, 0.45f, 0.75f), camo = Woodland, skin = SkinMedium, goggles = LensAmber, mask = false, yaw = 14f, background = new Color32(130, 40, 90, 255) },
-            new AvatarStyle { team = new Color(0.95f, 0.95f, 0.95f), camo = Night, skin = SkinDark, goggles = LensRed, mask = true, yaw = -12f, background = new Color32(60, 66, 78, 255) },
-            new AvatarStyle { team = new Color(0.15f, 0.15f, 0.18f), camo = Navy, skin = SkinLight, goggles = LensGreen, mask = true, yaw = 8f, background = new Color32(22, 26, 36, 255) },
+            new AvatarStyle { gear = Gear.Helmet, team = Blue, camo = Woodland, skin = SkinLight, accent = new Color(0.25f, 0.7f, 1f), mask = true, backdrop = Backdrop.SunsetFire, weapon = 0, yaw = -14f },
+            new AvatarStyle { gear = Gear.Beret, team = Maroon, camo = Desert, skin = SkinMedium, accent = Maroon, backdrop = Backdrop.DesertStorm, weapon = 3, yaw = 12f },
+            new AvatarStyle { gear = Gear.NightVision, team = Green, camo = Night, skin = SkinDark, accent = Green, mask = true, backdrop = Backdrop.NightOps, weapon = 1, yaw = -10f },
+            new AvatarStyle { gear = Gear.Balaclava, team = Black, camo = Urban, skin = SkinLight, accent = Black, backdrop = Backdrop.Inferno, weapon = 0, yaw = 14f },
+            new AvatarStyle { gear = Gear.Headset, team = Olive, camo = Woodland, skin = SkinMedium, accent = new Color(1f, 0.6f, 0.2f), mask = true, backdrop = Backdrop.SteelStorm, weapon = 0, yaw = -16f },
+            new AvatarStyle { gear = Gear.GasMask, team = Olive, camo = Night, skin = SkinLight, accent = new Color(0.4f, 0.9f, 0.8f), backdrop = Backdrop.Inferno, weapon = 1, yaw = 10f },
+            new AvatarStyle { gear = Gear.Boonie, team = Olive, camo = Woodland, skin = SkinDark, accent = Olive, facePaint = true, backdrop = Backdrop.SunsetFire, weapon = 2, yaw = -12f },
+            new AvatarStyle { gear = Gear.Bandana, team = Red, camo = Desert, skin = SkinMedium, accent = Red, facePaint = true, backdrop = Backdrop.DesertStorm, weapon = 0, yaw = 15f },
+            new AvatarStyle { gear = Gear.Helmet, team = Red, camo = Urban, skin = SkinDark, accent = new Color(1f, 0.4f, 0.3f), mask = true, backdrop = Backdrop.Arctic, weapon = 1, yaw = 9f },
+            new AvatarStyle { gear = Gear.Beret, team = Black, camo = Navy, skin = SkinLight, accent = Black, backdrop = Backdrop.NightOps, weapon = 3, yaw = -15f },
+            new AvatarStyle { gear = Gear.Helmet, team = Orange, camo = Desert, skin = SkinLight, accent = new Color(1f, 0.7f, 0.2f), facePaint = true, backdrop = Backdrop.SunsetFire, weapon = 2, yaw = 12f },
+            new AvatarStyle { gear = Gear.NightVision, team = Olive, camo = Woodland, skin = SkinMedium, accent = Green, backdrop = Backdrop.NightOps, weapon = 0, yaw = 14f },
+            new AvatarStyle { gear = Gear.Balaclava, team = new Color(0.9f, 0.92f, 0.95f), camo = Snow, skin = SkinLight, accent = new Color(0.9f, 0.92f, 0.95f), backdrop = Backdrop.Arctic, weapon = 0, yaw = -9f },
+            new AvatarStyle { gear = Gear.Boonie, team = Tan, camo = Desert, skin = SkinMedium, accent = Tan, mask = true, backdrop = Backdrop.DesertStorm, weapon = 0, yaw = 10f },
+            new AvatarStyle { gear = Gear.GasMask, team = Black, camo = Woodland, skin = SkinDark, accent = new Color(1f, 0.55f, 0.2f), backdrop = Backdrop.SteelStorm, weapon = 1, yaw = -13f },
+            new AvatarStyle { gear = Gear.Helmet, team = Black, camo = Night, skin = SkinDark, accent = new Color(1f, 0.3f, 0.2f), facePaint = true, backdrop = Backdrop.Inferno, weapon = 0, yaw = 11f },
         };
-
-        public static readonly string[] BannerNames = { "Steel", "Hazard", "Woodland", "Desert", "Sunset", "Arctic", "Inferno", "Neon" };
 
         public static void Build(SetupReport report)
         {
             FolderStructure.EnsureFolder(AvatarFolder);
             FolderStructure.EnsureFolder(BannerFolder);
             FolderStructure.EnsureFolder("Assets/Resources");
+            ClearFolder(AvatarFolder);
+            ClearFolder(BannerFolder);
+
+            WeaponCatalog weapons = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseDuel.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
 
             var avatars = new List<Sprite>();
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             for (int i = 0; i < Avatars.Length; i++)
             {
                 string path = $"{AvatarFolder}/Avatar_{i:00}.png";
-                RenderAvatar(Avatars[i], path);
-                avatars.Add(ImportSprite(path));
+                RenderAvatar(Avatars[i], weapons, path);
+                avatars.Add(ImportSprite(path, 256));
             }
 
+            BannerArt.Prepare(weapons);
             var banners = new List<Sprite>();
-            for (int i = 0; i < BannerNames.Length; i++)
+            for (int i = 0; i < BannerArt.Names.Length; i++)
             {
-                string path = $"{BannerFolder}/Banner_{i:00}_{BannerNames[i]}.png";
-                SaveTexture(path, BannerWidth, BannerHeight, (x, y) => BannerPixel(i, x, y));
-                banners.Add(ImportSprite(path));
+                int style = i;
+                string path = $"{BannerFolder}/Banner_{i:00}_{BannerArt.Names[i].Replace(" ", "")}.png";
+                SaveTexture(path, BannerArt.Width, BannerArt.Height, (x, y) => BannerArt.Pixel(style, x, y));
+                banners.Add(ImportSprite(path, 512));
             }
 
             var catalog = AssetDatabase.LoadAssetAtPath<ProfileCatalog>(CatalogPath);
@@ -89,7 +107,7 @@ namespace WarehouseDuel.EditorTools.UI
             }
             catalog.avatars = avatars.ToArray();
             catalog.banners = banners.ToArray();
-            catalog.bannerNames = (string[])BannerNames.Clone();
+            catalog.bannerNames = (string[])BannerArt.Names.Clone();
             EditorUtility.SetDirty(catalog);
             AssetDatabase.SaveAssets();
 
@@ -100,12 +118,13 @@ namespace WarehouseDuel.EditorTools.UI
 
         // ------------------------------------------------------------------ avatars
 
-        private static void RenderAvatar(AvatarStyle style, string path)
+        private static void RenderAvatar(AvatarStyle style, WeaponCatalog weapons, string path)
         {
             var root = new GameObject("Avatar Model");
             root.transform.position = new Vector3(0f, -500f, 0f);
             root.transform.rotation = Quaternion.Euler(0f, 180f + style.yaw, 0f);
             SoldierModelBuilder.Rig rig = SoldierModelBuilder.Build(root.transform, "Soldier");
+            var temporary = new List<Object>();
 
             // Per-avatar material copies (the shared soldier materials are left untouched).
             var copies = new Dictionary<Material, Material>();
@@ -119,45 +138,173 @@ namespace WarehouseDuel.EditorTools.UI
                     if (copy.IsKeywordEnabled("_EMISSION")) copy.SetColor("_EmissionColor", color.Value * 1.4f);
                 }
                 copies[source] = copy;
+                temporary.Add(copy);
                 return copy;
             }
 
+            Material skinMaterial = null, camoMaterial = null;
             foreach (Renderer r in root.GetComponentsInChildren<Renderer>())
             {
                 Material m = r.sharedMaterial;
-                string n = m.name;
-                bool lowerFaceMask = n == "M_Soldier_Mask" && r.transform.parent == rig.Head && r.transform.localScale.y > 0.15f;
-                if (n == "M_Soldier_Camo") r.sharedMaterial = Copy(m, style.camo);
-                else if (n == "M_Soldier_CamoDark") r.sharedMaterial = Copy(m, style.camo * 0.75f);
-                else if (n == "M_Soldier_Skin") r.sharedMaterial = Copy(m, style.skin);
-                else if (n == "M_Soldier_Team") r.sharedMaterial = Copy(m, style.team);
-                else if (n == "M_Soldier_Goggles") r.sharedMaterial = Copy(m, style.goggles);
-                if (lowerFaceMask && !style.mask) r.sharedMaterial = Copy(rig.Head.GetComponentInChildren<Renderer>().sharedMaterial, style.skin);
+                switch (m.name)
+                {
+                    case "M_Soldier_Camo": r.sharedMaterial = camoMaterial = Copy(m, style.camo); break;
+                    case "M_Soldier_CamoDark": r.sharedMaterial = Copy(m, style.camo * 0.75f); break;
+                    case "M_Soldier_Skin": r.sharedMaterial = skinMaterial = Copy(m, style.skin); break;
+                    case "M_Soldier_Team": r.sharedMaterial = Copy(m, style.team); break;
+                    case "M_Soldier_Goggles": r.sharedMaterial = Copy(m, style.accent); break;
+                }
             }
 
-            var lightObject = new GameObject("Avatar Key Light");
-            lightObject.transform.rotation = Quaternion.Euler(28f, 200f, 0f);
-            Light key = lightObject.AddComponent<Light>();
-            key.type = LightType.Directional;
-            key.intensity = 1.25f;
-            key.color = new Color(1f, 0.96f, 0.9f);
-            key.shadows = LightShadows.None;
+            Material Flat(Color color, float emission = 0f)
+            {
+                var material = new Material(Shader.Find("Universal Render Pipeline/Simple Lit"));
+                material.SetColor("_BaseColor", color);
+                material.SetFloat("_Smoothness", 0.2f);
+                if (emission > 0f)
+                {
+                    material.EnableKeyword("_EMISSION");
+                    material.SetColor("_EmissionColor", color * emission);
+                }
+                temporary.Add(material);
+                return material;
+            }
+
+            void Part(Vector3 position, Vector3 size, Material material, float rollZ = 0f)
+            {
+                GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                Object.DestroyImmediate(go.GetComponent<Collider>());
+                go.transform.SetParent(rig.Head, false);
+                go.transform.localPosition = position;
+                go.transform.localRotation = Quaternion.Euler(0f, 0f, rollZ);
+                go.transform.localScale = size;
+                go.GetComponent<MeshRenderer>().sharedMaterial = material;
+            }
+
+            // Head pieces: helmet group sits above y = 0.28; the lower face mask is the big mask box.
+            var helmet = new List<GameObject>();
+            GameObject lowerMask = null;
+            foreach (Transform child in rig.Head)
+            {
+                if (child.localPosition.y > 0.28f) helmet.Add(child.gameObject);
+                if (child.GetComponent<Renderer>()?.sharedMaterial.name == "M_Soldier_Mask" && child.localScale.y > 0.15f) lowerMask = child.gameObject;
+            }
+            void HideHelmet() { foreach (GameObject go in helmet) go.SetActive(false); }
+            if (lowerMask != null) lowerMask.SetActive(style.mask);
+
+            Material black = Flat(new Color(0.07f, 0.07f, 0.08f));
+            Material darkGear = Flat(new Color(0.16f, 0.17f, 0.15f));
+            switch (style.gear)
+            {
+                case Gear.Beret:
+                    HideHelmet();
+                    Part(new Vector3(0.03f, 0.385f, 0f), new Vector3(0.43f, 0.07f, 0.44f), Flat(style.accent), -9f);
+                    Part(new Vector3(-0.1f, 0.35f, 0.21f), new Vector3(0.06f, 0.06f, 0.012f), Flat(new Color(1f, 0.78f, 0.25f), 0.6f));
+                    break;
+                case Gear.Boonie:
+                    HideHelmet();
+                    Part(new Vector3(0f, 0.41f, 0f), new Vector3(0.41f, 0.12f, 0.41f), camoMaterial);
+                    Part(new Vector3(0f, 0.355f, 0f), new Vector3(0.64f, 0.025f, 0.64f), camoMaterial);
+                    break;
+                case Gear.Balaclava:
+                    HideHelmet();
+                    if (lowerMask != null) lowerMask.SetActive(false);
+                    Material wrap = Flat(style.accent * 0.9f + new Color(0.03f, 0.03f, 0.03f));
+                    Part(new Vector3(0f, 0.18f, 0f), new Vector3(0.395f, 0.41f, 0.395f), wrap);
+                    Part(new Vector3(0f, 0.22f, 0.199f), new Vector3(0.3f, 0.08f, 0.01f), skinMaterial);
+                    Part(new Vector3(-0.08f, 0.22f, 0.205f), new Vector3(0.07f, 0.045f, 0.01f), black);
+                    Part(new Vector3(0.08f, 0.22f, 0.205f), new Vector3(0.07f, 0.045f, 0.01f), black);
+                    break;
+                case Gear.Headset:
+                    Part(new Vector3(-0.215f, 0.2f, 0f), new Vector3(0.07f, 0.15f, 0.13f), darkGear);
+                    Part(new Vector3(0.215f, 0.2f, 0f), new Vector3(0.07f, 0.15f, 0.13f), darkGear);
+                    Part(new Vector3(0f, 0.49f, 0f), new Vector3(0.5f, 0.035f, 0.06f), darkGear);
+                    Part(new Vector3(0.16f, 0.09f, 0.15f), new Vector3(0.02f, 0.02f, 0.16f), black, 0f);
+                    Part(new Vector3(0.24f, 0.2f, 0.02f), new Vector3(0.02f, 0.03f, 0.03f), Flat(style.accent, 1.5f));
+                    break;
+                case Gear.NightVision:
+                    Part(new Vector3(0f, 0.47f, 0.24f), new Vector3(0.1f, 0.07f, 0.06f), darkGear);
+                    Part(new Vector3(-0.05f, 0.41f, 0.3f), new Vector3(0.075f, 0.075f, 0.14f), black);
+                    Part(new Vector3(0.05f, 0.41f, 0.3f), new Vector3(0.075f, 0.075f, 0.14f), black);
+                    Material lens = Flat(new Color(0.3f, 1f, 0.4f), 2.2f);
+                    Part(new Vector3(-0.05f, 0.41f, 0.372f), new Vector3(0.055f, 0.055f, 0.01f), lens);
+                    Part(new Vector3(0.05f, 0.41f, 0.372f), new Vector3(0.055f, 0.055f, 0.01f), lens);
+                    break;
+                case Gear.GasMask:
+                    if (lowerMask != null) lowerMask.SetActive(false);
+                    Part(new Vector3(0f, 0.15f, 0.215f), new Vector3(0.34f, 0.27f, 0.07f), black);
+                    Material glass = Flat(style.accent * 0.6f, 0.8f);
+                    Part(new Vector3(-0.085f, 0.22f, 0.252f), new Vector3(0.1f, 0.08f, 0.012f), glass);
+                    Part(new Vector3(0.085f, 0.22f, 0.252f), new Vector3(0.1f, 0.08f, 0.012f), glass);
+                    Part(new Vector3(0f, 0.06f, 0.29f), new Vector3(0.13f, 0.13f, 0.12f), Flat(new Color(0.3f, 0.34f, 0.22f)));
+                    break;
+                case Gear.Bandana:
+                    HideHelmet();
+                    Part(new Vector3(0f, 0.36f, 0f), new Vector3(0.39f, 0.04f, 0.39f), Flat(new Color(0.16f, 0.1f, 0.07f)));
+                    Part(new Vector3(0f, 0.31f, 0f), new Vector3(0.405f, 0.07f, 0.405f), Flat(style.accent));
+                    Part(new Vector3(0f, 0.3f, -0.22f), new Vector3(0.07f, 0.09f, 0.08f), Flat(style.accent * 0.85f));
+                    break;
+            }
+            if (style.facePaint)
+            {
+                Material paint = Flat(new Color(0.08f, 0.1f, 0.06f));
+                Part(new Vector3(-0.09f, 0.185f, 0.1925f), new Vector3(0.08f, 0.022f, 0.005f), paint);
+                Part(new Vector3(0.09f, 0.185f, 0.1925f), new Vector3(0.08f, 0.022f, 0.005f), paint);
+                Part(new Vector3(0f, 0.3f, 0.1925f), new Vector3(0.22f, 0.02f, 0.005f), paint);
+            }
+
+            if (weapons != null && style.weapon >= 0)
+            {
+                WeaponDefinition def = weapons.Get(style.weapon);
+                if (def != null && def.worldModelPrefab != null) Object.Instantiate(def.worldModelPrefab, rig.WeaponSocket, false);
+            }
+
+            // Lighting: warm key, strong coloured rim from behind, cool fill.
+            var lights = new List<GameObject>();
+            Light AddLight(string name, Quaternion rotation, float intensity, Color color)
+            {
+                var go = new GameObject(name);
+                go.transform.rotation = rotation;
+                Light light = go.AddComponent<Light>();
+                light.type = LightType.Directional;
+                light.intensity = intensity;
+                light.color = color;
+                light.shadows = LightShadows.None;
+                lights.Add(go);
+                return light;
+            }
+            Color rimColour = BackdropRim(style.backdrop);
+            // The soldier faces -Z (towards the camera): the key shines along +Z onto his face, the rim along -Z from behind.
+            AddLight("Key", Quaternion.Euler(24f, 22f, 0f), 1.2f, new Color(1f, 0.9f, 0.78f));
+            AddLight("Rim", Quaternion.Euler(12f, 196f, 0f), 1.7f, rimColour);
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.7f, 0.74f, 0.82f);
-            RenderSettings.ambientEquatorColor = new Color(0.5f, 0.5f, 0.52f);
-            RenderSettings.ambientGroundColor = new Color(0.3f, 0.28f, 0.26f);
+            RenderSettings.ambientSkyColor = new Color(0.45f, 0.52f, 0.66f);
+            RenderSettings.ambientEquatorColor = new Color(0.38f, 0.36f, 0.36f);
+            RenderSettings.ambientGroundColor = new Color(0.22f, 0.2f, 0.18f);
             RenderSettings.fog = false;
 
+            Vector3 focus = root.transform.position + new Vector3(0f, 1.58f, 0f);
             var camObject = new GameObject("Avatar Camera");
-            Vector3 focus = root.transform.position + new Vector3(0f, 1.66f, 0f);
-            camObject.transform.position = focus + new Vector3(0.12f, 0.08f, -1.75f);
+            camObject.transform.position = focus + new Vector3(0.14f, 0.1f, -1.8f);
             camObject.transform.LookAt(focus);
             Camera cam = camObject.AddComponent<Camera>();
-            cam.fieldOfView = 26f;
+            cam.fieldOfView = 31f;
             cam.nearClipPlane = 0.1f;
             cam.farClipPlane = 10f;
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = style.background;
+            cam.backgroundColor = Color.black;
+
+            // Painted battlefield backdrop on an unlit quad behind the soldier.
+            Texture2D backdropTexture = BackdropTexture(style.backdrop);
+            temporary.Add(backdropTexture);
+            var backdropMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+            backdropMaterial.SetTexture("_BaseMap", backdropTexture);
+            temporary.Add(backdropMaterial);
+            GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            quad.transform.position = camObject.transform.position + camObject.transform.forward * 3.4f;
+            quad.transform.rotation = camObject.transform.rotation;
+            quad.transform.localScale = new Vector3(2.2f, 2.2f, 1f);
+            quad.GetComponent<MeshRenderer>().sharedMaterial = backdropMaterial;
 
             var rt = new RenderTexture(AvatarSize, AvatarSize, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4 };
             cam.targetTexture = rt;
@@ -169,14 +316,14 @@ namespace WarehouseDuel.EditorTools.UI
             RenderTexture.active = null;
             cam.targetTexture = null;
 
-            // Studio backdrop: lighter centre glow, darker corners.
+            // Grade: a touch of contrast and a dark vignette.
             for (int y = 0; y < AvatarSize; y++)
             {
                 for (int x = 0; x < AvatarSize; x++)
                 {
-                    float d = new Vector2(x / (float)AvatarSize - 0.5f, y / (float)AvatarSize - 0.62f).magnitude;
-                    float shade = Mathf.Lerp(1.25f, 0.55f, Mathf.SmoothStep(0.05f, 0.75f, d));
-                    Color c = texture.GetPixel(x, y) * shade;
+                    float d = new Vector2(x / (float)AvatarSize - 0.5f, y / (float)AvatarSize - 0.55f).magnitude;
+                    Color c = texture.GetPixel(x, y);
+                    c = new Color(Contrast(c.r), Contrast(c.g), Contrast(c.b)) * Mathf.Lerp(1.05f, 0.55f, Mathf.SmoothStep(0.25f, 0.75f, d));
                     c.a = 1f;
                     texture.SetPixel(x, y, c);
                 }
@@ -187,103 +334,80 @@ namespace WarehouseDuel.EditorTools.UI
             Object.DestroyImmediate(texture);
             rt.Release();
             Object.DestroyImmediate(rt);
+            Object.DestroyImmediate(quad);
             Object.DestroyImmediate(camObject);
-            Object.DestroyImmediate(lightObject);
+            foreach (GameObject go in lights) Object.DestroyImmediate(go);
             Object.DestroyImmediate(root);
-            foreach (Material copy in copies.Values) Object.DestroyImmediate(copy);
+            foreach (Object o in temporary) Object.DestroyImmediate(o);
         }
 
-        // ------------------------------------------------------------------ banners
+        private static float Contrast(float v) => Mathf.Clamp01((v - 0.5f) * 1.12f + 0.5f);
 
-        private static Color BannerPixel(int style, int x, int y)
+        private static Color BackdropRim(Backdrop backdrop)
         {
-            float u = x / (float)(BannerWidth - 1), v = y / (float)(BannerHeight - 1);
-            switch (style)
+            switch (backdrop)
             {
-                case 0: // Steel: brushed metal with a diagonal sheen
-                {
-                    Color a = Hex(0x1E2633), b = Hex(0x3A4658);
-                    Color c = Color.Lerp(a, b, u * 0.7f + v * 0.3f);
-                    c *= 0.93f + 0.07f * Hash(0, y);
-                    float sheen = Mathf.Exp(-Mathf.Pow((u - v * 0.35f - 0.55f) * 7f, 2f));
-                    return Color.Lerp(c, Hex(0x7F93AE), sheen * 0.35f);
-                }
-                case 1: // Hazard stripes
-                {
-                    bool yellow = Mathf.Repeat((x + y) / 44f, 1f) < 0.5f;
-                    Color c = yellow ? Hex(0xF5B21E) : Hex(0x17181B);
-                    return c * (0.85f + 0.15f * Noise(x * 0.05f, y * 0.05f));
-                }
-                case 2: // Woodland camo (pixel blocks)
-                    return Camo(x, y, 7, Hex(0x2F3E22), Hex(0x4C6232), Hex(0x6E7A44), Hex(0x3B2D20));
-                case 3: // Desert camo
-                    return Camo(x, y, 11, Hex(0xB89A6A), Hex(0xD2B98A), Hex(0x8C7150), Hex(0xE3D2AA));
-                case 4: // Sunset with a striped sun
-                {
-                    Color top = Hex(0xFF9A3C), mid = Hex(0xD9406A), bottom = Hex(0x2B1640);
-                    Color sky = v > 0.5f ? Color.Lerp(mid, top, (v - 0.5f) * 2f) : Color.Lerp(bottom, mid, v * 2f);
-                    Vector2 p = new Vector2((u - 0.78f) * BannerWidth / BannerHeight, v - 0.42f);
-                    float sun = p.magnitude;
-                    bool cut = v < 0.42f && Mathf.Repeat(v * 22f, 1f) < 0.35f;
-                    if (sun < 0.36f && !cut) return Color.Lerp(Hex(0xFFE27A), Hex(0xFF7A3C), Mathf.InverseLerp(0.78f, 0.06f, v));
-                    float glow = Mathf.Exp(-sun * 3.2f) * 0.35f;
-                    return sky + new Color(glow, glow * 0.6f, glow * 0.2f, 0f);
-                }
-                case 5: // Arctic digital camo
-                    return Camo(x, y, 9, Hex(0xE8EEF3), Hex(0xBFCCD8), Hex(0x8FA3B6), Hex(0xF8FBFD));
-                case 6: // Inferno
-                {
-                    float n = Noise(x * 0.018f, y * 0.045f - u * 2f) * 0.6f + Noise(x * 0.05f, y * 0.11f) * 0.4f;
-                    float heat = Mathf.Clamp01((1f - v) * 0.9f + (n - 0.5f) * 0.9f);
-                    Color c = heat < 0.5f ? Color.Lerp(Hex(0x120606), Hex(0x8A1A10), heat * 2f) : Color.Lerp(Hex(0x8A1A10), Hex(0xFF8A2A), (heat - 0.5f) * 2f);
-                    return c;
-                }
-                default: // Neon grid
-                {
-                    Color c = Color.Lerp(Hex(0x0B0618), Hex(0x2A0F45), v);
-                    float gx = Mathf.Abs(Mathf.Repeat(x / 40f, 1f) - 0.5f) * 40f;
-                    float gy = Mathf.Abs(Mathf.Repeat(y / 40f, 1f) - 0.5f) * 40f;
-                    float line = Mathf.Max(Mathf.Clamp01(1.5f - (20f - gx)), Mathf.Clamp01(1.5f - (20f - gy)));
-                    c = Color.Lerp(c, Hex(0x2EE6FF), line * 0.55f * (1f - v * 0.6f));
-                    float band = Mathf.Exp(-Mathf.Pow((u - v * 0.8f - 0.45f) * 5f, 2f));
-                    return Color.Lerp(c, Hex(0xFF3FA4), band * 0.45f);
-                }
+                case Backdrop.NightOps: return new Color(0.4f, 1f, 0.5f);
+                case Backdrop.Arctic: return new Color(0.6f, 0.8f, 1f);
+                case Backdrop.SteelStorm: return new Color(0.55f, 0.7f, 1f);
+                case Backdrop.DesertStorm: return new Color(1f, 0.78f, 0.45f);
+                default: return new Color(1f, 0.45f, 0.15f);
             }
         }
 
-        private static Color Camo(int x, int y, int seed, Color a, Color b, Color c, Color d)
+        /// <summary>256² painted battlefield: sky gradient, glow, ruined skyline, smoke, embers or snow.</summary>
+        private static Texture2D BackdropTexture(Backdrop backdrop)
         {
-            const int block = 8;
-            int bx = x / block, by = y / block;
-            float n = Noise(bx * 0.22f + seed, by * 0.22f) * 0.65f + Noise(bx * 0.6f, by * 0.6f + seed) * 0.35f;
-            Color col = n < 0.36f ? a : n < 0.5f ? b : n < 0.64f ? c : d;
-            return col * (0.95f + 0.05f * Hash(bx, by));
+            const int size = 256;
+            var texture = new Texture2D(size, size, TextureFormat.RGB24, false);
+            Color top, middle, bottom, glow, skyline, particle;
+            switch (backdrop)
+            {
+                case Backdrop.NightOps: top = BannerArt.Hex(0x02080A); middle = BannerArt.Hex(0x0B2A1E); bottom = BannerArt.Hex(0x154A2C); glow = new Color(0.3f, 0.9f, 0.4f); skyline = BannerArt.Hex(0x020604); particle = new Color(0.7f, 1f, 0.7f); break;
+                case Backdrop.DesertStorm: top = BannerArt.Hex(0x8C6A44); middle = BannerArt.Hex(0xC9965A); bottom = BannerArt.Hex(0xE8C08A); glow = new Color(1f, 0.92f, 0.7f); skyline = BannerArt.Hex(0x4A3220); particle = new Color(0.95f, 0.85f, 0.65f); break;
+                case Backdrop.Inferno: top = BannerArt.Hex(0x120404); middle = BannerArt.Hex(0x6A1208); bottom = BannerArt.Hex(0xE04A12); glow = new Color(1f, 0.5f, 0.15f); skyline = BannerArt.Hex(0x0A0303); particle = new Color(1f, 0.6f, 0.2f); break;
+                case Backdrop.Arctic: top = BannerArt.Hex(0x4C6688); middle = BannerArt.Hex(0x9DB6CF); bottom = BannerArt.Hex(0xE2ECF4); glow = new Color(0.9f, 0.95f, 1f); skyline = BannerArt.Hex(0x2A3A4E); particle = Color.white; break;
+                case Backdrop.SteelStorm: top = BannerArt.Hex(0x10161E); middle = BannerArt.Hex(0x34465A); bottom = BannerArt.Hex(0x6A7E92); glow = new Color(0.7f, 0.8f, 1f); skyline = BannerArt.Hex(0x0A0E14); particle = new Color(0.8f, 0.85f, 0.9f); break;
+                default: top = BannerArt.Hex(0x2A0E1C); middle = BannerArt.Hex(0xB2401E); bottom = BannerArt.Hex(0xFFAE4A); glow = new Color(1f, 0.7f, 0.3f); skyline = BannerArt.Hex(0x120806); particle = new Color(1f, 0.65f, 0.25f); break;
+            }
+            bool snow = backdrop == Backdrop.Arctic;
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    float u = x / (size - 1f), v = y / (size - 1f);
+                    Color c = v > 0.45f ? Color.Lerp(middle, top, (v - 0.45f) / 0.55f) : Color.Lerp(bottom, middle, v / 0.45f);
+                    c += glow * Mathf.Exp(-new Vector2((u - 0.35f) * 2.2f, (v - 0.32f) * 3f).sqrMagnitude) * 0.45f;
+                    float smoke = BannerArt.Noise(x * 0.025f, y * 0.04f) * 0.6f + BannerArt.Noise(x * 0.07f, y * 0.09f) * 0.4f;
+                    c = Color.Lerp(c, skyline * 1.6f + new Color(0.05f, 0.05f, 0.05f), Mathf.Clamp01(smoke * 1.3f - 0.55f) * Mathf.Clamp01(1.2f - v));
+                    int column = x / 14;
+                    float building = 0.18f + 0.22f * BannerArt.Hash(column, 11) * (BannerArt.Hash(column, 3) > 0.35f ? 1f : 0.3f);
+                    building -= (BannerArt.Hash(x / 4, 19) > 0.8f ? 0.03f : 0f);                       // broken tops
+                    if (v < building)
+                    {
+                        c = skyline;
+                        if (BannerArt.Hash(x / 3, y / 4) > 0.97f && v < building - 0.04f) c = glow * 0.9f; // burning windows
+                    }
+                    float speck = BannerArt.Hash(x, y * 3 + 7);
+                    if (speck > (snow ? 0.985f : 0.993f)) c = Color.Lerp(c, particle, snow ? 0.9f : 0.8f);
+                    texture.SetPixel(x, y, c);
+                }
+            }
+            texture.Apply();
+            texture.wrapMode = TextureWrapMode.Clamp;
+            return texture;
         }
 
         // ------------------------------------------------------------------ helpers
 
-        private static float Hash(int x, int y)
+        private static void ClearFolder(string folder)
         {
-            unchecked
+            if (!AssetDatabase.IsValidFolder(folder)) return;
+            foreach (string guid in AssetDatabase.FindAssets("t:Texture2D", new[] { folder }))
             {
-                uint h = (uint)(x * 374761393 + y * 668265263);
-                h = (h ^ (h >> 13)) * 1274126177u;
-                return ((h ^ (h >> 16)) & 0xFFFF) / 65535f;
+                AssetDatabase.DeleteAsset(AssetDatabase.GUIDToAssetPath(guid));
             }
         }
-
-        private static float Noise(float x, float y)
-        {
-            int ix = Mathf.FloorToInt(x), iy = Mathf.FloorToInt(y);
-            float fx = x - ix, fy = y - iy;
-            fx = fx * fx * (3f - 2f * fx);
-            fy = fy * fy * (3f - 2f * fy);
-            float a = Mathf.Lerp(Hash(ix, iy), Hash(ix + 1, iy), fx);
-            float b = Mathf.Lerp(Hash(ix, iy + 1), Hash(ix + 1, iy + 1), fx);
-            return Mathf.Lerp(a, b, fy);
-        }
-
-        private static Color Hex(int rgb) => new Color(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1f);
 
         private static void SaveTexture(string path, int width, int height, System.Func<int, int, Color> pixel)
         {
@@ -302,7 +426,8 @@ namespace WarehouseDuel.EditorTools.UI
             Object.DestroyImmediate(texture);
         }
 
-        private static Sprite ImportSprite(string path)
+        /// <summary>Imports as a sprite with mobile compression (ASTC on Android) to keep the APK small.</summary>
+        private static Sprite ImportSprite(string path, int maxSize)
         {
             AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
             if (AssetImporter.GetAtPath(path) is TextureImporter importer)
@@ -312,7 +437,16 @@ namespace WarehouseDuel.EditorTools.UI
                 importer.mipmapEnabled = false;
                 importer.wrapMode = TextureWrapMode.Clamp;
                 importer.filterMode = FilterMode.Bilinear;
-                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.maxTextureSize = maxSize;
+                importer.textureCompression = TextureImporterCompression.Compressed;
+                importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings
+                {
+                    name = "Android",
+                    overridden = true,
+                    maxTextureSize = maxSize,
+                    format = TextureImporterFormat.ASTC_5x5,
+                    compressionQuality = 50,
+                });
                 importer.SaveAndReimport();
             }
             return AssetDatabase.LoadAssetAtPath<Sprite>(path);

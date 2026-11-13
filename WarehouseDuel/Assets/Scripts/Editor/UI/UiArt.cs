@@ -15,14 +15,16 @@ namespace WarehouseDuel.EditorTools.UI
     /// </summary>
     internal static class UiArt
     {
-        public const string SpriteFolder = "Assets/UI/Sprites";
-        public const string IconFolder = "Assets/UI/Icons";
-        public const string FontFolder = "Assets/UI/Fonts";
+        public const string SpriteFolder = "Assets/Art/UI/Sprites";
+        public const string IconFolder = "Assets/Art/UI/Icons";
+        public const string FontFolder = "Assets/Art/Fonts";
 
         public static Sprite Rounded => LoadSprite(SpriteFolder, "UI_Rounded");
         public static Sprite RoundedSmall => LoadSprite(SpriteFolder, "UI_RoundedSmall");
         public static Sprite Circle => LoadSprite(SpriteFolder, "UI_Circle");
         public static Sprite Ring => LoadSprite(SpriteFolder, "UI_Ring");
+        /// <summary>270° ring segment whose tail fades out — the loading spinner.</summary>
+        public static Sprite Arc => LoadSprite(SpriteFolder, "UI_Arc");
         public static Sprite Gradient => LoadSprite(SpriteFolder, "UI_Vignette");
         public static Sprite Avatar => AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Branding/AppIcon_Round.png");
         public static Sprite SplashBackground => AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Branding/Splash_Background.png");
@@ -41,6 +43,14 @@ namespace WarehouseDuel.EditorTools.UI
             SaveSprite(SpriteFolder, "UI_Ring", 128, (x, y) => Mathf.Min(Disc(x, y, 128, 62f), 1f - Disc(x, y, 128, 52f)));
             SaveSprite(SpriteFolder, "UI_Vignette", 128, Vignette);
             SaveSprite(SpriteFolder, "UI_BottomFade", 64, (x, y) => Mathf.SmoothStep(1f, 0f, y / 63f));
+            SaveSprite(SpriteFolder, "UI_Arc", 128, (x, y) =>
+            {
+                float ring = Mathf.Min(Disc(x, y, 128, 62f), 1f - Disc(x, y, 128, 50f));
+                float angle = Mathf.Repeat(Mathf.Atan2(y + 0.5f - 64f, x + 0.5f - 64f) * Mathf.Rad2Deg, 360f) / 360f;
+                float tail = angle < 0.75f ? Mathf.Pow(angle / 0.75f, 1.6f) : 0f;          // head at 270°, tail fades to 0°
+                float cap = angle >= 0.75f && angle < 0.765f ? 1f : 0f;                   // rounded-ish head
+                return ring * Mathf.Max(tail, cap);
+            });
 
             foreach (KeyValuePair<string, Func<Vector2, float>> icon in Icons)
             {
@@ -233,6 +243,8 @@ namespace WarehouseDuel.EditorTools.UI
                 Mathf.Min(SdBox(p, new Vector2(-0.46f, -0.3f), new Vector2(0.2f, 0.34f)), SdBox(p, new Vector2(0.46f, -0.42f), new Vector2(0.2f, 0.22f)))),
             ["Close"] = p => Mathf.Min(SdSegment(p, new Vector2(-0.42f, -0.42f), new Vector2(0.42f, 0.42f), 0.1f),
                 SdSegment(p, new Vector2(-0.42f, 0.42f), new Vector2(0.42f, -0.42f), 0.1f)),
+            ["Alert"] = p => Mathf.Min(SdRing(p, Vector2.zero, 0.7f, 0.08f),
+                Mathf.Min(SdSegment(p, new Vector2(0f, 0.38f), new Vector2(0f, -0.06f), 0.1f), SdCircle(p, new Vector2(0f, -0.32f), 0.1f))),
             ["Star"] = p =>
             {
                 // Tips every 72°, starting straight up; radius blends from the valley (0.3) to the tip (0.68).

@@ -23,7 +23,7 @@ namespace WarehouseDuel.UI
         public virtual void Close()
         {
             if (!gameObject.activeSelf) return;
-            gameObject.SetActive(false);
+            Widgets.PopupFx.Hide(gameObject);
             Closed?.Invoke();
         }
 

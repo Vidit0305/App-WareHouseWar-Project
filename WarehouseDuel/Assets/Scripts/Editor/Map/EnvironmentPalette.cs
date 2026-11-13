@@ -6,9 +6,9 @@ using UnityEngine;
 namespace WarehouseDuel.EditorTools.Map
 {
     /// <summary>
-    /// Flat-colour material palette for the low-poly look. Materials are saved as assets in
-    /// Assets/Art/Materials/Environment and reused (one material per colour → good SRP batching).
-    /// Uses URP "Simple Lit": diffuse lighting without PBR specular — cheaper on mobile and closer to a cartoon look.
+    /// Material palette for the environment. Each surface gets a base colour plus a procedural detail texture
+    /// (rust, grime, seams...) from <see cref="EnvironmentTextures"/>. Materials are saved in
+    /// Assets/Art/Materials/Environment and reused (good SRP batching). URP "Simple Lit" keeps it cheap on mobile.
     /// </summary>
     internal static class EnvironmentPalette
     {
@@ -48,18 +48,20 @@ namespace WarehouseDuel.EditorTools.Map
             return material;
         }
 
-        public static void ClearCache() => Cache.Clear();
+        public static void ClearCache()
+        {
+            Cache.Clear();
+            EnvironmentTextures.ClearCache();
+        }
 
         private static void Configure(Material m, Id id)
         {
             m.enableInstancing = true;
+            m.SetTexture("_BaseMap", null);
+            m.SetTextureScale("_BaseMap", Vector2.one);
             switch (id)
             {
-                case Id.ConcreteFloor:
-                    Base(m, Hex(0xA3A19A));
-                    m.SetTexture("_BaseMap", FloorTexture());
-                    m.SetTextureScale("_BaseMap", new Vector2(18f, 28f)); // 2 m tiles on a 36 × 56 m floor
-                    break;
+                case Id.ConcreteFloor: Base(m, Hex(0xB2ADA4)); break;
                 case Id.Concrete: Base(m, Hex(0xA19E96)); break;
                 case Id.ConcreteDark: Base(m, Hex(0x6A6A68)); break;
                 case Id.MetalWall: Base(m, Hex(0x5F8AB0)); break;
@@ -88,8 +90,46 @@ namespace WarehouseDuel.EditorTools.Map
                 case Id.PanelRed: Emissive(m, Hex(0xFF4A3A), 1.6f); break;
                 case Id.SpawnBlue: Emissive(m, Hex(0x3C9BFF), 1.2f); break;
                 case Id.SpawnRed: Emissive(m, Hex(0xFF5A3C), 1.2f); break;
-                case Id.Skylight: Emissive(m, Hex(0xCFE8FF), 1.35f); break;
+                case Id.Skylight: Emissive(m, Hex(0xFFE2B8), 1.6f); break;
             }
+            ApplySurface(m, id);
+        }
+
+        /// <summary>Detail texture + tiling per surface (box UVs are in metres, see <see cref="BoxMeshes"/>).</summary>
+        private static void ApplySurface(Material m, Id id)
+        {
+            EnvironmentTextures.Kind kind;
+            float metresPerTile;
+            switch (id)
+            {
+                case Id.ConcreteFloor: kind = EnvironmentTextures.Kind.ConcreteFloor; metresPerTile = 4f; break;
+                case Id.Concrete:
+                case Id.ConcreteDark: kind = EnvironmentTextures.Kind.Concrete; metresPerTile = 2f; break;
+                case Id.MetalWall:
+                case Id.MetalWallRib: kind = EnvironmentTextures.Kind.Corrugated; metresPerTile = 2f; break;
+                case Id.Roof: kind = EnvironmentTextures.Kind.Corrugated; metresPerTile = 3f; break;
+                case Id.Steel: kind = EnvironmentTextures.Kind.Steel; metresPerTile = 1f; break;
+                case Id.Hazard: kind = EnvironmentTextures.Kind.Hazard; metresPerTile = 1f; m.SetColor("_BaseColor", Color.white); break;
+                case Id.ContainerRed:
+                case Id.ContainerBlue:
+                case Id.ContainerGreen:
+                case Id.ContainerOrange: kind = EnvironmentTextures.Kind.Container; metresPerTile = 2f; break;
+                case Id.Wood:
+                case Id.WoodDark: kind = EnvironmentTextures.Kind.Wood; metresPerTile = 1f; break;
+                case Id.Cardboard: kind = EnvironmentTextures.Kind.Cardboard; metresPerTile = 1f; break;
+                case Id.BarrelRed:
+                case Id.BarrelBlue: kind = EnvironmentTextures.Kind.Barrel; metresPerTile = 1f; break;
+                case Id.RackOrange:
+                case Id.RackBlue:
+                case Id.Machine:
+                case Id.MachineDark: kind = EnvironmentTextures.Kind.PaintedMetal; metresPerTile = 1f; break;
+                case Id.Grating: kind = EnvironmentTextures.Kind.Grating; metresPerTile = 1f; break;
+                case Id.FloorPaint:
+                case Id.FloorPaintWhite: kind = EnvironmentTextures.Kind.WornPaint; metresPerTile = 2f; break;
+                default: return; // emissive surfaces stay flat
+            }
+            m.SetTexture("_BaseMap", EnvironmentTextures.Get(kind));
+            m.SetTextureScale("_BaseMap", Vector2.one / metresPerTile);
         }
 
         private static void Base(Material m, Color color)
@@ -111,44 +151,5 @@ namespace WarehouseDuel.EditorTools.Map
 
         private static Color Hex(int rgb) =>
             new Color(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1f);
-
-        /// <summary>A small tileable concrete-slab texture (soft mottling + darker seams), generated once.</summary>
-        private static Texture2D FloorTexture()
-        {
-            string path = $"{TextureFolder}/T_ConcreteTile.png";
-            var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-            if (existing != null) return existing;
-
-            const int size = 128;
-            var texture = new Texture2D(size, size, TextureFormat.RGB24, false);
-            var random = new System.Random(1234);
-            for (int y = 0; y < size; y++)
-            {
-                for (int x = 0; x < size; x++)
-                {
-                    float noise = 0.93f + (float)random.NextDouble() * 0.07f;
-                    float blotch = 0.97f + 0.03f * Mathf.PerlinNoise(x * 0.05f, y * 0.05f);
-                    bool seam = x < 2 || y < 2;
-                    float v = seam ? 0.78f : noise * blotch;
-                    texture.SetPixel(x, y, new Color(v, v, v));
-                }
-            }
-            texture.Apply();
-
-            FolderStructure.EnsureFolder(TextureFolder);
-            File.WriteAllBytes(path, texture.EncodeToPNG());
-            Object.DestroyImmediate(texture);
-            AssetDatabase.ImportAsset(path);
-
-            if (AssetImporter.GetAtPath(path) is TextureImporter importer)
-            {
-                importer.wrapMode = TextureWrapMode.Repeat;
-                importer.filterMode = FilterMode.Bilinear;
-                importer.mipmapEnabled = true;
-                importer.maxTextureSize = 128;
-                importer.SaveAndReimport();
-            }
-            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-        }
     }
 }

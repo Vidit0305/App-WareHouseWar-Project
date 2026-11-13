@@ -169,19 +169,34 @@ namespace WarehouseDuel.EditorTools.UI
             Button joinBack = CreateButton("Back", joinCard, "BACK", ButtonStyle.Ghost, new Vector2(300f, 110f));
             Place((RectTransform)joinBack.transform, new Vector2(0.5f, 0f), new Vector2(-170f, 34f), new Vector2(300f, 110f), new Vector2(0.5f, 0f));
 
-            RectTransform busyCard = SharedUiBuilder.Modal("Busy", safe, new Vector2(700f, 380f), out GameObject busyPanel);
-            Image spinner = CreateImage("Spinner", busyCard, Accent, UiArt.Ring);
-            Place(spinner.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -50f), new Vector2(110f, 110f), new Vector2(0.5f, 1f));
-            Image spinnerGap = CreateImage("Gap", spinner.transform, new Color(0.086f, 0.1f, 0.14f, 1f));
-            Place(spinnerGap.rectTransform, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(30f, 40f), new Vector2(0.5f, 1f));
-            TextMeshProUGUI busyText = CreateText("Text", busyCard, "Connecting…", 34f, TextPrimary, TextAlignmentOptions.Center);
-            Place(busyText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -190f), new Vector2(640f, 140f), new Vector2(0.5f, 1f));
+            // Busy: spinner, title, live status line.
+            RectTransform busyCard = SharedUiBuilder.Modal("Busy", safe, new Vector2(760f, 440f), out GameObject busyPanel);
+            busyCard.GetComponent<Image>().color = new Color(0.07f, 0.08f, 0.12f, 0.98f);
+            Image busyAccent = CreateImage("Accent", busyCard, Accent, UiArt.RoundedSmall);
+            Place(busyAccent.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -10f), new Vector2(160f, 6f), new Vector2(0.5f, 1f));
+            RectTransform spinner = SharedUiBuilder.CreateSpinner(busyCard, 120f);
+            Place(spinner, new Vector2(0.5f, 1f), new Vector2(0f, -56f), new Vector2(120f, 120f), new Vector2(0.5f, 1f));
+            TextMeshProUGUI busyTitle = CreateText("Title", busyCard, "PLEASE WAIT", 40f, Accent, TextAlignmentOptions.Center, display: true);
+            busyTitle.characterSpacing = 6f;
+            Place(busyTitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -206f), new Vector2(700f, 56f), new Vector2(0.5f, 1f));
+            TextMeshProUGUI busyText = CreateText("Text", busyCard, "Connecting…", 30f, TextPrimary, TextAlignmentOptions.Center);
+            Place(busyText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -268f), new Vector2(680f, 90f), new Vector2(0.5f, 1f));
+            TextMeshProUGUI busyHint = CreateText("Hint", busyCard, "This usually takes a few seconds.", 22f, TextMuted, TextAlignmentOptions.Center);
+            Place(busyHint.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 30f), new Vector2(680f, 36f), new Vector2(0.5f, 0f));
 
-            RectTransform messageCard = SharedUiBuilder.Modal("Message Panel", safe, new Vector2(900f, 420f), out GameObject messagePanel);
-            TextMeshProUGUI messageText = CreateText("Text", messageCard, "", 34f, TextPrimary, TextAlignmentOptions.Center);
-            Stretch(messageText.rectTransform, 50f, 50f, 50f, 150f);
-            Button messageOk = CreateButton("OK", messageCard, "OK", ButtonStyle.Primary, new Vector2(300f, 90f));
-            Place((RectTransform)messageOk.transform, new Vector2(0.5f, 0f), new Vector2(0f, 30f), new Vector2(300f, 90f), new Vector2(0.5f, 0f));
+            // Message: alert icon, title, text, OK.
+            RectTransform messageCard = SharedUiBuilder.Modal("Message Panel", safe, new Vector2(900f, 500f), out GameObject messagePanel);
+            messageCard.GetComponent<Image>().color = new Color(0.07f, 0.08f, 0.12f, 0.98f);
+            Image messageBand = CreateImage("Band", messageCard, new Color(0.92f, 0.31f, 0.24f, 1f), UiArt.Rounded);
+            Place(messageBand.rectTransform, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(900f, 120f), new Vector2(0.5f, 1f));
+            Image messageIcon = CreateImage("Icon", messageBand.transform, Color.white, UiArt.Icon("Alert"));
+            Place(messageIcon.rectTransform, new Vector2(0f, 0.5f), new Vector2(40f, 0f), new Vector2(72f, 72f), new Vector2(0f, 0.5f));
+            TextMeshProUGUI messageTitle = CreateText("Title", messageBand.transform, "NOTICE", 42f, Color.white, TextAlignmentOptions.Left, display: true);
+            Place(messageTitle.rectTransform, new Vector2(0f, 0.5f), new Vector2(136f, 0f), new Vector2(720f, 70f), new Vector2(0f, 0.5f));
+            TextMeshProUGUI messageText = CreateText("Text", messageCard, "", 31f, TextPrimary, TextAlignmentOptions.Center);
+            Stretch(messageText.rectTransform, 60f, 60f, 150f, 150f);
+            Button messageOk = CreateButton("OK", messageCard, "OK", ButtonStyle.Primary, new Vector2(320f, 96f), 40f);
+            Place((RectTransform)messageOk.transform, new Vector2(0.5f, 0f), new Vector2(0f, 34f), new Vector2(320f, 96f), new Vector2(0.5f, 0f));
 
             var controller = canvas.gameObject.AddComponent<MainMenuController>();
             Wire(controller, "homePanel", home.gameObject);
@@ -211,8 +226,8 @@ namespace WarehouseDuel.EditorTools.UI
             Wire(controller, "joinErrorText", joinError);
             Wire(controller, "busyPanel", busyPanel);
             Wire(controller, "busyText", busyText);
-            Wire(controller, "busySpinner", spinner.rectTransform);
             Wire(controller, "messagePanel", messagePanel);
+            Wire(controller, "messageTitle", messageTitle);
             Wire(controller, "messageText", messageText);
             Wire(controller, "messageOkButton", messageOk);
 

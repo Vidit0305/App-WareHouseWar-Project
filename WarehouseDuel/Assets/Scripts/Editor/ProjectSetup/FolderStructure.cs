@@ -9,17 +9,21 @@ namespace WarehouseDuel.EditorTools
     {
         public static readonly string[] All =
         {
-            "Assets/Art/Characters",
-            "Assets/Art/Environment",
-            "Assets/Art/Weapons",
+            "Assets/Art/Branding",
+            "Assets/Art/Fonts",
             "Assets/Art/Materials",
+            "Assets/Art/Meshes",
+            "Assets/Art/Shaders",
             "Assets/Art/Textures",
+            "Assets/Art/UI/Avatars",
+            "Assets/Art/UI/Banners",
+            "Assets/Art/UI/Icons",
+            "Assets/Art/UI/Sprites",
             "Assets/Audio/Music",
             "Assets/Audio/SFX",
             "Assets/Prefabs/Players",
             "Assets/Prefabs/Weapons",
             "Assets/Prefabs/Environment",
-            "Assets/Prefabs/UI",
             "Assets/Scenes",
             "Assets/Scripts/Core",
             "Assets/Scripts/Player",
@@ -29,13 +33,13 @@ namespace WarehouseDuel.EditorTools
             "Assets/Scripts/UI",
             "Assets/Scripts/Audio",
             "Assets/Scripts/Environment",
+            "Assets/Scripts/Profile",
             "Assets/Scripts/Editor",
             "Assets/ScriptableObjects/Weapons",
             "Assets/ScriptableObjects/GameSettings",
-            "Assets/UI/Fonts",
-            "Assets/UI/Icons",
-            "Assets/UI/Sprites",
-            "Assets/Settings",
+            "Assets/Plugins/Android",
+            "Assets/Resources",
+            "Assets/Settings/PostFX",
         };
 
         public static void Apply(SetupReport report)

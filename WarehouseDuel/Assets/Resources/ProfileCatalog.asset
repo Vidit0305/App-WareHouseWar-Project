@@ -23,15 +23,29 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 53279b90480ab2f4dba1f11e11671077, type: 3}
   - {fileID: 21300000, guid: 4399f0365f74d9543a56afefd2a31d01, type: 3}
   - {fileID: 21300000, guid: 2bb0ad4aa1b3f2e41b624e733f6a3928, type: 3}
+  - {fileID: 21300000, guid: 2a68862f28cc05a4585dd4b3b190d9c5, type: 3}
+  - {fileID: 21300000, guid: 708fde6e2fd307b47a04b86c7b01a8ac, type: 3}
+  - {fileID: 21300000, guid: e0dfd72cf5ec1a341912f49a53b8a014, type: 3}
+  - {fileID: 21300000, guid: d053b50ec4b3bd04ab42443dd3a5d8dc, type: 3}
+  - {fileID: 21300000, guid: 2f7684210379ed541877b15ea47b5e61, type: 3}
+  - {fileID: 21300000, guid: 30749e8a7030a06438716e5d9e9911c4, type: 3}
   banners:
   - {fileID: 21300000, guid: 7bd6e0f3bca02ca499b12c4d733b8dca, type: 3}
   - {fileID: 21300000, guid: dc09cda047b045044b22fcb304b70c38, type: 3}
   - {fileID: 21300000, guid: f6565625c40378e41940fea050e700ef, type: 3}
   - {fileID: 21300000, guid: 073a550939b61d542abed9280f6b941c, type: 3}
-  - {fileID: 21300000, guid: 08ebe542eb48a7b419e296bf87273808, type: 3}
-  - {fileID: 21300000, guid: 0a136b7ac81e6a742b79d36594b54acc, type: 3}
-  - {fileID: 21300000, guid: 5ab2b93d9f391df4992c4de73de1e9e3, type: 3}
-  - {fileID: 21300000, guid: b9da31421e54cec4d9759d85eee29e7b, type: 3}
+  - {fileID: 21300000, guid: fb8d9a5ab533e6c49bf1115abdd1ebd1, type: 3}
+  - {fileID: 21300000, guid: 66570f673094b9e4497701e18bd5abf2, type: 3}
+  - {fileID: 21300000, guid: cd9bbc83a2a77734aab6a3d4fb76cbdd, type: 3}
+  - {fileID: 21300000, guid: 941201bb046e4294f9a21824ed8c5566, type: 3}
+  - {fileID: 21300000, guid: 8d704cda1cf240d4e9fa1a8beaf679d2, type: 3}
+  - {fileID: 21300000, guid: 7fe5aceb30edc4041b7e3c6f10a9b35c, type: 3}
+  - {fileID: 21300000, guid: f321020228ac6434690f6d23049c2e13, type: 3}
+  - {fileID: 21300000, guid: b26d09bfafab7ec4ba4d9b66f3c93f63, type: 3}
+  - {fileID: 21300000, guid: 5bc1e3e38e60e174997f7eaaf08dbb07, type: 3}
+  - {fileID: 21300000, guid: 9dd07be3aa799cc448520d55b30eec76, type: 3}
+  - {fileID: 21300000, guid: a2d51e8124e3c0f48b79242bcdd2b827, type: 3}
+  - {fileID: 21300000, guid: 4f73a3b3539864d4eb5936241bc8356c, type: 3}
   bannerNames:
   - Steel
   - Hazard
@@ -41,3 +55,11 @@ MonoBehaviour:
   - Arctic
   - Inferno
   - Neon
+  - Crossfire
+  - Ammo Belt
+  - Airstrike
+  - Sniper
+  - Tank Column
+  - Dog Tags
+  - Barbed Wire
+  - Skull Squad

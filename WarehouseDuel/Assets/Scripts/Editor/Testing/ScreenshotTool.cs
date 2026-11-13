@@ -126,6 +126,7 @@ namespace WarehouseDuel.EditorTools.Testing
             cam.farClipPlane = 300f;
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.1f, 0.12f, 0.16f);
+            WarehouseDuel.EditorTools.Map.AtmosphereKit.EnableCameraEffects(cam);
             Render(cam, path);
             Object.DestroyImmediate(go);
         }
@@ -149,6 +150,7 @@ namespace WarehouseDuel.EditorTools.Testing
             cam.fieldOfView = 72f;
             cam.nearClipPlane = 0.03f;
             cam.farClipPlane = 300f;
+            WarehouseDuel.EditorTools.Map.AtmosphereKit.EnableCameraEffects(cam);
             var socket = new GameObject("Socket").transform;
             socket.SetParent(go.transform, false);
             socket.localPosition = hip;

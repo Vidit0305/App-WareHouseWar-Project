@@ -52,6 +52,20 @@ namespace WarehouseDuel.Core
             set => SetFloat("aim", Mathf.Clamp(value, MinSensitivity, MaxSensitivity));
         }
 
+        /// <summary>Post-processing (colour grading, bloom, vignette) + anti-aliasing. Off = faster on weak phones.</summary>
+        public static bool PostEffects
+        {
+            get => PlayerPrefs.GetInt(Prefix + "postfx", 1) == 1;
+            set => SetInt("postfx", value ? 1 : 0);
+        }
+
+        /// <summary>Short vibration on button presses and when hit.</summary>
+        public static bool Vibration
+        {
+            get => PlayerPrefs.GetInt(Prefix + "vibration", 1) == 1;
+            set => SetInt("vibration", value ? 1 : 0);
+        }
+
         public static bool InvertY
         {
             get => PlayerPrefs.GetInt(Prefix + "invertY", 0) == 1;
@@ -147,7 +161,7 @@ namespace WarehouseDuel.Core
         /// <summary>Restores audio, camera and control settings to their defaults (graphics and profile are kept).</summary>
         public static void ResetToDefaults()
         {
-            foreach (string key in new[] { "music", "sfx", "look", "aim", "invertY", "layout", "buttonScale" })
+            foreach (string key in new[] { "music", "sfx", "look", "aim", "invertY", "layout", "buttonScale", "vibration" })
             {
                 PlayerPrefs.DeleteKey(Prefix + key);
             }

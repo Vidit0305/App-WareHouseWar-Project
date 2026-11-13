@@ -18,6 +18,8 @@ namespace WarehouseDuel.UI
         [SerializeField] private Slider aimSensitivity;
         [SerializeField] private Slider buttonSize;
         [SerializeField] private Toggle invertY;
+        [SerializeField] private Toggle vibration;
+        [SerializeField] private Toggle postEffects;
         [SerializeField] private OptionSelector quality;
         [SerializeField] private OptionSelector frameRate;
         [SerializeField] private OptionSelector layout;
@@ -61,6 +63,13 @@ namespace WarehouseDuel.UI
             aimSensitivity.onValueChanged.AddListener(v => { if (!initialising) GameSettings.AimSensitivity = v; RefreshLabels(); });
             buttonSize.onValueChanged.AddListener(v => { if (!initialising) GameSettings.ButtonScale = v; RefreshLabels(); });
             invertY.onValueChanged.AddListener(v => { if (!initialising) GameSettings.InvertY = v; });
+            if (postEffects != null) postEffects.onValueChanged.AddListener(v => { if (!initialising) GameSettings.PostEffects = v; });
+            if (vibration != null) vibration.onValueChanged.AddListener(v =>
+            {
+                if (initialising) return;
+                GameSettings.Vibration = v;
+                if (v) Haptics.Medium();
+            });
             quality.Changed += i => GameSettings.QualityLevel = i;
             frameRate.Changed += i => GameSettings.TargetFrameRate = i == 0 ? 30 : 60;
             layout.Changed += i => GameSettings.Layout = (ControlLayout)i;
@@ -80,6 +89,8 @@ namespace WarehouseDuel.UI
             aimSensitivity.value = GameSettings.AimSensitivity;
             buttonSize.value = GameSettings.ButtonScale;
             invertY.isOn = GameSettings.InvertY;
+            if (vibration != null) vibration.isOn = GameSettings.Vibration;
+            if (postEffects != null) postEffects.isOn = GameSettings.PostEffects;
             quality.SetOptions(QualitySettings.names, GameSettings.QualityLevel);
             frameRate.SetOptions(FrameRateOptions, GameSettings.TargetFrameRate >= 60 ? 1 : 0);
             layout.SetOptions(LayoutOptions, (int)GameSettings.Layout);

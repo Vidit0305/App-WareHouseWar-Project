@@ -5,6 +5,7 @@ using WarehouseDuel.Audio;
 using WarehouseDuel.Core;
 using WarehouseDuel.Multiplayer;
 using WarehouseDuel.Player;
+using WarehouseDuel.UI.Widgets;
 
 namespace WarehouseDuel.UI
 {
@@ -49,8 +50,8 @@ namespace WarehouseDuel.UI
         [Header("Busy / messages")]
         [SerializeField] private GameObject busyPanel;
         [SerializeField] private TMP_Text busyText;
-        [SerializeField] private RectTransform busySpinner;
         [SerializeField] private GameObject messagePanel;
+        [SerializeField] private TMP_Text messageTitle;
         [SerializeField] private TMP_Text messageText;
         [SerializeField] private Button messageOkButton;
 
@@ -95,12 +96,14 @@ namespace WarehouseDuel.UI
             onlineBackButton.onClick.AddListener(() => ShowDialog(null));
             joinConfirmButton.onClick.AddListener(JoinRoom);
             joinBackButton.onClick.AddListener(() => ShowDialog(onlinePanel));
-            messageOkButton.onClick.AddListener(() => messagePanel.SetActive(false));
+            messageOkButton.onClick.AddListener(() => PopupFx.Hide(messagePanel));
 
             settingsPanel.SetActive(false);
             messagePanel.SetActive(false);
             homePanel.SetActive(true);
-            ShowDialog(null);
+            onlinePanel.SetActive(false);
+            joinPanel.SetActive(false);
+            busyPanel.SetActive(false);
             RefreshWins();
             GameSettings.Changed += RefreshWins;
 
@@ -108,7 +111,7 @@ namespace WarehouseDuel.UI
             {
                 session.StatusChanged += OnSessionStatus;
                 // Arrived here after a disconnect or failed join: explain why.
-                if (session.Status == SessionStatus.Failed && !string.IsNullOrEmpty(session.LastError)) ShowMessage(session.LastError);
+                if (session.Status == SessionStatus.Failed && !string.IsNullOrEmpty(session.LastError)) ShowMessage(session.LastError, "CONNECTION LOST");
             }
 
             AudioManager.Instance.StopAmbience();
@@ -123,7 +126,6 @@ namespace WarehouseDuel.UI
 
         private void Update()
         {
-            if (busyPanel.activeSelf && busySpinner != null) busySpinner.Rotate(0f, 0f, -300f * Time.unscaledDeltaTime);
             if (BackPressed()) HandleBack();
         }
 
@@ -139,7 +141,7 @@ namespace WarehouseDuel.UI
         /// <summary>Android back: closes the top-most dialog or screen.</summary>
         private void HandleBack()
         {
-            if (messagePanel.activeSelf) messagePanel.SetActive(false);
+            if (messagePanel.activeSelf) PopupFx.Hide(messagePanel);
             else if (busyPanel.activeSelf) return;
             else if (joinPanel.activeSelf) ShowDialog(onlinePanel);
             else if (onlinePanel.activeSelf) ShowDialog(null);
@@ -157,7 +159,7 @@ namespace WarehouseDuel.UI
 
         private void CloseSettings()
         {
-            settingsPanel.SetActive(false);
+            PopupFx.Hide(settingsPanel);
             homePanel.SetActive(true);
         }
 
@@ -205,7 +207,7 @@ namespace WarehouseDuel.UI
         {
             session = SessionService.Instance;
             if (session != null) return true;
-            ShowMessage("Networking is not initialised (SessionService missing).");
+            ShowMessage("Networking is not initialised (SessionService missing).", "SOMETHING WENT WRONG");
             return false;
         }
 
@@ -226,11 +228,12 @@ namespace WarehouseDuel.UI
         private void ShowFailure(GameObject returnTo)
         {
             ShowDialog(returnTo);
-            ShowMessage(string.IsNullOrEmpty(session.LastError) ? "Something went wrong. Please try again." : session.LastError);
+            ShowMessage(string.IsNullOrEmpty(session.LastError) ? "Something went wrong. Please try again." : session.LastError, "CONNECTION PROBLEM");
         }
 
-        private void ShowMessage(string text)
+        private void ShowMessage(string text, string title = "NOTICE")
         {
+            if (messageTitle != null) messageTitle.text = title;
             messageText.text = text;
             messagePanel.SetActive(true);
         }
@@ -238,9 +241,11 @@ namespace WarehouseDuel.UI
         /// <summary>Shows one of the online dialogs over the home screen (null = none).</summary>
         private void ShowDialog(GameObject dialog)
         {
-            onlinePanel.SetActive(dialog == onlinePanel);
-            joinPanel.SetActive(dialog == joinPanel);
-            busyPanel.SetActive(dialog == busyPanel);
+            foreach (GameObject panel in new[] { onlinePanel, joinPanel, busyPanel })
+            {
+                if (panel == dialog) panel.SetActive(true);
+                else PopupFx.Hide(panel);
+            }
         }
     }
 }

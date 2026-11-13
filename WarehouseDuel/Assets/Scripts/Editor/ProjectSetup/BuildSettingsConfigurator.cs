@@ -29,6 +29,7 @@ namespace WarehouseDuel.EditorTools
             foreach (EditorBuildSettingsScene existing in EditorBuildSettings.scenes)
             {
                 if (ordered.Exists(s => s.path == existing.path)) continue;
+                if (AssetDatabase.LoadAssetAtPath<SceneAsset>(existing.path) == null) continue; // deleted scene: drop it
                 ordered.Add(new EditorBuildSettingsScene(existing.path, false));
                 if (existing.enabled) report.Info($"Disabled unrelated scene in the build list: {existing.path}");
             }

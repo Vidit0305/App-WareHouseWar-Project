@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using WarehouseDuel.Audio;
+using WarehouseDuel.Core;
 using WarehouseDuel.Match;
 using WarehouseDuel.Multiplayer;
 using WarehouseDuel.Player;
@@ -295,7 +296,11 @@ namespace WarehouseDuel.UI
             subscribedWeapons = null;
         }
 
-        private void OnDamaged() => damageVignette.alpha = 0.6f;
+        private void OnDamaged()
+        {
+            damageVignette.alpha = 0.6f;
+            Haptics.Medium();
+        }
 
         private void OnHitConfirmed(bool headshot, bool killed)
         {
@@ -313,10 +318,12 @@ namespace WarehouseDuel.UI
             if (killer == me.Owner && victim != me)
             {
                 ShowBanner(victim.LastDeathWasHeadshot ? $"HEADSHOT!  ELIMINATED {victimName}" : $"ELIMINATED {victimName}");
+                Haptics.Medium();
             }
             else if (victim == me)
             {
                 ShowBanner("YOU WERE ELIMINATED");
+                Haptics.Heavy();
             }
         }
 

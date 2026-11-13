@@ -139,7 +139,7 @@ namespace WarehouseDuel.EditorTools.Gameplay
             cam.farClipPlane = 120f;
             cam.fieldOfView = 72f;
             cameraObject.AddComponent<AudioListener>();
-            cameraObject.AddComponent<UniversalAdditionalCameraData>();
+            WarehouseDuel.EditorTools.Map.AtmosphereKit.EnableCameraEffects(cam); // post-processing + FXAA (switchable in Settings)
             Transform viewSocket = Child(cameraObject.transform, "ViewModelSocket", new Vector3(0.13f, -0.13f, 0.2f));
             UiFactory.Wire(rig, "playerCamera", cam);
             UiFactory.Wire(rig, "viewModelSocket", viewSocket);
@@ -198,26 +198,6 @@ namespace WarehouseDuel.EditorTools.Gameplay
             var renderer = go.GetComponent<MeshRenderer>();
             renderer.sharedMaterial = material;
             return renderer;
-        }
-
-        private static Material CharacterMaterial(string name, Color color, float smoothness, bool emissive = false)
-        {
-            string path = $"{MaterialFolder}/{name}.mat";
-            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (material == null)
-            {
-                material = new Material(Shader.Find("Universal Render Pipeline/Simple Lit"));
-                AssetDatabase.CreateAsset(material, path);
-            }
-            material.SetColor("_BaseColor", color);
-            material.SetFloat("_Smoothness", smoothness);
-            if (emissive)
-            {
-                material.EnableKeyword("_EMISSION");
-                material.SetColor("_EmissionColor", color * 1.5f);
-            }
-            EditorUtility.SetDirty(material);
-            return material;
         }
 
         private static Material BubbleMaterial()

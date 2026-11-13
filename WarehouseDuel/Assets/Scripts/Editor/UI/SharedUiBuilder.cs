@@ -103,36 +103,60 @@ namespace WarehouseDuel.EditorTools.UI
             so.FindProperty("startWeapon").intValue = weapon;
             so.ApplyModifiedPropertiesWithoutUndo();
 
-            // Lighting: warm key spotlight on the character, sun for shadows, bright trilight ambient.
+            // Lighting, cinematic: warm key spotlight, an orange rim light from behind (sunset through the
+            // high windows), a low golden sun for long shadows, cool ambient, dark warm haze.
             var spotObject = new GameObject("Key Spotlight");
-            spotObject.transform.position = staging.Character + new Vector3(-0.6f, 4.4f, -2.2f);
+            spotObject.transform.position = staging.Character + new Vector3(-0.8f, 4.4f, -2.4f);
             spotObject.transform.LookAt(staging.Character + Vector3.up * 1.1f);
             Light spot = spotObject.AddComponent<Light>();
             spot.type = LightType.Spot;
             spot.range = 10f;
-            spot.spotAngle = 48f;
-            spot.intensity = 9f;
-            spot.color = new Color(1f, 0.92f, 0.8f);
+            spot.spotAngle = 50f;
+            spot.intensity = 15f;
+            spot.color = new Color(1f, 0.88f, 0.72f);
             spot.shadows = LightShadows.None;
 
+            var rimObject = new GameObject("Rim Light");
+            rimObject.transform.position = staging.Character + new Vector3(0.6f, 3.4f, 2.6f);
+            rimObject.transform.LookAt(staging.Character + Vector3.up * 1.3f);
+            Light rim = rimObject.AddComponent<Light>();
+            rim.type = LightType.Spot;
+            rim.range = 8f;
+            rim.spotAngle = 60f;
+            rim.intensity = 22f;
+            rim.color = new Color(1f, 0.5f, 0.2f);
+            rim.shadows = LightShadows.None;
+
             var sunObject = new GameObject("Sun");
-            sunObject.transform.rotation = Quaternion.Euler(42f, -40f, 0f);
+            sunObject.transform.rotation = Quaternion.Euler(28f, 200f, 0f);
             Light sun = sunObject.AddComponent<Light>();
             sun.type = LightType.Directional;
-            sun.intensity = 1.1f;
-            sun.color = new Color(1f, 0.93f, 0.82f);
+            sun.intensity = 1.3f;
+            sun.color = new Color(1f, 0.72f, 0.48f);
             sun.shadows = LightShadows.Soft;
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = new Color(0.62f, 0.68f, 0.8f);
-            RenderSettings.ambientEquatorColor = new Color(0.5f, 0.48f, 0.47f);
-            RenderSettings.ambientGroundColor = new Color(0.32f, 0.3f, 0.28f);
+            RenderSettings.ambientSkyColor = new Color(0.58f, 0.64f, 0.78f);
+            RenderSettings.ambientEquatorColor = new Color(0.52f, 0.47f, 0.44f);
+            RenderSettings.ambientGroundColor = new Color(0.34f, 0.3f, 0.27f);
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
-            RenderSettings.fogColor = new Color(0.12f, 0.14f, 0.18f);
-            RenderSettings.fogStartDistance = 9f;
-            RenderSettings.fogEndDistance = 42f;
+            RenderSettings.fogColor = new Color(0.32f, 0.23f, 0.18f);
+            RenderSettings.fogStartDistance = 10f;
+            RenderSettings.fogEndDistance = 46f;
+
+            // Burning-sunset windows high on the back wall, with beams falling towards the camera.
+            foreach (float x in new[] { -9.5f, -5.5f, 5.5f, 9.5f })
+            {
+                EnvironmentKit.NoShadow(EnvironmentKit.Box(root.transform, "Window", new Vector3(x, 5.0f, 11.72f), new Vector3(2.6f, 1.4f, 0.06f), EnvironmentPalette.Id.Skylight, false));
+                EnvironmentKit.NoShadow(EnvironmentKit.Box(root.transform, "Window Frame", new Vector3(x, 5.0f, 11.69f), new Vector3(0.12f, 1.4f, 0.08f), EnvironmentPalette.Id.Steel, false));
+                AtmosphereKit.LightShaft(root.transform, "Window Beam", new Vector3(x, 5.4f, 11.6f), new Vector3(-x * 0.03f, -0.45f, -1f), Vector3.right,
+                    13f, 2.6f, new Color(0.15f, 0.085f, 0.04f));
+            }
 
             Dust(staging.Character);
+            AtmosphereKit.Embers(staging.Character + new Vector3(0f, 0.1f, 1.5f), new Vector3(12f, 0.5f, 7f), 7f);
+            AtmosphereKit.Smoke(new Vector3(0f, 2.2f, 8.5f), new Vector3(24f, 2f, 4f), new Color(0.32f, 0.24f, 0.2f, 0.16f), 1.4f);
+            AtmosphereKit.AddGlobalVolume(AtmosphereKit.Look.Showroom);
 
             var camObject = new GameObject("Main Camera") { tag = "MainCamera" };
             camObject.transform.position = staging.Camera;
@@ -140,9 +164,10 @@ namespace WarehouseDuel.EditorTools.UI
             Camera cam = camObject.AddComponent<Camera>();
             cam.fieldOfView = staging.FieldOfView;
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.12f, 0.14f, 0.18f);
+            cam.backgroundColor = new Color(0.12f, 0.1f, 0.1f);
             cam.farClipPlane = 60f;
             camObject.AddComponent<AudioListener>();
+            AtmosphereKit.EnableCameraEffects(cam);
 
             var backdrop = root.AddComponent<MenuBackdrop>();
             Wire(backdrop, "cameraTransform", camObject.transform);
@@ -213,7 +238,31 @@ namespace WarehouseDuel.EditorTools.UI
             root = dim.gameObject;
             Image card = CreatePanel("Card", dim.transform);
             Place(card.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, size, new Vector2(0.5f, 0.5f));
+            dim.gameObject.AddComponent<CanvasGroup>();
+            PopupFx fx = dim.gameObject.AddComponent<PopupFx>();
+            Wire(fx, "content", card.rectTransform);
             return card.rectTransform;
+        }
+
+        /// <summary>Loading spinner: accent arc + counter-rotating inner arc + pulsing core.</summary>
+        public static RectTransform CreateSpinner(Transform parent, float size)
+        {
+            RectTransform root = CreateRect("Spinner", parent);
+            root.sizeDelta = new Vector2(size, size);
+            Image glow = CreateImage("Glow", root, new Color(1f, 0.69f, 0.13f, 0.18f), UiArt.Circle);
+            Stretch(glow.rectTransform, -size * 0.2f, -size * 0.2f, -size * 0.2f, -size * 0.2f);
+            Image outer = CreateImage("Outer", root, Accent, UiArt.Arc);
+            Stretch(outer.rectTransform);
+            Image inner = CreateImage("Inner", root, new Color(1f, 1f, 1f, 0.55f), UiArt.Arc);
+            Stretch(inner.rectTransform, size * 0.2f, size * 0.2f, size * 0.2f, size * 0.2f);
+            inner.rectTransform.localScale = new Vector3(-1f, 1f, 1f);
+            Image core = CreateImage("Core", root, Accent, UiArt.Circle);
+            Stretch(core.rectTransform, size * 0.4f, size * 0.4f, size * 0.4f, size * 0.4f);
+            Spinner spinner = root.gameObject.AddComponent<Spinner>();
+            Wire(spinner, "outer", outer.rectTransform);
+            Wire(spinner, "inner", inner.rectTransform);
+            Wire(spinner, "core", core.rectTransform);
+            return root;
         }
 
         /// <summary>
@@ -301,6 +350,7 @@ namespace WarehouseDuel.EditorTools.UI
             OptionSelector layout = SelectorRow(controls, "Button layout", "Where the joystick and fire buttons sit on screen.");
             Slider buttonSize = SliderRow(controls, "Button size", "Make the touch buttons bigger or smaller.", out TextMeshProUGUI buttonSizeValue);
             Toggle invert = SwitchRow(controls, "Invert look", "Swipe up to look down (flight-style controls).");
+            Toggle vibration = SwitchRow(controls, "Vibration", "Short buzz on button taps and when you get hit.");
 
             RectTransform camera = Page(1);
             y = 0f;
@@ -311,6 +361,7 @@ namespace WarehouseDuel.EditorTools.UI
             y = 0f;
             OptionSelector quality = SelectorRow(graphics, "Graphics quality", "Lower it if your phone gets hot or stutters.");
             OptionSelector fps = SelectorRow(graphics, "Frame rate", "60 FPS is smoother; 30 FPS saves battery.");
+            Toggle postEffects = SwitchRow(graphics, "Cinematic effects", "Colour grading, glow and smooth edges. Turn off on slower phones.");
 
             RectTransform audio = Page(3);
             y = 0f;
@@ -340,6 +391,8 @@ namespace WarehouseDuel.EditorTools.UI
             Wire(panel, "aimSensitivity", aim);
             Wire(panel, "buttonSize", buttonSize);
             Wire(panel, "invertY", invert);
+            Wire(panel, "vibration", vibration);
+            Wire(panel, "postEffects", postEffects);
             Wire(panel, "quality", quality);
             Wire(panel, "frameRate", fps);
             Wire(panel, "layout", layout);

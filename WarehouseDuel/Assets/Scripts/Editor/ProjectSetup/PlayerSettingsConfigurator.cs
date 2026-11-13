@@ -111,6 +111,16 @@ namespace WarehouseDuel.EditorTools
             // Photon uses raw sockets; Unity cannot always detect that, so force the INTERNET permission.
             PlayerSettings.Android.forceInternetPermission = true;
             report.Pass("Android: Target API = highest installed; INTERNET permission forced on.");
+
+            // APK size: strip unused engine/.NET code (Assets/link.xml keeps Fusion, Photon and game code whole),
+            // generate smaller IL2CPP code, full compiler optimisation, ASTC textures, no Unity logo texture.
+            PlayerSettings.stripEngineCode = true;
+            PlayerSettings.SetManagedStrippingLevel(NamedBuildTarget.Android, ManagedStrippingLevel.Low);
+            PlayerSettings.SetIl2CppCodeGeneration(NamedBuildTarget.Android, Il2CppCodeGeneration.OptimizeSize);
+            PlayerSettings.SetIl2CppCompilerConfiguration(NamedBuildTarget.Android, Il2CppCompilerConfiguration.Master);
+            PlayerSettings.SplashScreen.showUnityLogo = false;
+            EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.ASTC;
+            report.Pass("Android: size optimisations (code stripping, small IL2CPP code, ASTC textures).");
         }
     }
 }

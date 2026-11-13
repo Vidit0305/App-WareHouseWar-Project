@@ -82,16 +82,13 @@ namespace WarehouseDuel.EditorTools.UI
 
             RectTransform content = CreateRect("Content", page);
             Stretch(content, 40f, 40f, 150f, 26f);
-            AddTransition(root.GetComponent<RectTransform>(), page, new Vector2(0f, -40f));
-            return content;
-        }
 
-        private static void AddTransition(RectTransform root, RectTransform page, Vector2 offset)
-        {
-            var transition = page.gameObject.AddComponent<UiTransition>();
-            var so = new SerializedObject(transition);
-            so.FindProperty("fromOffset").vector2Value = offset;
-            so.ApplyModifiedPropertiesWithoutUndo();
+            // Fade + slide in when opened, fade out when closed (PopupFx.Hide).
+            root.AddComponent<CanvasGroup>();
+            PopupFx fx = root.AddComponent<PopupFx>();
+            Wire(fx, "content", content);
+            SetEnum(fx, "style", (int)PopupFx.Style.Slide);
+            return content;
         }
 
         /// <summary>A row of tab buttons; the screen script colours the selected one.</summary>
@@ -121,19 +118,6 @@ namespace WarehouseDuel.EditorTools.UI
             return panel;
         }
 
-        /// <summary>Selection ring drawn behind a tile (the screen script turns it on/off).</summary>
-        private static Image Ring(Transform parent, RectTransform tile, float thickness)
-        {
-            Image ring = CreateImage("Selected Ring", parent, new Color(1f, 0.69f, 0.13f, 0f), UiArt.Rounded);
-            ring.rectTransform.anchorMin = tile.anchorMin;
-            ring.rectTransform.anchorMax = tile.anchorMax;
-            ring.rectTransform.pivot = tile.pivot;
-            ring.rectTransform.anchoredPosition = tile.anchoredPosition + new Vector2(-thickness, thickness);
-            ring.rectTransform.sizeDelta = tile.sizeDelta + Vector2.one * thickness * 2f;
-            ring.transform.SetSiblingIndex(tile.GetSiblingIndex());
-            return ring;
-        }
-
         /// <summary>Scrollable vertical list (mask + content with layout). Returns the content to clone rows into.</summary>
         public static RectTransform ScrollList(Transform parent, string name, float x, float y, float w, float h, float spacing)
         {
@@ -161,6 +145,38 @@ namespace WarehouseDuel.EditorTools.UI
             scroll.horizontal = false;
             scroll.vertical = true;
             scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = 30f;
+            return content;
+        }
+
+        /// <summary>Scrolling grid filling <paramref name="parent"/> (fixed column count). Returns the content to add cells to.</summary>
+        public static RectTransform ScrollGrid(RectTransform parent, string name, Vector2 cell, Vector2 spacing, int columns)
+        {
+            RectTransform viewport = CreateRect(name, parent);
+            Stretch(viewport);
+            viewport.gameObject.AddComponent<RectMask2D>().padding = new Vector4(-8f, -8f, -8f, -8f);
+            Image hit = viewport.gameObject.AddComponent<Image>();
+            hit.color = new Color(0f, 0f, 0f, 0f);
+            ScrollRect scroll = viewport.gameObject.AddComponent<ScrollRect>();
+
+            RectTransform content = CreateRect("Content", viewport);
+            content.anchorMin = new Vector2(0f, 1f);
+            content.anchorMax = new Vector2(1f, 1f);
+            content.pivot = new Vector2(0.5f, 1f);
+            content.sizeDelta = Vector2.zero;
+            content.anchoredPosition = Vector2.zero;
+            GridLayoutGroup grid = content.gameObject.AddComponent<GridLayoutGroup>();
+            grid.cellSize = cell;
+            grid.spacing = spacing;
+            grid.padding = new RectOffset(8, 8, 8, 8);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = columns;
+            content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            scroll.content = content;
+            scroll.viewport = viewport;
+            scroll.horizontal = false;
+            scroll.movementType = ScrollRect.MovementType.Elastic;
             scroll.scrollSensitivity = 30f;
             return content;
         }
@@ -234,7 +250,7 @@ namespace WarehouseDuel.EditorTools.UI
             pages[0] = avatarPage.gameObject;
             const float tileSize = 160f, gap = 36f;
             // Grid layout so the photo tile (hidden until a photo exists) never leaves a hole.
-            RectTransform grid = At(CreateRect("Avatar Grid", avatarPage), 0f, 0f, 1140f, 400f);
+            RectTransform grid = At(CreateRect("Avatar Grid", avatarPage), 0f, 0f, 1140f, 600f);
             GridLayoutGroup gridLayout = grid.gameObject.AddComponent<GridLayoutGroup>();
             gridLayout.cellSize = new Vector2(tileSize, tileSize);
             gridLayout.spacing = new Vector2(gap, gap);
@@ -278,27 +294,27 @@ namespace WarehouseDuel.EditorTools.UI
                 avatarTiles[i] = tile;
             }
             avatarRings[0].color = Accent;
-            TextMeshProUGUI avatarStatus = Label(avatarPage, "Status", "", 22f, TextMuted, 6f, -420f, 1130f, 64f);
+            TextMeshProUGUI avatarStatus = Label(avatarPage, "Status", "", 22f, TextMuted, 6f, -612f, 1130f, 64f);
 
-            // BANNER page: two columns.
+            // BANNER page: two columns in a scrolling grid.
             RectTransform bannerPage = At(CreateRect("Banner Page", content), 700f, -112f, 1140f, 780f);
             pages[1] = bannerPage.gameObject;
+            RectTransform bannerGrid = ScrollGrid(bannerPage, "Banner List", new Vector2(556f, 140f), new Vector2(18f, 22f), 2);
             int bannerCount = catalog.BannerCount;
             var bannerTiles = new Button[bannerCount];
             var bannerImages = new Image[bannerCount];
             var bannerRings = new Image[bannerCount];
             for (int i = 0; i < bannerCount; i++)
             {
-                float x = (i % 2) * 574f + 6f, y = -(i / 2) * 168f - 6f;
-                Button tile = CreateButton($"Banner {i + 1}", bannerPage, "", ButtonStyle.Ghost, new Vector2(556f, 140f));
-                RectTransform rect = At((RectTransform)tile.transform, x, y, 556f, 140f);
+                Button tile = CreateButton($"Banner {i + 1}", bannerGrid, "", ButtonStyle.Ghost, new Vector2(556f, 140f));
+                bannerRings[i] = CreateImage("Selected Ring", tile.transform, new Color(1f, 0.69f, 0.13f, 0f), UiArt.Rounded);
+                Stretch(bannerRings[i].rectTransform, -7f, -7f, -7f, -7f);
                 bannerImages[i] = Masked(tile.transform, "Mask", UiArt.Rounded, catalog.Banner(i), out RectTransform mask);
                 Stretch(mask);
                 Image nameBack = CreateImage("Name Back", tile.transform, new Color(0f, 0f, 0f, 0.55f), UiArt.RoundedSmall);
                 At(nameBack.rectTransform, 14f, -88f, 200f, 40f);
                 TextMeshProUGUI bannerName = CreateText("Name", nameBack.transform, catalog.BannerName(i).ToUpperInvariant(), 20f, TextPrimary, TextAlignmentOptions.Center, display: true);
                 Stretch(bannerName.rectTransform);
-                bannerRings[i] = Ring(bannerPage, rect, 6f);
                 bannerTiles[i] = tile;
             }
             if (bannerCount > 0) bannerRings[0].color = Accent;
