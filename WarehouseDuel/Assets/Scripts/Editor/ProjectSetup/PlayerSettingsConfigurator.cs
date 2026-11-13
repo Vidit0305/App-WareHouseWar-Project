@@ -112,15 +112,16 @@ namespace WarehouseDuel.EditorTools
             PlayerSettings.Android.forceInternetPermission = true;
             report.Pass("Android: Target API = highest installed; INTERNET permission forced on.");
 
-            // APK size: strip unused engine/.NET code (Assets/link.xml keeps Fusion, Photon and game code whole),
-            // generate smaller IL2CPP code, full compiler optimisation, ASTC textures, no Unity logo texture.
+            // APK size: ASTC textures, no Unity logo texture. Managed code stripping and the IL2CPP size/Master
+            // options stay at Unity's defaults: with them the game started to a black screen on a real phone
+            // (reflection-based code — URP volumes, Fusion — was stripped), and that can't be tested off-device.
             PlayerSettings.stripEngineCode = true;
-            PlayerSettings.SetManagedStrippingLevel(NamedBuildTarget.Android, ManagedStrippingLevel.Low);
-            PlayerSettings.SetIl2CppCodeGeneration(NamedBuildTarget.Android, Il2CppCodeGeneration.OptimizeSize);
-            PlayerSettings.SetIl2CppCompilerConfiguration(NamedBuildTarget.Android, Il2CppCompilerConfiguration.Master);
+            PlayerSettings.SetManagedStrippingLevel(NamedBuildTarget.Android, ManagedStrippingLevel.Minimal);
+            PlayerSettings.SetIl2CppCodeGeneration(NamedBuildTarget.Android, Il2CppCodeGeneration.OptimizeSpeed);
+            PlayerSettings.SetIl2CppCompilerConfiguration(NamedBuildTarget.Android, Il2CppCompilerConfiguration.Release);
             PlayerSettings.SplashScreen.showUnityLogo = false;
             EditorUserBuildSettings.androidBuildSubtarget = MobileTextureSubtarget.ASTC;
-            report.Pass("Android: size optimisations (code stripping, small IL2CPP code, ASTC textures).");
+            report.Pass("Android: ASTC textures; default (safe) IL2CPP code settings.");
         }
     }
 }
