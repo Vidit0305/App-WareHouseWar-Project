@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Fusion;
 using TMPro;
 using UnityEngine;
@@ -6,29 +7,34 @@ using WarehouseDuel.Audio;
 using WarehouseDuel.Core;
 using WarehouseDuel.Match;
 using WarehouseDuel.Multiplayer;
+using WarehouseDuel.Profile;
 using WarehouseDuel.Weapons;
 
 namespace WarehouseDuel.UI
 {
     /// <summary>
-    /// End-of-match screen. Shows the host-decided result (victory / defeat / draw / forfeit), both players'
-    /// kills, match duration, selected weapons and total eliminations. Play Again needs both players' votes;
-    /// Return to Lobby moves both players back; Main Menu leaves the session.
+    /// End-of-match screen for free-for-all: the host-decided result (victory / defeat / draw / forfeit), a ranking of
+    /// every player (eliminations, deaths, weapon), match duration and the stars you earned. Play Again needs every
+    /// remaining player's vote; Return to Lobby moves everyone back; Main Menu leaves the session.
     /// </summary>
     public sealed class ResultsController : MonoBehaviour
     {
+        [System.Serializable]
+        public sealed class Row
+        {
+            public Image background;
+            public TMP_Text rank;
+            public TMP_Text name;
+            public TMP_Text kills;
+            public TMP_Text deaths;
+            public TMP_Text weapon;
+        }
+
         [SerializeField] private WeaponCatalog catalog;
         [SerializeField] private GameObject panel;
         [SerializeField] private TMP_Text titleText;
         [SerializeField] private TMP_Text subtitleText;
-        [SerializeField] private TMP_Text leftNameText;
-        [SerializeField] private TMP_Text leftKillsText;
-        [SerializeField] private TMP_Text leftWeaponText;
-        [SerializeField] private TMP_Text leftTagText;
-        [SerializeField] private TMP_Text rightNameText;
-        [SerializeField] private TMP_Text rightKillsText;
-        [SerializeField] private TMP_Text rightWeaponText;
-        [SerializeField] private TMP_Text rightTagText;
+        [SerializeField] private Row[] rows = new Row[0];
         [SerializeField] private TMP_Text detailsText;
         [SerializeField] private Image titleBand;
         [SerializeField] private Button playAgainButton;
@@ -42,6 +48,7 @@ namespace WarehouseDuel.UI
 
         private int shownForMatch = -1;
         private bool votedRematch;
+        private int starsEarned;
 
         private void Awake()
         {
@@ -81,9 +88,12 @@ namespace WarehouseDuel.UI
             PlayerRef local = session != null && session.Runner != null ? session.Runner.LocalPlayer : PlayerRef.None;
             bool practice = session != null && session.IsPractice;
 
-            PlayerSlot a = room.Slots[0], b = room.Slots[1];
-            PlayerSlot mine = a.Player == local ? a : b;
-            PlayerSlot theirs = a.Player == local ? b : a;
+            // Ranking: most eliminations first, then fewest deaths.
+            var ranking = new List<PlayerSlot>();
+            for (int i = 0; i < RoomState.Capacity; i++) if (room.Slots[i].Occupied) ranking.Add(room.Slots[i]);
+            ranking.Sort((x, y) => x.Kills != y.Kills ? y.Kills.CompareTo(x.Kills) : x.Deaths.CompareTo(y.Deaths));
+            room.TryGetSlot(local, out PlayerSlot mine);
+            int myRank = ranking.FindIndex(s => s.Player == local) + 1;
 
             string title, subtitle;
             Color band;
@@ -94,7 +104,7 @@ namespace WarehouseDuel.UI
             if (practice)
             {
                 title = "PRACTICE COMPLETE";
-                subtitle = "Ready for the real thing? Create a room and invite a friend.";
+                subtitle = "Ready for the real thing? Press PLAY to find opponents online.";
                 band = DrawColor;
                 sting = lib != null ? lib.draw : null;
             }
@@ -102,23 +112,22 @@ namespace WarehouseDuel.UI
             {
                 won = match.Winner == local;
                 title = won ? "VICTORY" : "MATCH ABANDONED";
-                subtitle = won ? "Your opponent left the match." : "The match ended early.";
+                subtitle = won ? "Everyone else left the match." : "The match ended early.";
                 band = won ? VictoryColor : DrawColor;
                 sting = lib != null ? (won ? lib.victory : lib.draw) : null;
             }
             else if (match.IsDraw)
             {
                 title = "DRAW";
-                subtitle = $"Both players scored {mine.Kills} elimination{(mine.Kills == 1 ? "" : "s")}.";
+                subtitle = $"Tied for first place with {ranking[0].Kills} elimination{(ranking.Count > 0 && ranking[0].Kills == 1 ? "" : "s")}.";
                 band = DrawColor;
                 sting = lib != null ? lib.draw : null;
             }
             else
             {
                 won = match.Winner == local;
-                string winnerName = room.NameOf(match.Winner);
                 title = won ? "VICTORY" : "DEFEAT";
-                subtitle = $"{winnerName} wins the match!";
+                subtitle = won ? "You topped the leaderboard!" : $"{room.NameOf(match.Winner)} wins the match.  You finished #{myRank}.";
                 band = won ? VictoryColor : DefeatColor;
                 sting = lib != null ? (won ? lib.victory : lib.defeat) : null;
             }
@@ -127,50 +136,46 @@ namespace WarehouseDuel.UI
             subtitleText.text = subtitle;
             titleBand.color = band;
 
-            // Left column = winner (or you on a draw), right column = the other player.
-            bool mineFirst = match.IsDraw || practice || match.Winner == local || match.Winner == PlayerRef.None;
-            PlayerSlot left = mineFirst ? mine : theirs;
-            PlayerSlot right = mineFirst ? theirs : mine;
-            FillColumn(left, local, leftNameText, leftKillsText, leftWeaponText, leftTagText, match);
-            FillColumn(right, local, rightNameText, rightKillsText, rightWeaponText, rightTagText, match);
-
-            int seconds = Mathf.RoundToInt(match.PlayedSeconds);
-            detailsText.text = $"Match duration  <b>{seconds / 60}:{seconds % 60:00}</b>     Total eliminations  <b>{a.Kills + b.Kills}</b>";
+            for (int i = 0; i < rows.Length; i++)
+            {
+                Row row = rows[i];
+                bool used = i < ranking.Count;
+                row.background.gameObject.SetActive(used);
+                if (!used) continue;
+                PlayerSlot slot = ranking[i];
+                bool isMe = slot.Player == local;
+                row.rank.text = $"#{i + 1}";
+                row.rank.color = i == 0 ? VictoryColor : Color.white;
+                row.name.text = isMe ? $"{slot.Name} <size=70%><color=#FFB020>(YOU)</color></size>" : slot.Name.ToString();
+                row.kills.text = slot.Kills.ToString();
+                row.deaths.text = slot.Deaths.ToString();
+                WeaponDefinition weapon = catalog.Get(slot.Weapon);
+                row.weapon.text = weapon != null ? weapon.displayName : string.Empty;
+                row.background.color = isMe ? new Color(1f, 0.69f, 0.13f, 0.22f) : new Color(1f, 1f, 1f, i % 2 == 0 ? 0.07f : 0.03f);
+            }
 
             if (firstTime)
             {
                 if (sting != null) AudioManager.Instance.Play2D(sting);
-                if (!practice) RecordStats(won, mine, theirs, match);
+                starsEarned = practice ? 0 : RecordStats(won, mine, ranking, local, match);
             }
-        }
 
-        private void FillColumn(PlayerSlot slot, PlayerRef local, TMP_Text nameText, TMP_Text killsText, TMP_Text weaponText, TMP_Text tagText, MatchManager match)
-        {
-            if (!slot.Occupied)
-            {
-                nameText.text = "—";
-                killsText.text = "-";
-                weaponText.text = string.Empty;
-                tagText.text = match.EndReason == MatchEndReason.OpponentLeft ? "LEFT" : string.Empty;
-                return;
-            }
-            nameText.text = slot.Player == local ? $"{slot.Name} (you)" : slot.Name.ToString();
-            killsText.text = slot.Kills.ToString();
-            WeaponDefinition weapon = catalog.Get(slot.Weapon);
-            weaponText.text = weapon != null ? weapon.displayName : string.Empty;
-            tagText.text = match.IsDraw ? "DRAW" : slot.Player == match.Winner ? "WINNER" : "";
+            int seconds = Mathf.RoundToInt(match.PlayedSeconds);
+            detailsText.text = $"Match duration  <b>{seconds / 60}:{seconds % 60:00}</b>     Players  <b>{ranking.Count}</b>" +
+                               (starsEarned > 0 ? $"     <color=#FFB020>+{starsEarned} STARS</color>" : string.Empty);
         }
 
         private void RefreshButtons(RoomState room)
         {
             int present = room.OccupiedCount;
             bool practice = SessionService.Instance != null && SessionService.Instance.IsPractice;
-            playAgainButton.interactable = !votedRematch && (practice || present == RoomState.Capacity);
+            bool enough = practice || present >= RoomState.MinPlayers;
+            playAgainButton.interactable = !votedRematch && enough;
             lobbyButton.gameObject.SetActive(!practice);
             lobbyButton.interactable = present > 0;
 
-            if (!practice && present < RoomState.Capacity) playAgainText.text = "OPPONENT LEFT";
-            else if (votedRematch) playAgainText.text = "WAITING FOR OPPONENT…";
+            if (!enough) playAgainText.text = "PLAYERS LEFT";
+            else if (votedRematch) playAgainText.text = "WAITING FOR OTHERS…";
             else playAgainText.text = "PLAY AGAIN";
         }
 
@@ -190,29 +195,39 @@ namespace WarehouseDuel.UI
             else if (RoomState.Instance != null) RoomState.Instance.RequestLobby();
         }
 
-        private static void RecordStats(bool won, PlayerSlot mine, PlayerSlot theirs, MatchManager match)
+        /// <summary>Lifetime stats, match history (best other player as the "opponent") and stars. Returns stars earned.</summary>
+        private static int RecordStats(bool won, PlayerSlot mine, List<PlayerSlot> ranking, PlayerRef local, MatchManager match)
         {
             GameSettings.MatchesPlayed++;
             if (won) GameSettings.MatchesWon++;
             GameSettings.TotalKills += mine.Kills;
             GameSettings.TotalDeaths += mine.Deaths;
 
-            WarehouseDuel.Profile.MatchHistory.Record(new WarehouseDuel.Profile.MatchHistory.Entry
+            PlayerSlot rival = default;
+            foreach (PlayerSlot slot in ranking)
             {
-                opponent = theirs.Occupied || theirs.Name.Length > 0 ? theirs.Name.ToString() : "Unknown",
-                opponentAvatar = theirs.Avatar,
-                opponentBanner = theirs.Banner,
-                opponentLevel = Mathf.Max(1, (int)theirs.Level),
+                if (slot.Player == local) continue;
+                rival = slot;
+                break;
+            }
+
+            MatchHistory.Record(new MatchHistory.Entry
+            {
+                opponent = rival.Occupied ? rival.Name.ToString() : "Unknown",
+                opponentAvatar = rival.Avatar,
+                opponentBanner = rival.Banner,
+                opponentLevel = Mathf.Max(1, (int)rival.Level),
                 kills = mine.Kills,
                 deaths = mine.Deaths,
-                opponentKills = theirs.Kills,
-                opponentDeaths = theirs.Deaths,
-                result = (int)(match.IsDraw ? WarehouseDuel.Profile.MatchHistory.Result.Draw
-                    : won ? WarehouseDuel.Profile.MatchHistory.Result.Win : WarehouseDuel.Profile.MatchHistory.Result.Loss),
+                opponentKills = rival.Kills,
+                opponentDeaths = rival.Deaths,
+                result = (int)(match.IsDraw ? MatchHistory.Result.Draw : won ? MatchHistory.Result.Win : MatchHistory.Result.Loss),
                 weapon = mine.Weapon,
                 seconds = match.PlayedSeconds,
             });
-            WarehouseDuel.Profile.PlayerProfile.NotifyChanged();
+            int stars = Shop.AwardMatch(won, mine.Kills);
+            PlayerProfile.NotifyChanged();
+            return stars;
         }
     }
 }

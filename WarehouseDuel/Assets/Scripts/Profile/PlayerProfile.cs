@@ -52,7 +52,7 @@ namespace WarehouseDuel.Profile
 
         public static int AvatarIndex
         {
-            get => Mathf.Max(0, PlayerPrefs.GetInt(Prefix + "avatar", 0));
+            get => Owned(Shop.Category.Avatar, PlayerPrefs.GetInt(Prefix + "avatar", 0));
             set
             {
                 PlayerPrefs.SetInt(Prefix + "avatar", Mathf.Max(0, value));
@@ -64,7 +64,7 @@ namespace WarehouseDuel.Profile
         /// <summary>Chosen playable character (see <see cref="CharacterCatalog"/>).</summary>
         public static int CharacterIndex
         {
-            get => Mathf.Max(0, PlayerPrefs.GetInt(Prefix + "character", 0));
+            get => Owned(Shop.Category.Costume, PlayerPrefs.GetInt(Prefix + "character", 0));
             set
             {
                 PlayerPrefs.SetInt(Prefix + "character", Mathf.Max(0, value));
@@ -74,7 +74,7 @@ namespace WarehouseDuel.Profile
 
         public static int BannerIndex
         {
-            get => Mathf.Max(0, PlayerPrefs.GetInt(Prefix + "banner", 0));
+            get => Owned(Shop.Category.Banner, PlayerPrefs.GetInt(Prefix + "banner", 0));
             set
             {
                 PlayerPrefs.SetInt(Prefix + "banner", Mathf.Max(0, value));
@@ -98,6 +98,9 @@ namespace WarehouseDuel.Profile
         }
 
         public static string Title => Titles[TitleIndex].name;
+
+        /// <summary>The saved choice if the player owns it, otherwise the first (free) item.</summary>
+        private static int Owned(Shop.Category category, int index) => Shop.IsOwned(category, Mathf.Max(0, index)) ? Mathf.Max(0, index) : 0;
 
         // ------------------------------------------------------------------ avatar
 

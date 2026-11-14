@@ -62,6 +62,7 @@ namespace WarehouseDuel.EditorTools
 
                 // Scenes.
                 WarehouseMapBuilder.Build(report);
+                OutdoorMapBuilder.Build(report);
                 HudBuilder.Build(report, catalog);
                 MenuScenesBuilder.BuildMainMenu(report, catalog);
                 MenuScenesBuilder.BuildLobby(report, catalog);
@@ -142,9 +143,8 @@ namespace WarehouseDuel.EditorTools
         {
             SetupReport report = ProjectValidator.Run(showDialog: false);
             var map = new SetupReport();
-            EditorSceneManager.OpenScene(GameConstants.Scenes.PathOf(GameConstants.Scenes.WarehouseMap));
-            MapValidator.Run(map);
-            map.PrintToConsole("Warehouse map validation");
+            MapValidator.RunAllMaps(map);
+            map.PrintToConsole("Map validation (all maps)");
             EditorApplication.Exit(report.ErrorCount + map.ErrorCount == 0 ? 0 : 1);
         }
 

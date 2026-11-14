@@ -6,7 +6,7 @@ using WarehouseDuel.Weapons;
 namespace WarehouseDuel.Player
 {
     /// <summary>
-    /// Player sounds on every peer: footsteps, jump/land, weapon fire/reload/switch, hurt and death.
+    /// Player sounds on every peer: footsteps, jump/land, weapon fire/reload/switch, knife hits, explosions, hurt and death.
     /// The local player's own sounds are 2D; the opponent's are 3D at their position so you can hear them coming.
     /// Hit markers and elimination stings play only for the shooter.
     /// </summary>
@@ -36,6 +36,8 @@ namespace WarehouseDuel.Player
             weapons.Equipped += OnEquip;
             weapons.HitConfirmed += OnHitConfirmed;
             weapons.DryFired += OnDryFire;
+            weapons.MeleeImpactShown += OnMeleeImpact;
+            weapons.ExplosionShown += OnExplosion;
             character.Damaged += OnDamaged;
             PlayerCharacter.AnyDied += OnAnyDied;
             PlayerCharacter.AnySpawned += OnAnySpawned;
@@ -48,6 +50,8 @@ namespace WarehouseDuel.Player
             weapons.Equipped -= OnEquip;
             weapons.HitConfirmed -= OnHitConfirmed;
             weapons.DryFired -= OnDryFire;
+            weapons.MeleeImpactShown -= OnMeleeImpact;
+            weapons.ExplosionShown -= OnExplosion;
             character.Damaged -= OnDamaged;
             PlayerCharacter.AnyDied -= OnAnyDied;
             PlayerCharacter.AnySpawned -= OnAnySpawned;
@@ -73,6 +77,21 @@ namespace WarehouseDuel.Player
         private void OnEquip(WeaponDefinition weapon)
         {
             if (Library != null) Play(Library.weaponSwitch, 0.7f, 0f);
+        }
+
+        /// <summary>Knife connecting: flesh thwack on a player, blade-on-metal/concrete otherwise.</summary>
+        private void OnMeleeImpact(WeaponDefinition weapon, Vector3 point, Vector3 normal, bool hitPlayer)
+        {
+            if (weapon == null) return;
+            AudioClip clip = hitPlayer && weapon.impactPlayerSound != null ? weapon.impactPlayerSound : weapon.impactSound;
+            Play(clip, 0.9f, 0.06f);
+        }
+
+        /// <summary>Explosions are always positional (at the blast), for the shooter too.</summary>
+        private void OnExplosion(WeaponDefinition weapon, Vector3 origin, Vector3 point, Vector3 normal)
+        {
+            AudioClip clip = weapon != null && weapon.impactSound != null ? weapon.impactSound : Library != null ? Library.explosion : null;
+            if (clip != null) AudioManager.Instance.PlayAt(clip, point, 1f, 0.06f);
         }
 
         private void OnDryFire()

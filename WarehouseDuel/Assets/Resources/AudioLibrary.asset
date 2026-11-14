@@ -38,3 +38,6 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 9bf699e754ed23e4e94a77536a7b14bb, type: 3}
   - {fileID: 8300000, guid: 4dbe66c0e03fc5646b8ba0c27579f91f, type: 3}
   - {fileID: 8300000, guid: d69226487b451534d80bba7792a667c1, type: 3}
+  explosion: {fileID: 8300000, guid: 395a9303b89eea9479c9e02fbc9b3807, type: 3}
+  knifeHit: {fileID: 8300000, guid: e6e104a480139a440b5af7c00e7a1e72, type: 3}
+  knifeHitSurface: {fileID: 8300000, guid: cf7ac3da610da984e8aadbecd437772a, type: 3}

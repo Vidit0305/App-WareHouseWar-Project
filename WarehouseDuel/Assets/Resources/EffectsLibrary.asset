@@ -18,3 +18,6 @@ MonoBehaviour:
   bulletHole: {fileID: 6806744845661583025, guid: a7ce1bfb278952746bbd9b792d92bf98, type: 3}
   elimination: {fileID: 8072292481679196529, guid: f636149d214bdc74580a838a9a8fd46c, type: 3}
   spawn: {fileID: 3678075381010860208, guid: 0fb26485bea333442b2c2ddfdb6b8406, type: 3}
+  explosion: {fileID: 3119095950959634743, guid: 5a0fe31c3f9d45b4fa9567847bef214e, type: 3}
+  rocketTrail: {fileID: 5113360965342060414, guid: 34ac102bcbe37864db284880d2a823c8, type: 3}
+  scorchMark: {fileID: 4512655936677598590, guid: 6e0c95b694618494d92c428bdafebc15, type: 3}

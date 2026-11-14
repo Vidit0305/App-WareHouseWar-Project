@@ -37,5 +37,12 @@ namespace WarehouseDuel.Audio
         public AudioClip headshotMarker;
         public AudioClip elimination;
         public AudioClip[] impacts;
+
+        [Header("Weapons (shared)")]
+        [Tooltip("Rocket explosion; also set on the RPG definition as its impactSound.")]
+        public AudioClip explosion;
+        [Tooltip("Knife hitting a player / a surface (also on the knife definition).")]
+        public AudioClip knifeHit;
+        public AudioClip knifeHitSurface;
     }
 }

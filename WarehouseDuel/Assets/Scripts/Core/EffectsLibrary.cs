@@ -15,6 +15,11 @@ namespace WarehouseDuel.Core
         public GameObject elimination;
         public GameObject spawn;
 
+        [Header("Explosive / melee weapons")]
+        public GameObject explosion;
+        public GameObject rocketTrail;
+        public GameObject scorchMark;
+
         private static EffectsLibrary cached;
 
         public static EffectsLibrary Instance
@@ -35,6 +40,9 @@ namespace WarehouseDuel.Core
             EffectPool.Warm(bulletHole, 24);
             EffectPool.Warm(elimination, 2);
             EffectPool.Warm(spawn, 2);
+            EffectPool.Warm(explosion, 2);
+            EffectPool.Warm(rocketTrail, 2);
+            EffectPool.Warm(scorchMark, 4);
         }
     }
 }

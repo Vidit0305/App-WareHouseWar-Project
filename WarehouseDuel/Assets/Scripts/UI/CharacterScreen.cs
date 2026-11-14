@@ -7,8 +7,9 @@ using WarehouseDuel.Profile;
 namespace WarehouseDuel.UI
 {
     /// <summary>
-    /// Character select: a card per character on the left, details on the right; the menu soldier in the middle
-    /// changes into whichever character you look at. SELECT makes it yours (saved, and shown to your opponent).
+    /// Wardrobe: a card per costume (character) on the left, details on the right; the menu soldier in the middle
+    /// changes into whichever costume you look at. Owned costumes can be selected (saved, and shown to everyone in
+    /// the match); locked ones can be bought with Stars right here.
     /// </summary>
     public sealed class CharacterScreen : MenuScreen
     {
@@ -21,6 +22,8 @@ namespace WarehouseDuel.UI
         [SerializeField] private Image[] portraits = new Image[0];
         [SerializeField] private TMP_Text[] cardNames = new TMP_Text[0];
         [SerializeField] private GameObject[] selectedTags = new GameObject[0];
+        [SerializeField] private GameObject[] lockTags = new GameObject[0];
+        [SerializeField] private TMP_Text[] priceTexts = new TMP_Text[0];
 
         [Header("Details")]
         [SerializeField] private TMP_Text characterName;
@@ -46,12 +49,21 @@ namespace WarehouseDuel.UI
             }
             selectButton.onClick.AddListener(() =>
             {
+                if (!Shop.IsOwned(Shop.Category.Costume, viewing) && !Shop.Buy(Shop.Category.Costume, viewing)) return;
                 PlayerProfile.CharacterIndex = viewing;
                 View(viewing);
             });
         }
 
-        private void OnEnable() => View(PlayerProfile.CharacterIndex);
+        private void OnEnable()
+        {
+            Shop.Changed += Refresh;
+            View(PlayerProfile.CharacterIndex);
+        }
+
+        private void OnDisable() => Shop.Changed -= Refresh;
+
+        private void Refresh() => View(viewing);
 
         public override void Close()
         {
@@ -69,6 +81,9 @@ namespace WarehouseDuel.UI
                 cardFrames[i].color = on ? new Color(1f, 0.69f, 0.13f, 1f) : new Color(1f, 1f, 1f, 0.08f);
                 cardNames[i].color = on ? new Color(0.15f, 0.12f, 0.05f) : Color.white;
                 if (i < selectedTags.Length && selectedTags[i] != null) selectedTags[i].SetActive(i == chosen);
+                bool locked = !Shop.IsOwned(Shop.Category.Costume, i);
+                if (i < lockTags.Length && lockTags[i] != null) lockTags[i].SetActive(locked);
+                if (locked && i < priceTexts.Length && priceTexts[i] != null) priceTexts[i].text = Shop.Price(Shop.Category.Costume, i).ToString();
             }
 
             if (preview != null && preview.Applied != index)
@@ -85,8 +100,18 @@ namespace WarehouseDuel.UI
                 characterDescription.text = entry.description;
             }
             bool isChosen = index == chosen;
-            selectButton.interactable = !isChosen;
-            selectLabel.text = isChosen ? "SELECTED" : "SELECT";
+            bool owned = Shop.IsOwned(Shop.Category.Costume, index);
+            if (owned)
+            {
+                selectButton.interactable = !isChosen;
+                selectLabel.text = isChosen ? "SELECTED" : "SELECT";
+            }
+            else
+            {
+                int price = Shop.Price(Shop.Category.Costume, index);
+                selectButton.interactable = Shop.CanAfford(Shop.Category.Costume, index);
+                selectLabel.text = selectButton.interactable ? $"BUY  {price} STARS" : $"NEED {price} STARS";
+            }
         }
     }
 }

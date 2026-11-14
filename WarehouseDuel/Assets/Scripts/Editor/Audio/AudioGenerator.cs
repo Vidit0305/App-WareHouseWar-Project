@@ -21,8 +21,11 @@ namespace WarehouseDuel.EditorTools.Audio
         public const string MusicFolder = "Assets/Audio/Music";
         public const string LibraryPath = "Assets/Resources/AudioLibrary.asset";
 
-        /// <summary>Weapon clip names, read by the weapon builder: Fire_{key}, Reload_{key}.</summary>
-        public static readonly string[] WeaponKeys = { "Rifle", "SMG", "Shotgun", "Pistol" };
+        /// <summary>
+        /// Weapon clip names, read by the weapon builder: Fire_{key}, Reload_{key}. The knife uses Knife_Swing /
+        /// Knife_Hit / Knife_HitSurface instead, and the RPG's blast is "Explosion".
+        /// </summary>
+        public static readonly string[] WeaponKeys = { "Rifle", "SMG", "Shotgun", "Pistol", "Sniper", "MachineGun", "RPG" };
 
         /// <summary>One rendered clip (mono when <see cref="Right"/> is null).</summary>
         internal sealed class Clip
@@ -112,6 +115,18 @@ namespace WarehouseDuel.EditorTools.Audio
                 Sfx("Reload_Pistol", PistolReload(7));
                 Sfx("Reload_Shotgun", ShotgunReload(8));
                 Sfx("DryFire", DryFire(9));
+
+                // Heavy weapons, knife and explosion (reload clips stay inside reloadSeconds: sniper 3.2, LMG 4.0, RPG 2.8).
+                Sfx("Fire_Sniper", SniperShot(10), 1.3f);
+                Sfx("Fire_MachineGun", MachineGunShot(11), 1.2f);
+                Sfx("Fire_RPG", RocketLaunch(12), 0.9f);
+                Sfx("Explosion", Explosion(13), 1.4f);
+                Sfx("Knife_Swing", KnifeSwing(14), 0.2f);
+                Sfx("Knife_Hit", KnifeHitFlesh(15), 0.6f);
+                Sfx("Knife_HitSurface", KnifeHitSurface(16), 0.4f);
+                Sfx("Reload_Sniper", SniperReload(17));
+                Sfx("Reload_MachineGun", MachineGunReload(18));
+                Sfx("Reload_RPG", RocketReload(19));
 
                 // Player -----------------------------------------------------------------
                 for (int i = 0; i < 4; i++) Sfx($"Footstep_{i + 1}", Footstep(20 + i));
@@ -279,7 +294,8 @@ namespace WarehouseDuel.EditorTools.Audio
         /// </summary>
         private static float[] Gunshot(int seed, float length, float crack, float blastCut, float blastDecay, float blastGain,
             float midFreq, float midGain, float body0, float body1, float bodyDecay, float bodyGain,
-            float rumbleDecay, float rumbleGain, float mechTime, float mechFreq, float mechGain, float wet, float boom = 0f)
+            float rumbleDecay, float rumbleGain, float mechTime, float mechFreq, float mechGain, float wet, float boom = 0f,
+            Action<Synth, Synth.Mix> extra = null)
         {
             var s = new Synth(seed);
             var m = new Synth.Mix(length);
@@ -290,6 +306,7 @@ namespace WarehouseDuel.EditorTools.Audio
             Synth.Tone(m, 0f, 0.6f, body0, body1, 0.022f, bodyGain, 0.0006f, bodyDecay, Wave.Sine, 1.8f, 0f, 0.7f);
             s.NoiseHit(m, 0.002f, length, rumbleGain, 0.008f, rumbleDecay, FilterType.Low, 450f, 110f, rumbleDecay * 0.8f, 0.7f, NoiseColor.Brown, 0.3f, 0f, 1f);
             if (boom > 0f) Synth.Tone(m, 0f, 1.2f, 75f, 30f, 0.06f, boom, 0.002f, 0.35f, Wave.Sine, 0.8f, 0f, 0.8f);
+            extra?.Invoke(s, m);
 
             if (mechGain > 0f)
             {
@@ -407,6 +424,206 @@ namespace WarehouseDuel.EditorTools.Audio
             Synth.FadeOut(b, 0.03f);
             return b;
         }
+
+        // ------------------------------------------------------------------ heavy weapons, knife, explosion
+
+        /// <summary>Bolt-action rifle: huge supersonic crack, deep punch, long rolling warehouse tail, then the bolt is cycled.</summary>
+        private static float[] SniperShot(int seed) =>
+            Gunshot(seed, length: 2.4f, crack: 1.0f, blastCut: 6000f, blastDecay: 0.065f, blastGain: 1.0f,
+                midFreq: 1050f, midGain: 0.6f, body0: 150f, body1: 40f, bodyDecay: 0.12f, bodyGain: 1.3f,
+                rumbleDecay: 0.75f, rumbleGain: 0.9f, mechTime: 0f, mechFreq: 0f, mechGain: 0f, wet: 0.42f, boom: 0.55f,
+                extra: (s, m) =>
+                {
+                    // second, sharper supersonic crack and a far-wall slap
+                    s.NoiseHit(m, 0.0015f, 0.012f, 0.6f, 0.0001f, 0.0011f, FilterType.High, 3500f, 3500f, 1f, 0.7071f, NoiseColor.White, 2f, 0f, 0.5f);
+                    s.NoiseHit(m, 0.16f, 0.3f, 0.22f, 0.002f, 0.06f, FilterType.Low, 1400f, 400f, 0.05f, 0.8f, NoiseColor.White, 0.6f, 0.15f, 1f);
+                    // rolling thunder-like decay
+                    s.NoiseHit(m, 0.08f, 2.2f, 0.4f, 0.06f, 0.9f, FilterType.Low, 380f, 85f, 0.7f, 0.7f, NoiseColor.Brown, 0.2f, 0f, 1f);
+                    // bolt cycle: lift, pull back (+ casing ting), push forward, lock down
+                    s.MetalClick(m, 0.62f, 2400f, 0.35f, 0.02f, 0.3f, 0.1f, 0.05f);
+                    s.Scrape(m, 0.65f, 0.09f, 0.3f, 2300f, 1500f, 1.5f, 0.55f, 0.1f, 0.05f);
+                    s.MetalClick(m, 0.74f, 1700f, 0.5f, 0.03f, 0.4f, 0.1f, 0.05f);
+                    s.Modal(m, 0.8f, 4600f, HelmetRatios, HelmetAmps, HelmetDecays, 0.06f, -0.3f, 0.1f, 0.01f, 0.3f, 0.4f);
+                    s.Scrape(m, 0.86f, 0.07f, 0.28f, 1500f, 2400f, 1.5f, 0.5f, 0.1f, 0.05f);
+                    s.MetalClick(m, 0.93f, 1450f, 0.7f, 0.045f, 0.55f, 0.1f, 0.05f);
+                    s.Thunk(m, 0.93f, 0.35f, 1.15f, 0.1f, 0.05f);
+                    s.MetalClick(m, 0.99f, 3000f, 0.3f, 0.015f, 0f, 0.1f, 0.05f);
+                });
+
+        /// <summary>Belt-fed LMG: heavier, lower and chunkier than the rifle, with belt-link rattle.</summary>
+        private static float[] MachineGunShot(int seed) =>
+            Gunshot(seed, length: 0.95f, crack: 0.85f, blastCut: 6200f, blastDecay: 0.042f, blastGain: 0.95f,
+                midFreq: 1100f, midGain: 0.55f, body0: 160f, body1: 46f, bodyDecay: 0.075f, bodyGain: 1.1f,
+                rumbleDecay: 0.32f, rumbleGain: 0.65f, mechTime: 0.03f, mechFreq: 2000f, mechGain: 0.22f, wet: 0.28f,
+                extra: (s, m) =>
+                {
+                    for (int i = 0; i < 3; i++)
+                        s.MetalClick(m, 0.04f + i * 0.011f + s.Range(0f, 0.004f), s.Range(3900f, 5600f), 0.1f, 0.008f, 0f, 0.15f, 0.05f);
+                    s.Thunk(m, 0.034f, 0.25f, 0.9f, 0f, 0.1f);
+                });
+
+        /// <summary>RPG: launch pop, backblast roar, then the rocket motor whooshing away with sputter.</summary>
+        private static float[] RocketLaunch(int seed)
+        {
+            var s = new Synth(seed);
+            var m = new Synth.Mix(2.2f);
+            s.NoiseHit(m, 0f, 0.012f, 0.7f, 0.0001f, 0.0015f, FilterType.High, 2200f, 2200f, 1f, 0.7071f, NoiseColor.White, 1.2f);       // ignition snap
+            Synth.Tone(m, 0f, 0.5f, 110f, 38f, 0.03f, 1.1f, 0.001f, 0.12f, Wave.Sine, 1.6f, 0f, 0.6f);                                 // launch thump
+            s.NoiseHit(m, 0f, 0.8f, 1.0f, 0.002f, 0.16f, FilterType.Low, 3500f, 350f, 0.18f, 0.8f, NoiseColor.White, 2.4f, 0f, 1f);    // backblast
+            s.NoiseHit(m, 0.003f, 0.6f, 0.4f, 0.004f, 0.12f, FilterType.Band, 900f, 500f, 0.12f, 1.1f, NoiseColor.White, 1f, 0f, 0.8f);
+            // motor: rough band-passed roar sweeping down as it flies away, plus a hiss
+            s.Scrape(m, 0.02f, 1.5f, 0.55f, 1900f, 520f, 1.1f, 0.85f, 0.15f, 0.6f);
+            s.NoiseHit(m, 0.02f, 1.6f, 0.35f, 0.05f, 0.5f, FilterType.High, 4500f, 2200f, 0.8f, 0.7071f, NoiseColor.White, 0f, 0.1f, 0.6f);
+            s.Crackle(m, 0.03f, 1.0f, 700f, 0.35f, 0.5f, 600f, 3500f, 0.1f, 0.4f);                                                      // sputter
+            s.NoiseHit(m, 0.01f, 2.0f, 0.5f, 0.02f, 0.55f, FilterType.Low, 300f, 80f, 0.5f, 0.7f, NoiseColor.Brown, 0.2f, 0f, 1f);     // rumble
+            float[] b = m.Finish(With(Warehouse, 0.35f));
+            Synth.FadeOut(b, 0.25f);
+            return b;
+        }
+
+        /// <summary>Big explosion: crack, saturated blast, sub boom, crunchy mid, debris rain and a long rolling tail.</summary>
+        private static float[] Explosion(int seed)
+        {
+            var s = new Synth(seed);
+            var m = new Synth.Mix(3.4f);
+            s.NoiseHit(m, 0f, 0.015f, 1f, 0.0001f, 0.002f, FilterType.High, 1800f, 1800f, 1f, 0.7071f, NoiseColor.White, 2f);           // detonation crack
+            s.NoiseHit(m, 0f, 1.2f, 1.2f, 0.0005f, 0.22f, FilterType.Low, 5000f, 180f, 0.25f, 0.9f, NoiseColor.White, 3f, 0f, 1f);       // blast
+            s.NoiseHit(m, 0.001f, 0.6f, 0.55f, 0.001f, 0.1f, FilterType.Band, 700f, 300f, 0.15f, 1f, NoiseColor.White, 1.5f, 0f, 0.8f); // crunch
+            Synth.Tone(m, 0f, 2.5f, 90f, 24f, 0.09f, 1.3f, 0.002f, 0.6f, Wave.Sine, 1.8f, 0f, 0.6f);                                   // sub punch
+            s.Boom(m, 0f, 0.8f, 0f, 0.6f);
+            s.NoiseHit(m, 0.02f, 3.2f, 0.7f, 0.03f, 1.0f, FilterType.Low, 420f, 60f, 0.9f, 0.7f, NoiseColor.Brown, 0.4f, 0f, 1f);     // rolling tail
+            s.Modal(m, 0.01f, 640f, PlateRatios, PlateAmps, PlateDecays, 0.18f, 0.25f, 0.4f, 0.02f, 0.4f);                              // sheet metal rattles
+            s.Crackle(m, 0.03f, 1.8f, 1100f, 0.6f, 0.55f, 1200f, 7500f, 0f, 0.4f);                                                      // debris
+            for (int i = 0; i < 12; i++)                                                                                                 // chunks landing
+            {
+                float t = s.Range(0.35f, 2.2f);
+                float g = s.Range(0.08f, 0.25f) * (1.2f - t * 0.35f);
+                if (s.Chance(0.5f)) s.MetalClick(m, t, s.Range(1400f, 4200f), g, s.Range(0.01f, 0.03f), 0.3f, s.Range(-0.5f, 0.5f), 0.3f);
+                else s.Thunk(m, t, g * 1.4f, s.Range(0.7f, 1.3f), s.Range(-0.5f, 0.5f), 0.3f);
+            }
+            Synth.Space space = With(Warehouse, 0.45f);
+            space.Room = 0.9f;
+            space.Size = 1.3f;
+            float[] b = m.Finish(space);
+            Synth.FadeOut(b, 0.4f);
+            return b;
+        }
+
+        /// <summary>Fast blade whoosh with a faint metallic "shing" and a sleeve rustle.</summary>
+        private static float[] KnifeSwing(int seed)
+        {
+            var s = new Synth(seed);
+            var m = new Synth.Mix(0.38f);
+            s.NoiseHit(m, 0f, 0.3f, 0.75f, 0.06f, 0.06f, FilterType.Band, 3200f, 700f, 0.08f, 1.6f, NoiseColor.White, 0f, 0.2f, 0.1f);
+            s.Scrape(m, 0.02f, 0.16f, 0.35f, 1400f, 3600f, 2.2f, 0.15f, -0.2f, 0.1f);
+            s.Modal(m, 0.035f, 6200f, HelmetRatios, HelmetAmps, HelmetDecays, 0.035f, 0.2f, 0.1f, 0.01f, 0f, 0.3f);
+            s.Rustle(m, 0f, 0.2f, 0.25f, 800f, 1800f);
+            float[] b = m.Finish(SmallRoom);
+            Synth.FadeOut(b, 0.04f);
+            return b;
+        }
+
+        /// <summary>Knife into a body: dull wet thwack, punch and a short blade drag.</summary>
+        private static float[] KnifeHitFlesh(int seed)
+        {
+            var s = new Synth(seed);
+            var m = new Synth.Mix(0.45f);
+            s.NoiseHit(m, 0f, 0.15f, 1f, 0.0004f, 0.02f, FilterType.Low, 1300f, 280f, 0.015f, 0.8f, NoiseColor.White, 1.6f, 0f, 0.2f);
+            Synth.Tone(m, 0f, 0.25f, 135f, 50f, 0.014f, 1f, 0.0005f, 0.055f, Wave.Sine, 1.4f, 0f, 0.2f);
+            s.NoiseHit(m, 0.002f, 0.07f, 0.5f, 0.0004f, 0.014f, FilterType.Band, 850f, 600f, 0.012f, 2.2f, NoiseColor.White, 0.8f);   // wet slap
+            s.Crackle(m, 0.003f, 0.06f, 2400f, 0.4f, 0.016f, 1300f, 4000f);
+            s.Scrape(m, 0.03f, 0.09f, 0.16f, 2600f, 1700f, 1.8f, 0.5f);                                                                 // blade drag
+            float[] b = m.Finish(SmallRoom);
+            Synth.FadeOut(b, 0.04f);
+            return b;
+        }
+
+        /// <summary>Blade striking metal / concrete: bright clank, short ring and a gritty scrape.</summary>
+        private static float[] KnifeHitSurface(int seed)
+        {
+            var s = new Synth(seed);
+            var m = new Synth.Mix(0.6f);
+            s.MetalClick(m, 0f, 3600f, 0.9f, 0.03f, 0.25f, 0f, 0.25f);
+            s.Modal(m, 0.001f, 1650f, PlateRatios, PlateAmps, PlateDecays, 0.22f, 0f, 0.25f, 0.015f, 0.5f, 0.8f);
+            s.Scrape(m, 0.006f, 0.1f, 0.35f, 4400f, 2600f, 2f, 0.7f, 0f, 0.2f);
+            s.Crackle(m, 0.004f, 0.12f, 1600f, 0.3f, 0.04f, 2000f, 8000f, 0f, 0.15f);
+            float[] b = m.Finish(With(Warehouse, 0.12f));
+            Synth.FadeOut(b, 0.05f);
+            return b;
+        }
+
+        /// <summary>Bolt-action reload (3.0 s, fits 3.2 s): bolt open, five rounds thumbed in, bolt closed.</summary>
+        private static float[] SniperReload(int seed)
+        {
+            var s = new Synth(seed);
+            var m = new Synth.Mix(3.0f);
+            s.Rustle(m, 0f, 0.2f, 0.16f);
+            s.MetalClick(m, 0.12f, 2300f, 0.45f, 0.02f, 0.3f);                // bolt handle up
+            s.Scrape(m, 0.16f, 0.1f, 0.32f, 2300f, 1500f, 1.5f, 0.55f);       // bolt back
+            s.MetalClick(m, 0.26f, 1650f, 0.6f, 0.03f, 0.4f);
+            s.Rustle(m, 0.3f, 0.35f, 0.14f, 700f, 1600f);                      // reach for the rounds
+            for (int i = 0; i < 5; i++)
+            {
+                float t = 0.72f + i * 0.31f + s.Range(-0.02f, 0.02f);
+                s.Scrape(m, t, 0.05f, 0.2f, 2000f, 1400f, 1.4f, 0.5f);       // round pressed past the follower
+                s.MetalClick(m, t + 0.045f, 2700f, 0.45f, 0.02f, 0.2f);
+                s.Thunk(m, t + 0.05f, 0.25f, 1.2f);
+            }
+            s.Scrape(m, 2.42f, 0.08f, 0.3f, 1500f, 2400f, 1.5f, 0.5f);        // bolt forward
+            s.MetalClick(m, 2.5f, 1450f, 0.85f, 0.045f, 0.55f);               // chambered
+            s.Thunk(m, 2.5f, 0.45f, 1.1f);
+            s.MetalClick(m, 2.6f, 3100f, 0.4f, 0.015f, 0f);                   // handle locked down
+            float[] b = m.Finish(SmallRoom);
+            Synth.FadeOut(b, 0.05f);
+            return b;
+        }
+
+        /// <summary>LMG reload (3.8 s, fits 4.0 s): feed cover open, box out, new box in, belt laid, cover slammed, charged.</summary>
+        private static float[] MachineGunReload(int seed)
+        {
+            var s = new Synth(seed);
+            var m = new Synth.Mix(3.8f);
+            s.Rustle(m, 0f, 0.2f, 0.18f);
+            s.MetalClick(m, 0.15f, 3000f, 0.45f, 0.015f, 0.15f);                                            // cover latch
+            s.Scrape(m, 0.18f, 0.12f, 0.28f, 1700f, 1100f, 1.3f, 0.6f);
+            s.MetalClick(m, 0.31f, 1250f, 0.7f, 0.045f, 0.6f);                                              // cover opens
+            for (int i = 0; i < 4; i++) s.MetalClick(m, 0.42f + i * 0.03f, s.Range(3800f, 5200f), 0.14f, 0.008f, 0f); // old belt links
+            MagRelease(s, m, 0.62f, 0.8f);
+            s.Scrape(m, 0.66f, 0.22f, 0.3f, 1500f, 900f, 1.3f, 0.6f);                                       // box pulled off
+            s.Thunk(m, 0.95f, 0.4f, 0.75f);                                                                 // ...dropped
+            s.Rustle(m, 1.05f, 0.75f, 0.16f, 700f, 1500f);
+            s.Scrape(m, 1.8f, 0.12f, 0.3f, 1000f, 1600f, 1.3f, 0.6f);                                        // new box slid on
+            s.Thunk(m, 1.93f, 0.85f, 0.75f);
+            s.MetalClick(m, 1.95f, 2100f, 0.7f, 0.025f, 0.3f);
+            for (int i = 0; i < 9; i++)                                                                     // belt laid into the tray
+                s.MetalClick(m, 2.15f + i * 0.045f + s.Range(0f, 0.01f), s.Range(3800f, 5600f), s.Range(0.15f, 0.3f), 0.01f, 0.05f);
+            s.MetalClick(m, 2.85f, 1150f, 1f, 0.05f, 0.7f);                                                 // cover slammed
+            s.Thunk(m, 2.85f, 0.8f, 0.85f);
+            s.MetalClick(m, 2.86f, 3000f, 0.35f, 0.015f, 0f);
+            Rack(s, m, 3.2f, 0.85f, 1.15f);
+            float[] b = m.Finish(SmallRoom);
+            Synth.FadeOut(b, 0.05f);
+            return b;
+        }
+
+        /// <summary>RPG reload (2.6 s, fits 2.8 s): pause while the launch fades, rocket slid down the tube, seated, hammer cocked.</summary>
+        private static float[] RocketReload(int seed)
+        {
+            var s = new Synth(seed);
+            var m = new Synth.Mix(2.6f);
+            s.Rustle(m, 0.35f, 0.45f, 0.2f, 600f, 1500f);                                                   // rocket from the pack
+            s.Scrape(m, 0.9f, 0.38f, 0.32f, 900f, 600f, 1.2f, 0.6f);                                        // sliding into the tube
+            s.Modal(m, 0.9f, 360f, GunBodyRatios, GunBodyAmps, GunBodyDecays, 0.12f, 0f, 0.15f, 0.02f, 0.2f); // hollow tube resonance
+            s.Thunk(m, 1.3f, 0.85f, 0.75f);                                                                 // seated
+            s.MetalClick(m, 1.32f, 1550f, 0.65f, 0.04f, 0.5f);
+            s.MetalClick(m, 1.9f, 2400f, 0.5f, 0.02f, 0.2f);                                                // hammer cocked
+            s.MetalClick(m, 1.95f, 3300f, 0.3f, 0.012f, 0f);
+            s.Rustle(m, 2.05f, 0.35f, 0.18f, 700f, 1600f);                                                  // back on the shoulder
+            float[] b = m.Finish(SmallRoom);
+            Synth.FadeOut(b, 0.05f);
+            return b;
+        }
+
 
         // ------------------------------------------------------------------ player foley
 
@@ -1155,6 +1372,9 @@ namespace WarehouseDuel.EditorTools.Audio
             library.headshotMarker = Sfx("HeadshotMarker");
             library.elimination = Sfx("Elimination");
             library.impacts = new[] { Sfx("Impact_1"), Sfx("Impact_2"), Sfx("Impact_3") };
+            library.explosion = Sfx("Explosion");
+            library.knifeHit = Sfx("Knife_Hit");
+            library.knifeHitSurface = Sfx("Knife_HitSurface");
 
             EditorUtility.SetDirty(library);
             AssetDatabase.SaveAssets();

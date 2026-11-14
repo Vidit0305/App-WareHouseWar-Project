@@ -33,13 +33,26 @@ namespace WarehouseDuel.EditorTools.Map
             return volume;
         }
 
+        /// <summary>
+        /// Rebuilds the look's profile IN PLACE (same asset, same GUID): several scenes share one profile, so deleting
+        /// and recreating it would break the Volume references in the scenes that were built earlier.
+        /// </summary>
         private static VolumeProfile CreateProfile(Look look)
         {
             FolderStructure.EnsureFolder(ProfileFolder);
             string path = $"{ProfileFolder}/PFX_{look}.asset";
-            if (AssetDatabase.LoadMainAssetAtPath(path) != null) AssetDatabase.DeleteAsset(path);
-            var profile = ScriptableObject.CreateInstance<VolumeProfile>();
-            AssetDatabase.CreateAsset(profile, path);
+            var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(path);
+            if (profile == null)
+            {
+                if (AssetDatabase.LoadMainAssetAtPath(path) != null) AssetDatabase.DeleteAsset(path); // wrong type
+                profile = ScriptableObject.CreateInstance<VolumeProfile>();
+                AssetDatabase.CreateAsset(profile, path);
+            }
+            else
+            {
+                foreach (Object sub in AssetDatabase.LoadAllAssetRepresentationsAtPath(path)) Object.DestroyImmediate(sub, true);
+                profile.components.Clear();
+            }
 
             bool showroom = look == Look.Showroom;
             Tonemapping tone = profile.Add<Tonemapping>(true);
@@ -250,6 +263,85 @@ namespace WarehouseDuel.EditorTools.Map
             renderer.receiveShadows = false;
             renderer.sortingFudge = 10f;
             return ps;
+        }
+
+        /// <summary>
+        /// Cheap falling snow over a box-shaped area: small soft flakes, no noise module, no collision.
+        /// <paramref name="centre"/> is the top of the area; flakes fall about <paramref name="fallHeight"/> metres.
+        /// </summary>
+        public static ParticleSystem Snowfall(Vector3 centre, Vector2 area, float fallHeight, float rate)
+        {
+            var go = new GameObject("Snowfall");
+            go.transform.position = centre;
+            go.transform.rotation = Quaternion.Euler(90f, 0f, 0f); // emit along -Y
+            var ps = go.AddComponent<ParticleSystem>();
+            ParticleSystem.MainModule main = ps.main;
+            main.loop = true;
+            main.duration = 10f;
+            main.prewarm = true;
+            main.startSpeed = new ParticleSystem.MinMaxCurve(1.2f, 2.0f);
+            main.startLifetime = fallHeight / 1.6f;
+            main.startSize = new ParticleSystem.MinMaxCurve(0.05f, 0.12f);
+            main.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 1f, 1f, 0.75f), new Color(0.9f, 0.95f, 1f, 0.95f));
+            main.maxParticles = Mathf.Clamp(Mathf.CeilToInt(rate * fallHeight / 1.6f), 50, 900);
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            ParticleSystem.EmissionModule emission = ps.emission;
+            emission.rateOverTime = rate;
+            ParticleSystem.ShapeModule shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.scale = new Vector3(area.x, area.y, 0.5f);
+            // Gentle sideways drift (cheaper than the noise module).
+            ParticleSystem.VelocityOverLifetimeModule drift = ps.velocityOverLifetime;
+            drift.enabled = true;
+            drift.space = ParticleSystemSimulationSpace.World;
+            drift.x = new ParticleSystem.MinMaxCurve(-0.35f, 0.35f);
+            drift.y = new ParticleSystem.MinMaxCurve(0f, 0f);
+            drift.z = new ParticleSystem.MinMaxCurve(-0.35f, 0.35f);
+            ParticleSystem.ColorOverLifetimeModule colour = ps.colorOverLifetime;
+            colour.enabled = true;
+            var gradient = new Gradient();
+            gradient.SetKeys(
+                new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.1f), new GradientAlphaKey(1f, 0.9f), new GradientAlphaKey(0f, 1f) });
+            colour.color = gradient;
+            var renderer = go.GetComponent<ParticleSystemRenderer>();
+            renderer.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{MaterialFolder}/M_FX_Smoke.mat");
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            return ps;
+        }
+
+        // ------------------------------------------------------------------ sky
+
+        /// <summary>
+        /// Creates/updates a "Skybox/Procedural" material (works in URP) at Assets/Art/Materials/Environment/{name}.mat.
+        /// The asset is kept between builds so scenes keep their reference.
+        /// </summary>
+        public static Material ProceduralSky(string name, Color skyTint, Color ground, float atmosphereThickness, float exposure, float sunSize)
+        {
+            string folder = EnvironmentPalette.MaterialFolder;
+            string path = $"{folder}/{name}.mat";
+            Shader shader = Shader.Find("Skybox/Procedural");
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                FolderStructure.EnsureFolder(folder);
+                material = new Material(shader) { name = name };
+                AssetDatabase.CreateAsset(material, path);
+            }
+            else if (shader != null && material.shader != shader)
+            {
+                material.shader = shader;
+            }
+            material.SetFloat("_SunDisk", 2f);               // high quality sun disk
+            material.SetFloat("_SunSize", sunSize);
+            material.SetFloat("_SunSizeConvergence", 5f);
+            material.SetFloat("_AtmosphereThickness", atmosphereThickness);
+            material.SetColor("_SkyTint", skyTint);
+            material.SetColor("_GroundColor", ground);
+            material.SetFloat("_Exposure", exposure);
+            EditorUtility.SetDirty(material);
+            return material;
         }
     }
 }

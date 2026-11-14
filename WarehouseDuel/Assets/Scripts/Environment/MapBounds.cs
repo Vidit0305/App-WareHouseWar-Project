@@ -12,16 +12,20 @@ namespace WarehouseDuel.Environment
         [SerializeField] private Bounds playableArea = new Bounds(Vector3.up * 4f, new Vector3(36f, 10f, 56f));
         [Tooltip("Anything below this world height is considered out of the map.")]
         [SerializeField] private float killHeight = -5f;
+        [Tooltip("Outdoor map without a roof: the boundary walls/cliffs alone keep players in (used by the map validator).")]
+        [SerializeField] private bool openSky;
 
         public static MapBounds Current { get; private set; }
 
         public Bounds PlayableArea => playableArea;
         public float KillHeight => killHeight;
+        public bool OpenSky => openSky;
 
-        public void Configure(Bounds area, float killY)
+        public void Configure(Bounds area, float killY, bool isOpenSky = false)
         {
             playableArea = area;
             killHeight = killY;
+            openSky = isOpenSky;
         }
 
         /// <summary>True when <paramref name="position"/> is inside the map with some tolerance.</summary>

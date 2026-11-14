@@ -39,6 +39,8 @@ namespace WarehouseDuel.UI
         [SerializeField] private TMP_Text copyFeedbackText;
         [SerializeField] private TMP_Text roomStatusText;
         [SerializeField] private TMP_Text pingText;
+        [SerializeField] private TMP_Text mapText;
+        [SerializeField] private TMP_Text playerCountText;
 
         [Header("Players")]
         [SerializeField] private PlayerCard[] cards = new PlayerCard[2];
@@ -65,7 +67,11 @@ namespace WarehouseDuel.UI
         private static readonly Color Unselected = new Color(1f, 1f, 1f, 0.12f);
         private static readonly Color ReadyColor = new Color(0.3f, 0.85f, 0.45f);
         private static readonly Color NotReadyColor = new Color(0.55f, 0.58f, 0.65f);
-        private static readonly Color[] SlotColors = { new Color(0.2f, 0.55f, 1f), new Color(1f, 0.35f, 0.25f) };
+        private static readonly Color[] SlotColors =
+        {
+            new Color(0.2f, 0.55f, 1f), new Color(1f, 0.35f, 0.25f), new Color(0.3f, 0.85f, 0.4f), new Color(1f, 0.75f, 0.15f),
+            new Color(0.7f, 0.4f, 1f), new Color(0.2f, 0.9f, 0.95f), new Color(1f, 0.45f, 0.75f), new Color(0.95f, 0.95f, 0.95f),
+        };
 
         private SessionService session;
         private int selectedWeapon;
@@ -136,9 +142,10 @@ namespace WarehouseDuel.UI
         private void Refresh()
         {
             if (session == null) return;
-            roomCodeText.text = string.IsNullOrEmpty(session.RoomCode) ? "-----" : session.RoomCode;
-
             RoomState room = RoomState.Instance;
+            bool quick = room != null && room.Object != null && room.QuickPlay;
+            roomCodeText.text = quick ? "QUICK MATCH" : string.IsNullOrEmpty(session.RoomCode) ? "-----" : session.RoomCode;
+            if (copyCodeButton != null) copyCodeButton.gameObject.SetActive(!quick);
             if (room == null || room.Object == null)
             {
                 roomStatusText.text = "Connecting to room…";
@@ -147,14 +154,20 @@ namespace WarehouseDuel.UI
                 return;
             }
 
-            for (int i = 0; i < RoomState.Capacity; i++) FillCard(cards[i], room.Slots[i], i);
+            for (int i = 0; i < RoomState.Capacity && i < cards.Length; i++) FillCard(cards[i], room.Slots[i], i);
 
             int count = room.OccupiedCount;
             room.TryGetSlot(LocalPlayer, out PlayerSlot me);
             bool everyoneReady = room.AllReady;
+            if (mapText != null)
+            {
+                int map = room.MapChoice;
+                mapText.text = map < GameConstants.Scenes.MapNames.Length ? $"MAP: {GameConstants.Scenes.MapNames[map].ToUpperInvariant()}" : "MAP: RANDOM";
+            }
+            if (playerCountText != null) playerCountText.text = $"{count}/{RoomState.Capacity}";
 
-            if (count < RoomState.Capacity) roomStatusText.text = "Waiting for your opponent to join… Share the room code.";
-            else if (!everyoneReady) roomStatusText.text = "Both players are here. Pick a weapon and press READY.";
+            if (count < RoomState.MinPlayers) roomStatusText.text = "Waiting for players to join… Share the room code (up to 8 players).";
+            else if (!everyoneReady) roomStatusText.text = $"{count} players here. Pick a weapon and press READY.";
             else roomStatusText.text = session.IsHost ? "Everyone is ready — start the match!" : "Everyone is ready — waiting for the host to start.";
 
             readyButton.interactable = me.Occupied;
@@ -167,8 +180,8 @@ namespace WarehouseDuel.UI
             readyButtonText.text = me.Ready ? "NOT READY" : "READY";
 
             startButton.gameObject.SetActive(session.IsHost);
-            startButton.interactable = session.IsHost && count == RoomState.Capacity && everyoneReady;
-            startButtonText.text = count < RoomState.Capacity ? "WAITING FOR PLAYER" : everyoneReady ? "START MATCH" : "WAITING FOR READY";
+            startButton.interactable = session.IsHost && count >= RoomState.MinPlayers && everyoneReady;
+            startButtonText.text = count < RoomState.MinPlayers ? "WAITING FOR PLAYERS" : everyoneReady ? "START MATCH" : "WAITING FOR READY";
         }
 
         private void FillCard(PlayerCard card, PlayerSlot slot, int index)
@@ -233,10 +246,10 @@ namespace WarehouseDuel.UI
             weaponDescriptionText.text = def.description;
 
             // Normalised stats for the bars (damage per shot, fire rate, effective range, magazine).
-            SetBar(0, def.damage * def.pellets / 100f);
+            SetBar(0, def.DisplayDamage / 100f);
             SetBar(1, def.roundsPerMinute / 900f);
-            SetBar(2, def.falloffEnd / 60f);
-            SetBar(3, def.magazineSize / 32f);
+            SetBar(2, def.DisplayRange / 60f);
+            SetBar(3, def.usesAmmo ? def.magazineSize / 32f : 1f);
         }
 
         private void SetBar(int index, float value)

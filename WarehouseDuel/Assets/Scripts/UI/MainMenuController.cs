@@ -24,6 +24,9 @@ namespace WarehouseDuel.UI
         [SerializeField] private Button practiceModeButton;
         [SerializeField] private Button profileChipButton;
         [SerializeField] private Button characterCardButton;
+        [SerializeField] private Button shopCardButton;
+        [SerializeField] private TMP_Text playLabel;
+        [SerializeField] private TMP_Text starsText;
         [SerializeField] private Button armoryCardButton;
         [SerializeField] private Button leaderboardButton;
         [SerializeField] private Button settingsButton;
@@ -34,6 +37,13 @@ namespace WarehouseDuel.UI
         [SerializeField] private LeaderboardScreen leaderboardScreen;
         [SerializeField] private ArmoryScreen armoryScreen;
         [SerializeField] private CharacterScreen characterScreen;
+        [SerializeField] private ShopScreen shopScreen;
+
+        [Header("Map picker (quick match + create room)")]
+        [SerializeField] private GameObject mapPanel;
+        [SerializeField] private TMP_Text mapPanelTitle;
+        [SerializeField] private Button[] mapButtons = new Button[0]; // one per map, then Random
+        [SerializeField] private Button mapBackButton;
         [SerializeField] private GameObject settingsPanel;
         [SerializeField] private Button settingsCloseButton;
 
@@ -57,6 +67,9 @@ namespace WarehouseDuel.UI
         [SerializeField] private Button messageOkButton;
 
         private SessionService session;
+        private bool pickingForQuickMatch;
+        private float searchStartedAt;
+        private string playIdleText = "PLAY";
 
         private void Start()
         {
@@ -72,11 +85,19 @@ namespace WarehouseDuel.UI
             codeInput.onValueChanged.AddListener(_ => joinErrorText.text = string.Empty);
             codeInput.onSubmit.AddListener(_ => JoinRoom());
 
-            playButton.onClick.AddListener(() => ShowDialog(onlinePanel));
+            playButton.onClick.AddListener(OnPlayPressed);
+            if (playLabel != null) playIdleText = playLabel.text;
+            for (int i = 0; i < mapButtons.Length; i++)
+            {
+                int map = i < GameConstants.Scenes.Maps.Length ? i : GameConstants.Scenes.RandomMap;
+                mapButtons[i].onClick.AddListener(() => OnMapChosen(map));
+            }
+            mapBackButton.onClick.AddListener(() => PopupFx.Hide(mapPanel));
             onlineModeButton.onClick.AddListener(() => ShowDialog(onlinePanel));
             practiceModeButton.onClick.AddListener(StartPractice);
             profileChipButton.onClick.AddListener(() => OpenScreen(profileScreen));
             characterCardButton.onClick.AddListener(() => OpenScreen(characterScreen));
+            shopCardButton.onClick.AddListener(() => OpenScreen(shopScreen));
             armoryCardButton.onClick.AddListener(() => OpenScreen(armoryScreen));
             leaderboardButton.onClick.AddListener(() => OpenScreen(leaderboardScreen));
             settingsButton.onClick.AddListener(() =>
@@ -86,13 +107,13 @@ namespace WarehouseDuel.UI
             });
             settingsCloseButton.onClick.AddListener(CloseSettings);
 
-            foreach (MenuScreen screen in new MenuScreen[] { profileScreen, leaderboardScreen, armoryScreen, characterScreen })
+            foreach (MenuScreen screen in new MenuScreen[] { profileScreen, leaderboardScreen, armoryScreen, characterScreen, shopScreen })
             {
                 screen.Closed += () => homePanel.SetActive(true);
                 screen.gameObject.SetActive(false);
             }
 
-            createRoomButton.onClick.AddListener(CreateRoom);
+            createRoomButton.onClick.AddListener(() => OpenMapPicker(quickMatch: false));
             joinRoomButton.onClick.AddListener(() =>
             {
                 joinErrorText.text = string.Empty;
@@ -109,8 +130,10 @@ namespace WarehouseDuel.UI
             onlinePanel.SetActive(false);
             joinPanel.SetActive(false);
             busyPanel.SetActive(false);
+            mapPanel.SetActive(false);
             RefreshWins();
             GameSettings.Changed += RefreshWins;
+            WarehouseDuel.Profile.Shop.Changed += RefreshWins;
 
             if (session != null)
             {
@@ -127,11 +150,71 @@ namespace WarehouseDuel.UI
         {
             if (session != null) session.StatusChanged -= OnSessionStatus;
             GameSettings.Changed -= RefreshWins;
+            WarehouseDuel.Profile.Shop.Changed -= RefreshWins;
         }
 
         private void Update()
         {
             if (BackPressed()) HandleBack();
+            UpdateSearchLabel();
+        }
+
+        // ------------------------------------------------------------------ quick match
+
+        private bool Searching => session != null && session.IsQuickPlay &&
+                                  (session.Status == SessionStatus.Connecting || session.Status == SessionStatus.InRoom);
+
+        private void OnPlayPressed()
+        {
+            session = SessionService.Instance;
+            if (Searching)
+            {
+                session.LeaveSession(); // tap again to cancel the search
+                return;
+            }
+            OpenMapPicker(quickMatch: true);
+        }
+
+        private void OpenMapPicker(bool quickMatch)
+        {
+            pickingForQuickMatch = quickMatch;
+            if (mapPanelTitle != null) mapPanelTitle.text = quickMatch ? "QUICK MATCH — CHOOSE A MAP" : "CREATE ROOM — CHOOSE A MAP";
+            ShowDialog(null);
+            mapPanel.SetActive(true);
+        }
+
+        private async void OnMapChosen(int map)
+        {
+            PopupFx.Hide(mapPanel);
+            if (!pickingForQuickMatch)
+            {
+                CreateRoom(map);
+                return;
+            }
+            if (!EnsureSession()) return;
+            searchStartedAt = Time.unscaledTime;
+            bool ok = await session.QuickPlayAsync(map);
+            if (!ok && !string.IsNullOrEmpty(session.LastError)) ShowMessage(session.LastError, "MATCHMAKING PROBLEM");
+        }
+
+        /// <summary>PLAY shows the search time (1, 2, 3…), players found, then the start countdown.</summary>
+        private void UpdateSearchLabel()
+        {
+            if (playLabel == null) return;
+            if (!Searching)
+            {
+                if (playLabel.text != playIdleText) playLabel.text = playIdleText;
+                return;
+            }
+            RoomState room = RoomState.Instance;
+            if (room != null && room.Object != null && room.QuickStartRemaining > 0f)
+            {
+                playLabel.text = $"STARTING {Mathf.CeilToInt(room.QuickStartRemaining)}";
+                return;
+            }
+            int seconds = Mathf.FloorToInt(Time.unscaledTime - searchStartedAt);
+            int players = room != null && room.Object != null ? room.OccupiedCount : 1;
+            playLabel.text = $"<size=60%>SEARCHING</size> {seconds / 60}:{seconds % 60:00}\n<size=34%>{Mathf.Max(1, players)}/{RoomState.Capacity} PLAYERS · TAP TO CANCEL</size>";
         }
 
         private static bool BackPressed()
@@ -147,6 +230,7 @@ namespace WarehouseDuel.UI
         private void HandleBack()
         {
             if (messagePanel.activeSelf) PopupFx.Hide(messagePanel);
+            else if (mapPanel.activeSelf) PopupFx.Hide(mapPanel);
             else if (busyPanel.activeSelf) return;
             else if (joinPanel.activeSelf) ShowDialog(onlinePanel);
             else if (onlinePanel.activeSelf) ShowDialog(null);
@@ -155,6 +239,7 @@ namespace WarehouseDuel.UI
             else if (leaderboardScreen.IsOpen) leaderboardScreen.Close();
             else if (armoryScreen.IsOpen) armoryScreen.Close();
             else if (characterScreen.IsOpen) characterScreen.Close();
+            else if (shopScreen.IsOpen) shopScreen.Close();
         }
 
         private void OpenScreen(MenuScreen screen)
@@ -172,13 +257,14 @@ namespace WarehouseDuel.UI
         private void RefreshWins()
         {
             if (winsText != null) winsText.text = GameSettings.MatchesWon.ToString();
+            if (starsText != null) starsText.text = WarehouseDuel.Profile.Shop.Stars.ToString();
         }
 
-        private async void CreateRoom()
+        private async void CreateRoom(int map)
         {
             if (!EnsureSession()) return;
             ShowBusy("Connecting to Photon…");
-            bool ok = await session.CreateRoomAsync();
+            bool ok = await session.CreateRoomAsync(map);
             if (!ok) ShowFailure(onlinePanel);
             // On success Fusion loads the Lobby scene for us.
         }

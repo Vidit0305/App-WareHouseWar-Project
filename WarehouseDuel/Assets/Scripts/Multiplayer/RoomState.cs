@@ -7,7 +7,7 @@ using WarehouseDuel.Core;
 
 namespace WarehouseDuel.Multiplayer
 {
-    /// <summary>One player's entry in the room. Slot 0 = host (spawn A), slot 1 = guest (spawn B).</summary>
+    /// <summary>One player's entry in the room (up to 8). Slot 0 = host; each slot has its own spawn point.</summary>
     public struct PlayerSlot : INetworkStruct
     {
         public PlayerRef Player;
@@ -27,17 +27,28 @@ namespace WarehouseDuel.Multiplayer
     }
 
     /// <summary>
-    /// Host-owned record of who is in the room. Survives scene changes (lobby ↔ warehouse).
+    /// Host-owned record of who is in the room (up to 8 players, free-for-all), the chosen map and, for quick
+    /// matches, the auto-start countdown. Survives scene changes (menu/lobby ↔ map).
     /// Clients never write it directly: they ask the host through RPCs, and the host validates every request.
     /// Kills/deaths are only changed by <see cref="RegisterKill"/>, which the host calls exactly once per death.
     /// </summary>
     public sealed class RoomState : NetworkBehaviour
     {
-        public const int Capacity = 2;
+        public const int Capacity = 8;
+        /// <summary>Players needed to start an online match.</summary>
+        public const int MinPlayers = 2;
+        /// <summary>Quick match: seconds to wait for more players once the minimum is reached.</summary>
+        public const float QuickStartDelay = 4f;
 
         [Networked, Capacity(Capacity)] public NetworkArray<PlayerSlot> Slots => default;
         /// <summary>Incremented on every change so UIs can refresh cheaply.</summary>
         [Networked] public int Revision { get; private set; }
+        /// <summary>Map index into GameConstants.Scenes.Maps, or GameConstants.Scenes.RandomMap.</summary>
+        [Networked] public byte MapChoice { get; private set; }
+        /// <summary>True for matchmaking rooms (no code, starts by itself once enough players are in).</summary>
+        [Networked] public NetworkBool QuickPlay { get; private set; }
+        [Networked] public TickTimer QuickStartTimer { get; private set; }
+        [Networked] public NetworkBool QuickStarted { get; private set; }
 
         public static RoomState Instance { get; private set; }
 
@@ -58,6 +69,44 @@ namespace WarehouseDuel.Multiplayer
         {
             if (Instance == this) Instance = null;
             Changed?.Invoke();
+        }
+
+        public override void FixedUpdateNetwork()
+        {
+            if (!HasStateAuthority || !QuickPlay || QuickStarted) return;
+            if (OccupiedCount < MinPlayers)
+            {
+                QuickStartTimer = TickTimer.None;
+                return;
+            }
+            if (!QuickStartTimer.IsRunning) QuickStartTimer = TickTimer.CreateFromSeconds(Runner, QuickStartDelay);
+            else if (QuickStartTimer.Expired(Runner))
+            {
+                QuickStarted = true;
+                Revision++;
+                if (SessionService.Instance != null) SessionService.Instance.StartQuickMatch();
+            }
+        }
+
+        /// <summary>Seconds until a quick match starts (0 when not counting down).</summary>
+        public float QuickStartRemaining => QuickStartTimer.IsRunning ? Mathf.Max(0f, QuickStartTimer.RemainingTime(Runner) ?? 0f) : 0f;
+
+        /// <summary>Host: the map and mode chosen when the room was created.</summary>
+        public void Configure(int mapChoice, bool quickPlay)
+        {
+            if (!HasStateAuthority) return;
+            MapChoice = (byte)mapChoice;
+            QuickPlay = quickPlay;
+            QuickStarted = false;
+            QuickStartTimer = TickTimer.None;
+            Revision++;
+        }
+
+        /// <summary>Host: the map to load now (resolves "random").</summary>
+        public int ResolveMap()
+        {
+            int count = GameConstants.Scenes.Maps.Length;
+            return MapChoice < count ? MapChoice : UnityEngine.Random.Range(0, count);
         }
 
         public override void Render()
@@ -141,8 +190,8 @@ namespace WarehouseDuel.Multiplayer
             int index = SlotOf(player);
             if (index < 0) return;
             Slots.Set(index, default);
-            // The remaining player must confirm again before the next match.
-            for (int i = 0; i < Capacity; i++) Modify(i, (ref PlayerSlot s) => { s.Ready = false; s.WantsRematch = false; });
+            // Rematch votes are cast again by whoever is still here.
+            for (int i = 0; i < Capacity; i++) Modify(i, (ref PlayerSlot s) => s.WantsRematch = false);
             Revision++;
         }
 
@@ -174,7 +223,7 @@ namespace WarehouseDuel.Multiplayer
             Revision++;
         }
 
-        /// <summary>True when every player in the room asked for a rematch.</summary>
+        /// <summary>True when every player in the room (at least two) asked for a rematch.</summary>
         public bool BothWantRematch
         {
             get
@@ -186,7 +235,7 @@ namespace WarehouseDuel.Multiplayer
                     if (!Slots[i].WantsRematch) return false;
                     voters++;
                 }
-                return voters > 0;
+                return voters >= MinPlayers;
             }
         }
 
@@ -303,6 +352,6 @@ namespace WarehouseDuel.Multiplayer
             Revision++;
         }
 
-        private static byte ClampWeapon(byte weapon) => (byte)Mathf.Clamp(weapon, 0, 3);
+        private static byte ClampWeapon(byte weapon) => (byte)Mathf.Clamp(weapon, 0, WarehouseDuel.Weapons.WeaponCatalog.MaxWeapons - 1);
     }
 }

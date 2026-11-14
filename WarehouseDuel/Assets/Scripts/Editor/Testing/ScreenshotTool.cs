@@ -48,24 +48,51 @@ namespace WarehouseDuel.EditorTools.Testing
                 if (roof != null) roof.SetActive(true);
             }
 
+            CaptureOutdoorMaps(dir);
             CaptureWeapons(Path.Combine(dir, "weapons.png"));
             CaptureFirstPerson(dir);
 
             // UI screens (canvases are switched to camera space so they appear in the render).
             string[] runtimeHidden = { "Online", "Join", "Busy", "Settings Panel", "Profile Panel", "Message Panel", "Death Panel",
-                                       "Countdown", "Panel", "Confirm Leave", "Centre Message", "Banner", "Copied" };
+                                       "Countdown", "Panel", "Confirm Leave", "Centre Message", "Banner", "Copied",
+                                       "Scope Overlay", "Map Picker", "Shop Screen" };
             CaptureUiScene(GameConstants.Scenes.SplashScreen, Path.Combine(dir, "ui_splash.png"), runtimeHidden);
             CaptureUiScene(GameConstants.Scenes.MainMenu, Path.Combine(dir, "ui_mainmenu.png"), runtimeHidden);
             foreach (var (shot, show) in new[] { ("ui_profile", "Profile Screen"), ("ui_leaderboard", "Leaderboard Screen"),
-                                                 ("ui_armory", "Armory Screen"), ("ui_characters", "Character Screen"), ("ui_settings", "Settings Panel"), ("ui_online", "Online") })
+                                                 ("ui_armory", "Armory Screen"), ("ui_characters", "Character Screen"), ("ui_shop", "Shop Screen"), ("ui_settings", "Settings Panel"), ("ui_online", "Online"),
+                                                 ("ui_mappicker", "Map Picker") })
             {
-                bool overHome = show == "Online";
+                bool overHome = show == "Online" || show == "Map Picker";
                 CaptureUiScene(GameConstants.Scenes.MainMenu, Path.Combine(dir, shot + ".png"), runtimeHidden, show, overHome ? null : "Home");
             }
             CaptureUiScene(GameConstants.Scenes.Lobby, Path.Combine(dir, "ui_lobby.png"), runtimeHidden);
             CaptureUiScene(GameConstants.Scenes.WarehouseMap, Path.Combine(dir, "ui_hud.png"), runtimeHidden);
             Debug.Log($"[Screenshots] Saved to {dir}");
             EditorApplication.Exit(0);
+        }
+
+        /// <summary>Overview, eye-level and top-down shots of the Desert, Forest and Snow maps.</summary>
+        private static void CaptureOutdoorMaps(string dir)
+        {
+            var maps = new (string scene, string tag, Vector3 overFrom, Vector3 overTo, Vector3 eyeFrom, Vector3 eyeTo)[]
+            {
+                (GameConstants.Scenes.DesertMap, "desert", new Vector3(-27f, 17f, -27f), new Vector3(2f, 0f, 2f), new Vector3(-7f, 1.6f, -15f), new Vector3(2f, 1.4f, -2f)),
+                (GameConstants.Scenes.ForestMap, "forest", new Vector3(26f, 18f, -27f), new Vector3(-2f, 0f, 2f), new Vector3(6f, 1.6f, -16f), new Vector3(-3f, 1.8f, -2f)),
+                (GameConstants.Scenes.SnowMap, "snow", new Vector3(27f, 17f, 27f), new Vector3(-2f, 0f, -2f), new Vector3(-4f, 1.6f, -15f), new Vector3(6f, 1.8f, -4f)),
+            };
+            foreach (var m in maps)
+            {
+                string scenePath = GameConstants.Scenes.PathOf(m.scene);
+                if (AssetDatabase.LoadAssetAtPath<SceneAsset>(scenePath) == null) continue;
+                EditorSceneManager.OpenScene(scenePath);
+                string warmup = Path.Combine(dir, "_warmup.png");
+                Capture(warmup, m.overFrom, m.overTo, 60f);
+                File.Delete(warmup);
+                Capture(Path.Combine(dir, $"{m.tag}_overview.png"), m.overFrom, m.overTo, 60f);
+                Capture(Path.Combine(dir, $"{m.tag}_eye.png"), m.eyeFrom, m.eyeTo, 72f);
+                Capture(Path.Combine(dir, $"{m.tag}_spawn_eye.png"), new Vector3(0f, 1.6f, -26f), new Vector3(0f, 1.4f, 0f), 72f);
+                Capture(Path.Combine(dir, $"{m.tag}_topdown.png"), new Vector3(0f, 70f, 0f), new Vector3(0f, 0f, 0.01f), 55f);
+            }
         }
 
         private static void CaptureUiScene(string sceneName, string path, string[] hideNames, string show = null, string alsoHide = null)
@@ -124,7 +151,7 @@ namespace WarehouseDuel.EditorTools.Testing
             cam.fieldOfView = fov;
             cam.nearClipPlane = 0.05f;
             cam.farClipPlane = 300f;
-            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.clearFlags = RenderSettings.skybox != null ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.1f, 0.12f, 0.16f);
             WarehouseDuel.EditorTools.Map.AtmosphereKit.EnableCameraEffects(cam);
             Render(cam, path);
@@ -162,6 +189,7 @@ namespace WarehouseDuel.EditorTools.Testing
                 var model = (GameObject)Object.Instantiate(def.viewModelPrefab, socket, false);
                 model.transform.localScale = Vector3.one * scale;
                 model.transform.localPosition = def.viewModelOffset;
+                model.transform.localRotation = Quaternion.Euler(def.viewModelEuler);
                 WarehouseDuel.Player.PlayerCameraRig.AttachHands(model.transform, hands);
                 Render(cam, Path.Combine(dir, $"fp_{i}_{def.name}.png"));
                 Object.DestroyImmediate(model);
@@ -180,7 +208,7 @@ namespace WarehouseDuel.EditorTools.Testing
                 WeaponDefinition def = catalog.Get(i);
                 if (def == null || def.worldModelPrefab == null) continue;
                 var model = (GameObject)PrefabUtility.InstantiatePrefab(def.worldModelPrefab, root.transform);
-                model.transform.localPosition = new Vector3(0f, 0.6f - i * 0.4f, 0f);
+                model.transform.localPosition = new Vector3(i / 4 * 1.0f - 0.5f, 0.6f - i % 4 * 0.4f, 0f);
                 model.transform.localRotation = Quaternion.Euler(0f, 90f, 0f);
             }
             var lightObject = new GameObject("Key Light");
@@ -190,7 +218,7 @@ namespace WarehouseDuel.EditorTools.Testing
             light.type = LightType.Directional;
             light.intensity = 1.4f;
 
-            Capture(path, root.transform.position + new Vector3(0.2f, 0f, -2.1f), root.transform.position + new Vector3(0.2f, 0f, 0f), 40f);
+            Capture(path, root.transform.position + new Vector3(0f, 0f, -2.6f), root.transform.position, 40f);
             Object.DestroyImmediate(root);
         }
 

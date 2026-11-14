@@ -40,6 +40,7 @@ namespace WarehouseDuel.EditorTools
                 PlayerSettingsConfigurator.Apply(report);
                 LayerConfigurator.Apply(report);
                 SceneBuilder.BuildScenes(report, overwriteExisting: false);
+                OutdoorMapBuilder.EnsureScenes(report);
                 AssetDatabase.SaveAssets();
 
                 AudioGenerator.Generate(report);
@@ -48,7 +49,11 @@ namespace WarehouseDuel.EditorTools
                 BuildEffectsLibrary(report);
                 WeaponCatalog catalog = WeaponAssetBuilder.BuildAll(report);
                 AssignWeaponIcons(catalog, report);
-                if (buildMap) WarehouseMapBuilder.Build(report);
+                if (buildMap)
+                {
+                    WarehouseMapBuilder.Build(report);
+                    OutdoorMapBuilder.Build(report);
+                }
                 BuildSettingsConfigurator.Apply(report);
                 AssetDatabase.SaveAssets();
                 return catalog;

@@ -77,10 +77,10 @@ namespace WarehouseDuel.UI
             if (def == null) return;
             weaponName.text = def.displayName.ToUpperInvariant();
             weaponDescription.text = def.description;
-            SetStat(0, def.damage * def.pellets / 100f, def.pellets > 1 ? $"{def.damage:0}×{def.pellets}" : $"{def.damage:0}");
-            SetStat(1, def.roundsPerMinute / 900f, $"{def.roundsPerMinute:0} RPM");
-            SetStat(2, def.falloffEnd / 60f, $"{def.falloffEnd:0} m");
-            SetStat(3, def.magazineSize / 32f, def.magazineSize.ToString());
+            SetStat(0, def.DisplayDamage / 100f, def.pellets > 1 ? $"{def.damage:0}×{def.pellets}" : def.IsExplosive ? $"{def.DisplayDamage:0} SPLASH" : $"{def.DisplayDamage:0}");
+            SetStat(1, def.roundsPerMinute / 900f, def.IsMelee ? $"{def.roundsPerMinute:0} SLASH" : $"{def.roundsPerMinute:0} RPM");
+            SetStat(2, def.DisplayRange / 60f, def.DisplayRange < 10f ? $"{def.DisplayRange:0.#} m" : $"{def.DisplayRange:0} m");
+            SetStat(3, def.usesAmmo ? def.magazineSize / 32f : 1f, def.usesAmmo ? def.magazineSize.ToString() : "∞");
 
             bool isEquipped = index == equipped;
             equipButton.interactable = !isEquipped;

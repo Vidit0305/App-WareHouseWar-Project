@@ -50,6 +50,8 @@ namespace WarehouseDuel.Player
         public event Action Damaged;
 
         public NetworkCharacterController Motor { get; private set; }
+        /// <summary>This player's weapons (loadout, ammo, current weapon).</summary>
+        public Weapons.WeaponController WeaponController => weapons;
         public MatchRules Rules => rules;
         public PlayerRef Owner => Object.InputAuthority;
         public bool IsLocal => Object != null && Object.HasInputAuthority;

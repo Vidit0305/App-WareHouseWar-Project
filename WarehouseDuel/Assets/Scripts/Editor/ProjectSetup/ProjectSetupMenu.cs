@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using WarehouseDuel.EditorTools.Map;
 
 namespace WarehouseDuel.EditorTools
 {
@@ -18,6 +19,7 @@ namespace WarehouseDuel.EditorTools
             PlayerSettingsConfigurator.Apply(report);
             LayerConfigurator.Apply(report);
             SceneBuilder.BuildScenes(report, overwriteExisting: false);
+            OutdoorMapBuilder.EnsureScenes(report);
             BuildSettingsConfigurator.Apply(report);
 
             AssetDatabase.SaveAssets();
@@ -39,6 +41,7 @@ namespace WarehouseDuel.EditorTools
 
             var report = new SetupReport();
             SceneBuilder.BuildScenes(report, overwriteExisting: true);
+            OutdoorMapBuilder.EnsureScenes(report);
             BuildSettingsConfigurator.Apply(report);
             AssetDatabase.SaveAssets();
             report.PrintToConsole("Rebuild scaffold scenes");

@@ -7,6 +7,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using WarehouseDuel.Core;
+using WarehouseDuel.Multiplayer;
 using WarehouseDuel.UI;
 using WarehouseDuel.UI.Controls;
 using WarehouseDuel.UI.Widgets;
@@ -16,18 +17,34 @@ using static WarehouseDuel.EditorTools.UI.UiFactory;
 namespace WarehouseDuel.EditorTools.UI
 {
     /// <summary>
-    /// Adds the in-match UI to the WarehouseMap scene: HUD, touch controls, pause menu and results screen.
+    /// Adds the in-match UI to every map scene: HUD, touch controls, pause menu and results screen.
     /// Regenerates the "Match UI" root each time; the map itself is untouched.
     /// </summary>
     internal static class HudBuilder
     {
         private const string RootName = "Match UI";
 
+        /// <summary>Adds the match UI to every map scene that exists.</summary>
         public static void Build(SetupReport report, WeaponCatalog catalog)
         {
-            // Reload: lighting bakes refresh assets, which can leave a previously loaded catalog object stale.
-            catalog = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseDuel.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
-            string path = GameConstants.Scenes.PathOf(GameConstants.Scenes.WarehouseMap);
+            foreach (string map in GameConstants.Scenes.Maps)
+            {
+                string path = GameConstants.Scenes.PathOf(map);
+                if (AssetDatabase.LoadAssetAtPath<SceneAsset>(path) == null)
+                {
+                    report.Error($"Map scene {path} is missing; build the maps first.");
+                    continue;
+                }
+                BuildInto(report, map);
+            }
+        }
+
+        private static WeaponCatalog LoadCatalog() =>
+            AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseDuel.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
+
+        private static void BuildInto(SetupReport report, string mapName)
+        {
+            string path = GameConstants.Scenes.PathOf(mapName);
             Scene scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
             foreach (GameObject old in scene.GetRootGameObjects().Where(g => g.name == RootName || g.name == "Session Bootstrap" || g.GetComponent<EventSystem>() != null))
             {
@@ -47,6 +64,38 @@ namespace WarehouseDuel.EditorTools.UI
             vignette.rectTransform.SetAsFirstSibling();
             CanvasGroup vignetteGroup = vignette.gameObject.AddComponent<CanvasGroup>();
             vignetteGroup.blocksRaycasts = false;
+
+            // Sniper scope: a square lens sized to the screen height, black wings to either side, shown by HudController while scoped.
+            RectTransform scopeRoot = CreateRect("Scope Overlay", canvas.transform);
+            Stretch(scopeRoot);
+            scopeRoot.SetSiblingIndex(1);
+            CanvasGroup scopeGroup = scopeRoot.gameObject.AddComponent<CanvasGroup>();
+            scopeGroup.blocksRaycasts = false;
+            scopeGroup.interactable = false;
+            scopeGroup.alpha = 0f;
+            Image lens = CreateImage("Lens", scopeRoot, new Color(0.01f, 0.01f, 0.012f, 1f), UiArt.Scope);
+            lens.raycastTarget = false;
+            lens.rectTransform.anchorMin = new Vector2(0.5f, 0f);
+            lens.rectTransform.anchorMax = new Vector2(0.5f, 1f);
+            lens.rectTransform.pivot = new Vector2(0.5f, 0.5f);
+            lens.rectTransform.sizeDelta = new Vector2(1080f, 0f);
+            var lensFit = lens.gameObject.AddComponent<AspectRatioFitter>();
+            lensFit.aspectMode = AspectRatioFitter.AspectMode.HeightControlsWidth;
+            lensFit.aspectRatio = 1f;
+            foreach (bool left in new[] { true, false })
+            {
+                Image wing = CreateImage(left ? "Left" : "Right", lens.transform, new Color(0.01f, 0.01f, 0.012f, 1f));
+                wing.raycastTarget = false;
+                wing.rectTransform.anchorMin = new Vector2(left ? 0f : 1f, 0f);
+                wing.rectTransform.anchorMax = new Vector2(left ? 0f : 1f, 1f);
+                wing.rectTransform.pivot = new Vector2(left ? 1f : 0f, 0.5f);
+                wing.rectTransform.anchoredPosition = new Vector2(left ? 1f : -1f, 0f); // 1 px overlap, no seam
+                wing.rectTransform.sizeDelta = new Vector2(4000f, 0f);
+            }
+            Image scopeDot = CreateImage("Dot", lens.transform, new Color(1f, 0.15f, 0.1f, 1f), UiArt.Circle);
+            scopeDot.raycastTarget = false;
+            Place(scopeDot.rectTransform, new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(8f, 8f), new Vector2(0.5f, 0.5f));
+            scopeRoot.gameObject.SetActive(false);
 
             GameObject touch = BuildTouchControls(safe);
             RectTransform gameplay = CreateRect("Gameplay HUD", safe);
@@ -166,6 +215,8 @@ namespace WarehouseDuel.EditorTools.UI
 
             // ---- pause, results
             PauseMenu pauseMenu = BuildPause(safe, pause);
+            // Load the catalog only now: opening a baked map scene can refresh assets and leave an earlier-loaded catalog stale.
+            WeaponCatalog catalog = LoadCatalog();
             ResultsController results = BuildResults(safe, catalog);
 
             var hud = canvas.gameObject.AddComponent<HudController>();
@@ -185,6 +236,8 @@ namespace WarehouseDuel.EditorTools.UI
             Wire(hud, "reloadFill", reloadFill.rectTransform);
             Wire(hud, "reloadGroup", reloadGroup.gameObject);
             WireArray(hud, "crosshairLines", lines);
+            Wire(hud, "crosshairDot", dot.gameObject);
+            Wire(hud, "scopeOverlay", scopeGroup);
             Wire(hud, "hitMarker", hitGroup);
             Wire(hud, "hitMarkerImage", hitA);
             Wire(hud, "damageVignette", vignetteGroup);
@@ -202,9 +255,17 @@ namespace WarehouseDuel.EditorTools.UI
             pauseMenu.transform.SetAsLastSibling();
             results.transform.SetAsLastSibling();
 
+            var resultsSo = new SerializedObject(results);
+            if (resultsSo.FindProperty("catalog").objectReferenceValue == null)
+            {
+                Wire(results, "catalog", LoadCatalog());
+                if (new SerializedObject(results).FindProperty("catalog").objectReferenceValue == null)
+                    report.Error($"{mapName}: results screen has no WeaponCatalog.");
+            }
+
             EditorSceneManager.MarkSceneDirty(scene);
-            if (EditorSceneManager.SaveScene(scene)) report.Pass("Match UI (HUD, touch controls, pause, results) added to WarehouseMap.");
-            else report.Error("Could not save WarehouseMap after adding the HUD.");
+            if (EditorSceneManager.SaveScene(scene)) report.Pass($"Match UI (HUD, touch controls, pause, results) added to {mapName}.");
+            else report.Error($"Could not save {mapName} after adding the HUD.");
         }
 
         /// <summary>Button layout, in canvas units from the zone's bottom corner (reference 1920×1080). Shared with the self-test.</summary>
@@ -346,66 +407,83 @@ namespace WarehouseDuel.EditorTools.UI
         {
             RectTransform host = CreateRect("Results", safe);
             Stretch(host);
-            RectTransform card = SharedUiBuilder.Modal("Panel", host, new Vector2(1320f, 820f), out GameObject panel);
+            RectTransform card = SharedUiBuilder.Modal("Panel", host, new Vector2(1400f, 960f), out GameObject panel);
 
             Image band = CreateImage("Title Band", card, UiFactory.Accent, UiArt.Rounded);
-            Place(band.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -30f), new Vector2(1240f, 140f), new Vector2(0.5f, 1f));
-            TextMeshProUGUI title = CreateText("Title", band.transform, "VICTORY", 96f, new Color(0.06f, 0.07f, 0.1f), TextAlignmentOptions.Center, display: true);
+            Place(band.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -24f), new Vector2(1340f, 120f), new Vector2(0.5f, 1f));
+            TextMeshProUGUI title = CreateText("Title", band.transform, "VICTORY", 84f, new Color(0.06f, 0.07f, 0.1f), TextAlignmentOptions.Center, display: true);
             Stretch(title.rectTransform);
-            TextMeshProUGUI subtitle = CreateText("Subtitle", card, "", 32f, TextPrimary);
-            Place(subtitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -190f), new Vector2(1200f, 50f), new Vector2(0.5f, 1f));
+            TextMeshProUGUI subtitle = CreateText("Subtitle", card, "", 30f, TextPrimary);
+            Place(subtitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -152f), new Vector2(1300f, 46f), new Vector2(0.5f, 1f));
 
-            TextMeshProUGUI MakeColumn(string name, float x, out TextMeshProUGUI kills, out TextMeshProUGUI weapon, out TextMeshProUGUI tag)
+            // Ranking table: header + 8 rows.
+            float[] columns = { 40f, 150f, 760f, 940f, 1110f };
+            float[] widths = { 100f, 600f, 160f, 160f, 220f };
+            string[] headers = { "RANK", "PLAYER", "KILLS", "DEATHS", "WEAPON" };
+            for (int i = 0; i < headers.Length; i++)
             {
-                Image column = CreatePanel(name, card, new Color(1f, 1f, 1f, 0.06f));
-                Place(column.rectTransform, new Vector2(0.5f, 1f), new Vector2(x, -270f), new Vector2(520f, 300f), new Vector2(0.5f, 1f));
-                TextMeshProUGUI playerName = CreateText("Name", column.transform, "", 38f, TextPrimary, TextAlignmentOptions.Center, display: true);
-                Place(playerName.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -20f), new Vector2(480f, 56f), new Vector2(0.5f, 1f));
-                tag = CreateText("Tag", column.transform, "", 22f, Accent, TextAlignmentOptions.Center, display: true);
-                Place(tag.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -76f), new Vector2(480f, 30f), new Vector2(0.5f, 1f));
-                kills = CreateText("Kills", column.transform, "0", 110f, TextPrimary, TextAlignmentOptions.Center, display: true);
-                Place(kills.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -100f), new Vector2(480f, 120f), new Vector2(0.5f, 1f));
-                TextMeshProUGUI killsLabel = CreateText("Kills Label", column.transform, "ELIMINATIONS", 20f, TextMuted, TextAlignmentOptions.Center);
-                Place(killsLabel.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -218f), new Vector2(480f, 30f), new Vector2(0.5f, 1f));
-                weapon = CreateText("Weapon", column.transform, "", 26f, TextMuted, TextAlignmentOptions.Center);
-                Place(weapon.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -254f), new Vector2(480f, 36f), new Vector2(0.5f, 1f));
-                return playerName;
+                TextMeshProUGUI header = CreateText(headers[i], card, headers[i], 20f, TextMuted, i <= 1 ? TextAlignmentOptions.Left : TextAlignmentOptions.Center, display: true);
+                Place(header.rectTransform, new Vector2(0f, 1f), new Vector2(columns[i] + 30f, -210f), new Vector2(widths[i], 30f), new Vector2(0f, 1f));
+            }
+            var rows = new ResultsController.Row[RoomState.Capacity];
+            for (int r = 0; r < rows.Length; r++)
+            {
+                Image background = CreateImage($"Row {r + 1}", card, new Color(1f, 1f, 1f, 0.05f), UiArt.RoundedSmall);
+                Place(background.rectTransform, new Vector2(0f, 1f), new Vector2(30f, -246f - r * 62f), new Vector2(1340f, 56f), new Vector2(0f, 1f));
+                TextMeshProUGUI Cell(string name, int column, float size, bool display)
+                {
+                    TextMeshProUGUI cell = CreateText(name, background.transform, "-", size, TextPrimary, column <= 1 ? TextAlignmentOptions.Left : TextAlignmentOptions.Center, display: display);
+                    Place(cell.rectTransform, new Vector2(0f, 0.5f), new Vector2(columns[column], 0f), new Vector2(widths[column], 52f), new Vector2(0f, 0.5f));
+                    cell.textWrappingMode = TextWrappingModes.NoWrap;
+                    cell.overflowMode = TextOverflowModes.Ellipsis;
+                    return cell;
+                }
+                rows[r] = new ResultsController.Row
+                {
+                    background = background,
+                    rank = Cell("Rank", 0, 30f, true),
+                    name = Cell("Name", 1, 30f, true),
+                    kills = Cell("Kills", 2, 32f, true),
+                    deaths = Cell("Deaths", 3, 30f, false),
+                    weapon = Cell("Weapon", 4, 24f, false),
+                };
             }
 
-            TextMeshProUGUI leftName = MakeColumn("Left", -290f, out TextMeshProUGUI leftKills, out TextMeshProUGUI leftWeapon, out TextMeshProUGUI leftTag);
-            TextMeshProUGUI rightName = MakeColumn("Right", 290f, out TextMeshProUGUI rightKills, out TextMeshProUGUI rightWeapon, out TextMeshProUGUI rightTag);
-            TextMeshProUGUI vs = CreateText("VS", card, "VS", 48f, TextMuted, TextAlignmentOptions.Center, display: true);
-            Place(vs.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -390f), new Vector2(100f, 60f), new Vector2(0.5f, 1f));
+            TextMeshProUGUI details = CreateText("Details", card, "", 26f, TextMuted);
+            Place(details.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 140f), new Vector2(1300f, 40f), new Vector2(0.5f, 0f));
 
-            TextMeshProUGUI details = CreateText("Details", card, "", 28f, TextMuted);
-            Place(details.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 150f), new Vector2(1200f, 44f), new Vector2(0.5f, 0f));
-
-            Button again = CreateButton("Play Again", card, "PLAY AGAIN", ButtonStyle.Primary, new Vector2(400f, 100f), out TextMeshProUGUI againLabel, 36f);
-            Place((RectTransform)again.transform, new Vector2(0.5f, 0f), new Vector2(-420f, 30f), new Vector2(400f, 100f), new Vector2(0.5f, 0f));
-            Button lobby = CreateButton("Lobby", card, "RETURN TO LOBBY", ButtonStyle.Secondary, new Vector2(400f, 100f), 32f);
-            Place((RectTransform)lobby.transform, new Vector2(0.5f, 0f), new Vector2(0f, 30f), new Vector2(400f, 100f), new Vector2(0.5f, 0f));
-            Button menu = CreateButton("Menu", card, "MAIN MENU", ButtonStyle.Ghost, new Vector2(400f, 100f), 32f);
-            Place((RectTransform)menu.transform, new Vector2(0.5f, 0f), new Vector2(420f, 30f), new Vector2(400f, 100f), new Vector2(0.5f, 0f));
+            Button again = CreateButton("Play Again", card, "PLAY AGAIN", ButtonStyle.Primary, new Vector2(400f, 96f), out TextMeshProUGUI againLabel, 34f);
+            Place((RectTransform)again.transform, new Vector2(0.5f, 0f), new Vector2(-430f, 28f), new Vector2(400f, 96f), new Vector2(0.5f, 0f));
+            Button lobby = CreateButton("Lobby", card, "RETURN TO LOBBY", ButtonStyle.Secondary, new Vector2(400f, 96f), 30f);
+            Place((RectTransform)lobby.transform, new Vector2(0.5f, 0f), new Vector2(0f, 28f), new Vector2(400f, 96f), new Vector2(0.5f, 0f));
+            Button menu = CreateButton("Menu", card, "MAIN MENU", ButtonStyle.Ghost, new Vector2(400f, 96f), 30f);
+            Place((RectTransform)menu.transform, new Vector2(0.5f, 0f), new Vector2(430f, 28f), new Vector2(400f, 96f), new Vector2(0.5f, 0f));
 
             ResultsController results = host.gameObject.AddComponent<ResultsController>();
             Wire(results, "catalog", catalog);
             Wire(results, "panel", panel);
             Wire(results, "titleText", title);
             Wire(results, "subtitleText", subtitle);
-            Wire(results, "leftNameText", leftName);
-            Wire(results, "leftKillsText", leftKills);
-            Wire(results, "leftWeaponText", leftWeapon);
-            Wire(results, "leftTagText", leftTag);
-            Wire(results, "rightNameText", rightName);
-            Wire(results, "rightKillsText", rightKills);
-            Wire(results, "rightWeaponText", rightWeapon);
-            Wire(results, "rightTagText", rightTag);
             Wire(results, "detailsText", details);
             Wire(results, "titleBand", band);
             Wire(results, "playAgainButton", again);
             Wire(results, "playAgainText", againLabel);
             Wire(results, "lobbyButton", lobby);
             Wire(results, "menuButton", menu);
+            var so = new SerializedObject(results);
+            SerializedProperty array = so.FindProperty("rows");
+            array.arraySize = rows.Length;
+            for (int r = 0; r < rows.Length; r++)
+            {
+                SerializedProperty element = array.GetArrayElementAtIndex(r);
+                element.FindPropertyRelative("background").objectReferenceValue = rows[r].background;
+                element.FindPropertyRelative("rank").objectReferenceValue = rows[r].rank;
+                element.FindPropertyRelative("name").objectReferenceValue = rows[r].name;
+                element.FindPropertyRelative("kills").objectReferenceValue = rows[r].kills;
+                element.FindPropertyRelative("deaths").objectReferenceValue = rows[r].deaths;
+                element.FindPropertyRelative("weapon").objectReferenceValue = rows[r].weapon;
+            }
+            so.ApplyModifiedPropertiesWithoutUndo();
             return results;
         }
 

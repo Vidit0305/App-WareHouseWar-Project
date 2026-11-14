@@ -16,6 +16,17 @@ namespace WarehouseDuel.Core
             public const string MainMenu = "MainMenu";
             public const string Lobby = "Lobby";
             public const string WarehouseMap = "WarehouseMap";
+            public const string DesertMap = "DesertMap";
+            public const string ForestMap = "ForestMap";
+            public const string SnowMap = "SnowMap";
+
+            /// <summary>Playable maps; the index is the map id sent over the network (RoomState.Map).</summary>
+            public static readonly string[] Maps = { WarehouseMap, DesertMap, ForestMap, SnowMap };
+            public static readonly string[] MapNames = { "Warehouse", "Desert", "Forest", "Snow" };
+            /// <summary>Map choice value meaning "pick one at random when the match starts".</summary>
+            public const int RandomMap = 255;
+
+            public static bool IsMap(string sceneName) => System.Array.IndexOf(Maps, sceneName) >= 0;
 
             public const string Folder = "Assets/Scenes";
 
@@ -23,7 +34,7 @@ namespace WarehouseDuel.Core
             /// Build-index order. Photon Fusion refers to networked scenes by build index
             /// (SceneRef.FromIndex), so host and client builds MUST share this exact order.
             /// </summary>
-            public static readonly string[] BuildOrder = { SplashScreen, MainMenu, Lobby, WarehouseMap };
+            public static readonly string[] BuildOrder = { SplashScreen, MainMenu, Lobby, WarehouseMap, DesertMap, ForestMap, SnowMap };
 
             public static string PathOf(string sceneName) => $"{Folder}/{sceneName}.unity";
         }

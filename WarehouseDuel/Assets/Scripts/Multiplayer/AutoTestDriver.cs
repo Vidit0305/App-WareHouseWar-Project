@@ -89,7 +89,7 @@ namespace WarehouseDuel.Multiplayer
             if (role == Role.Host)
             {
                 if (File.Exists(codeFile)) File.Delete(codeFile);
-                bool ok = await session.CreateRoomAsync();
+                bool ok = await session.CreateRoomAsync(0);
                 Log(ok ? $"Room created: {session.RoomCode}" : $"Create failed: {session.LastError}");
                 if (ok) File.WriteAllText(codeFile, session.RoomCode);
             }
@@ -123,7 +123,7 @@ namespace WarehouseDuel.Multiplayer
                 Log("Sent profile + ready");
             }
 
-            if (role == Role.Host && !startedMatch && room.OccupiedCount == RoomState.Capacity && room.AllReady)
+            if (role == Role.Host && !startedMatch && room.OccupiedCount >= RoomState.MinPlayers && room.AllReady)
             {
                 startedMatch = true;
                 Log("Both ready: starting match");
@@ -199,7 +199,7 @@ namespace WarehouseDuel.Multiplayer
             sb.AppendLine($"  \"isDraw\": {(match.IsDraw ? "true" : "false")},");
             sb.AppendLine($"  \"winner\": \"{(room != null ? room.NameOf(match.Winner) : "?")}\",");
             sb.AppendLine($"  \"playedSeconds\": {match.PlayedSeconds:0.0},");
-            for (int i = 0; room != null && i < RoomState.Capacity; i++)
+            for (int i = 0; room != null && i < 2; i++) // the test always runs exactly two players
             {
                 PlayerSlot s = room.Slots[i];
                 sb.AppendLine($"  \"slot{i}\": {{ \"name\": \"{s.Name}\", \"kills\": {s.Kills}, \"deaths\": {s.Deaths}, \"weapon\": {s.Weapon} }}{(i == 0 ? "," : "")}");

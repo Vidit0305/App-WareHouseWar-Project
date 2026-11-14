@@ -15,7 +15,8 @@ namespace WarehouseDuel.EditorTools.Map
     /// Generates the playable warehouse inside Assets/Scenes/WarehouseMap.unity.
     ///
     /// Layout (top view, metres; interior x ∈ [-18, 18], z ∈ [-28, 28]):
-    ///   - Spawn A at (0, -25) facing +Z, Spawn B at (0, 25) facing -Z.
+    ///   - Spawn A (slot 0) at (0, -25) facing +Z, Spawn B (slot 1) at (0, 25) facing -Z; slots 2–7 (free-for-all) at
+    ///     the side walls (∓16.5, 0) and the four back corners, see <see cref="WarehouseSpawns"/>.
     ///   - Every prop in the southern half is mirrored by a 180° rotation about the centre, so both
     ///     players get exactly the same geometry (point symmetry = fair map).
     ///   - Partition walls at z = ±12 with three doorways each + a passage under the catwalk → 4 routes.
@@ -32,6 +33,18 @@ namespace WarehouseDuel.EditorTools.Map
         public const float PartitionZ = 12f;
         public const float PartitionHeight = 3f;
         public static readonly Vector3 SpawnA = new Vector3(0f, 0f, -25f);
+
+        /// <summary>
+        /// All 8 spawns as (x, z, facing yaw); index = slot. Slots 0/1 are <see cref="SpawnA"/> and its mirror (unchanged
+        /// from the 1v1 layout); every other pair is point-symmetric too, so any two opposite slots get the same geometry.
+        /// </summary>
+        private static readonly Vector3[] WarehouseSpawns =
+        {
+            new Vector3(0f, -25f, 0f), new Vector3(0f, 25f, 180f),
+            new Vector3(-16.5f, 0f, 90f), new Vector3(16.5f, 0f, 270f),
+            new Vector3(-14f, -25.5f, 35f), new Vector3(14f, 25.5f, 215f),
+            new Vector3(12.5f, -25.5f, 325f), new Vector3(-12.5f, 25.5f, 145f),
+        };
 
         private const string EnvironmentRoot = "Environment";
         private const string SpawnRoot = "Spawn Points";
@@ -67,6 +80,11 @@ namespace WarehouseDuel.EditorTools.Map
             new Placement(Piece.CrateSmall, -6.3f, 0f, -23.6f),
             new Placement(Piece.BarrelRed, 4.6f, 0f, -24.5f),
             new Placement(Piece.BarrelBlue, 5.25f, 0f, -24.2f),
+            // Crate stacks along the back wall: block the sight lines from spawn 0 to the corner spawns 4 and 6.
+            new Placement(Piece.Crate, -8f, 0f, -25.2f),
+            new Placement(Piece.Crate, -8f, 1.2f, -25.2f, 15f),
+            new Placement(Piece.Crate, 7.5f, 0f, -25.3f),
+            new Placement(Piece.Crate, 7.5f, 1.2f, -25.3f, -12f),
 
             // Left lane: storage racks (one forms a narrow corridor against the wall).
             new Placement(Piece.StorageRack, -17.2f, 0f, -21f),
@@ -175,7 +193,7 @@ namespace WarehouseDuel.EditorTools.Map
             BuildLighting(scene);
             PositionOverviewCamera(scene);
 
-            report.Pass($"Warehouse built: {count} props, 2 spawns, {PartitionSegments.Length * 2} partition walls.");
+            report.Pass($"Warehouse built: {count} props, {WarehouseSpawns.Length} spawns, {PartitionSegments.Length * 2} partition walls.");
 
             MapValidator.Run(report);
 
@@ -280,6 +298,10 @@ namespace WarehouseDuel.EditorTools.Map
             // Spawn pads (blue = slot 0, red = slot 1) and a hazard square around the centre machine.
             SpawnPad(parent, SpawnA, Id.SpawnBlue);
             SpawnPad(parent, Mirror(SpawnA), Id.SpawnRed);
+            for (int slot = 2; slot < WarehouseSpawns.Length; slot++)
+            {
+                SpawnPad(parent, new Vector3(WarehouseSpawns[slot].x, 0f, WarehouseSpawns[slot].y), Id.FloorPaintWhite);
+            }
 
             const float half = 3.6f, line = 0.15f, y = 0.006f;
             foreach (float s in new[] { -1f, 1f })
@@ -316,6 +338,11 @@ namespace WarehouseDuel.EditorTools.Map
             Transform root = ResetRoot(scene, SpawnRoot);
             CreateSpawn(root, "Spawn A (slot 0)", SpawnA, 0f, 0);
             CreateSpawn(root, "Spawn B (slot 1)", Mirror(SpawnA), 180f, 1);
+            for (int slot = 2; slot < WarehouseSpawns.Length; slot++)
+            {
+                Vector3 s = WarehouseSpawns[slot];
+                CreateSpawn(root, $"Spawn {slot} (slot {slot})", new Vector3(s.x, 0f, s.y), s.z, slot);
+            }
         }
 
         private static void CreateSpawn(Transform parent, string name, Vector3 position, float rotationY, int slot)

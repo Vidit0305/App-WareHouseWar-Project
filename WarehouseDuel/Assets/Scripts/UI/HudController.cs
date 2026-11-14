@@ -38,6 +38,8 @@ namespace WarehouseDuel.UI
 
         [Header("Crosshair & feedback")]
         [SerializeField] private RectTransform[] crosshairLines = new RectTransform[4]; // up, down, left, right
+        [SerializeField] private GameObject crosshairDot;
+        [SerializeField] private CanvasGroup scopeOverlay;
         [SerializeField] private CanvasGroup hitMarker;
         [SerializeField] private Image hitMarkerImage;
         [SerializeField] private CanvasGroup damageVignette;
@@ -104,6 +106,7 @@ namespace WarehouseDuel.UI
             bool hasPlayer = me != null && me.Object != null && me.Object.IsValid;
 
             gameplayGroup.SetActive(hasPlayer);
+            UpdateScope(hasPlayer);
             if (LocalInputCollector.Instance != null)
             {
                 bool ended = match != null && match.Phase == MatchPhase.Ended;
@@ -173,18 +176,27 @@ namespace WarehouseDuel.UI
                 local = SessionService.Instance.Runner.LocalPlayer;
             }
 
+            // Free-for-all: my score and place on the left, the best other player on the right.
             PlayerSlot mine = default, theirs = default;
+            int players = 0, ahead = 0;
             for (int i = 0; i < RoomState.Capacity; i++)
             {
                 PlayerSlot slot = room.Slots[i];
                 if (!slot.Occupied) continue;
+                players++;
                 if (slot.Player == local) mine = slot;
-                else theirs = slot;
+                else if (!theirs.Occupied || slot.Kills > theirs.Kills) theirs = slot;
+            }
+            for (int i = 0; i < RoomState.Capacity; i++)
+            {
+                PlayerSlot slot = room.Slots[i];
+                if (slot.Occupied && slot.Player != local && slot.Kills > mine.Kills) ahead++;
             }
 
-            myNameText.text = "YOU";
+            myNameText.text = players > 2 ? $"YOU  #{ahead + 1}" : "YOU";
             myKillsText.text = mine.Kills.ToString();
-            opponentNameText.text = theirs.Occupied ? theirs.Name.ToString().ToUpperInvariant() : "—";
+            string rival = theirs.Occupied ? theirs.Name.ToString().ToUpperInvariant() : "—";
+            opponentNameText.text = players > 2 && theirs.Occupied ? (theirs.Kills > mine.Kills ? $"1ST  {rival}" : $"BEST  {rival}") : rival;
             opponentKillsText.text = theirs.Occupied ? theirs.Kills.ToString() : "0";
         }
 
@@ -211,9 +223,19 @@ namespace WarehouseDuel.UI
             if (weapons == null || weapons.Current == null) return;
             WeaponDefinition def = weapons.Current;
 
-            ammoText.text = weapons.CurrentMagazine.ToString();
-            ammoText.color = weapons.CurrentMagazine <= Mathf.Max(1, def.magazineSize / 5) ? HealthLow : Color.white;
-            reserveText.text = $"/ {weapons.CurrentReserve}";
+            if (def.usesAmmo)
+            {
+                ammoText.text = weapons.CurrentMagazine.ToString();
+                bool low = def.magazineSize > 1 ? weapons.CurrentMagazine <= Mathf.Max(1, def.magazineSize / 5) : weapons.CurrentMagazine == 0;
+                ammoText.color = low ? HealthLow : Color.white;
+                reserveText.text = $"/ {weapons.CurrentReserve}";
+            }
+            else
+            {
+                ammoText.text = "∞"; // melee: no ammo
+                ammoText.color = Color.white;
+                reserveText.text = "";
+            }
             weaponNameText.text = def.displayName.ToUpperInvariant();
             if (weaponIcon != null)
             {
@@ -244,6 +266,25 @@ namespace WarehouseDuel.UI
                 crosshairLines[2].anchoredPosition = new Vector2(-gap, 0f);
                 crosshairLines[3].anchoredPosition = new Vector2(gap, 0f);
             }
+        }
+
+        /// <summary>Sniper scope: fades the lens overlay in while aiming a scoped weapon and hides the crosshair.</summary>
+        private void UpdateScope(bool hasPlayer)
+        {
+            PlayerCameraRig rig = PlayerCameraRig.Local;
+            float blend = hasPlayer && rig != null ? rig.ScopeBlend : 0f;
+            if (scopeOverlay != null)
+            {
+                scopeOverlay.alpha = blend;
+                bool show = blend > 0.001f;
+                if (scopeOverlay.gameObject.activeSelf != show) scopeOverlay.gameObject.SetActive(show);
+            }
+            bool crosshair = blend < 0.5f;
+            foreach (RectTransform line in crosshairLines)
+            {
+                if (line != null && line.gameObject.activeSelf != crosshair) line.gameObject.SetActive(crosshair);
+            }
+            if (crosshairDot != null && crosshairDot.activeSelf != crosshair) crosshairDot.SetActive(crosshair);
         }
 
         private void UpdateCenter(PlayerCharacter me, MatchManager match)

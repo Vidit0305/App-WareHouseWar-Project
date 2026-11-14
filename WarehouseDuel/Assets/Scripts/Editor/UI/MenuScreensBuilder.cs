@@ -285,12 +285,14 @@ namespace WarehouseDuel.EditorTools.UI
             var avatarTiles = new Button[presetCount];
             var avatarImages = new Image[presetCount];
             var avatarRings = new Image[presetCount];
+            var avatarLocks = new GameObject[presetCount];
             for (int i = 0; i < presetCount; i++)
             {
                 Button tile = CreateButton($"Avatar {i + 1}", grid, "", ButtonStyle.Ghost, new Vector2(tileSize, tileSize));
                 avatarRings[i] = RingChild(tile);
                 avatarImages[i] = Masked(tile.transform, "Mask", UiArt.Rounded, catalog.Avatar(i), out RectTransform mask);
                 Stretch(mask);
+                avatarLocks[i] = LockOverlay(tile.transform, out _, withPrice: false);
                 avatarTiles[i] = tile;
             }
             avatarRings[0].color = Accent;
@@ -304,6 +306,7 @@ namespace WarehouseDuel.EditorTools.UI
             var bannerTiles = new Button[bannerCount];
             var bannerImages = new Image[bannerCount];
             var bannerRings = new Image[bannerCount];
+            var bannerLocks = new GameObject[bannerCount];
             for (int i = 0; i < bannerCount; i++)
             {
                 Button tile = CreateButton($"Banner {i + 1}", bannerGrid, "", ButtonStyle.Ghost, new Vector2(556f, 140f));
@@ -315,6 +318,7 @@ namespace WarehouseDuel.EditorTools.UI
                 At(nameBack.rectTransform, 14f, -88f, 200f, 40f);
                 TextMeshProUGUI bannerName = CreateText("Name", nameBack.transform, catalog.BannerName(i).ToUpperInvariant(), 20f, TextPrimary, TextAlignmentOptions.Center, display: true);
                 Stretch(bannerName.rectTransform);
+                bannerLocks[i] = LockOverlay(tile.transform, out _, withPrice: false);
                 bannerTiles[i] = tile;
             }
             if (bannerCount > 0) bannerRings[0].color = Accent;
@@ -363,10 +367,12 @@ namespace WarehouseDuel.EditorTools.UI
             WireArray(screen, "avatarTiles", avatarTiles);
             WireArray(screen, "avatarImages", avatarImages);
             WireArray(screen, "avatarRings", avatarRings);
+            WireArray(screen, "avatarLocks", avatarLocks);
             Wire(screen, "avatarStatus", avatarStatus);
             WireArray(screen, "bannerTiles", bannerTiles);
             WireArray(screen, "bannerImages", bannerImages);
             WireArray(screen, "bannerRings", bannerRings);
+            WireArray(screen, "bannerLocks", bannerLocks);
             WireArray(screen, "titleButtons", titleButtons);
             WireArray(screen, "titleBackgrounds", titleBackgrounds);
             WireArray(screen, "titleNames", titleNames);
@@ -487,7 +493,7 @@ namespace WarehouseDuel.EditorTools.UI
 
         public static CharacterScreen Characters(RectTransform safe, CharacterCatalog catalog, SoldierAnimator character, Transform turntable)
         {
-            RectTransform content = Frame("Character Screen", safe, "CHARACTERS", true, out GameObject root, out Button back);
+            RectTransform content = Frame("Character Screen", safe, "WARDROBE", true, out GameObject root, out Button back);
 
             // Drag the soldier in the middle.
             Image drag = CreateImage("Character Drag Area", content, new Color(0f, 0f, 0f, 0f), raycast: true);
@@ -501,6 +507,8 @@ namespace WarehouseDuel.EditorTools.UI
             var portraits = new Image[count];
             var names = new TMP_Text[count];
             var tags = new GameObject[count];
+            var locks = new GameObject[count];
+            var prices = new TMP_Text[count];
             const float cardW = 236f, cardH = 158f, gap = 14f;
             for (int i = 0; i < count; i++)
             {
@@ -522,6 +530,7 @@ namespace WarehouseDuel.EditorTools.UI
                 Stretch(tagText.rectTransform);
                 tag.gameObject.SetActive(i == 0);
                 tags[i] = tag.gameObject;
+                locks[i] = LockOverlay(mask, out prices[i], withPrice: true);
                 cards[i] = card;
             }
 
@@ -549,11 +558,137 @@ namespace WarehouseDuel.EditorTools.UI
             WireArray(screen, "portraits", portraits);
             WireArray(screen, "cardNames", names);
             WireArray(screen, "selectedTags", tags);
+            WireArray(screen, "lockTags", locks);
+            WireArray(screen, "priceTexts", prices);
             Wire(screen, "characterName", name);
             Wire(screen, "characterRole", role);
             Wire(screen, "characterDescription", description);
             Wire(screen, "selectButton", select);
             Wire(screen, "selectLabel", selectLabel);
+            root.SetActive(false);
+            return screen;
+        }
+
+        // ------------------------------------------------------------------ shop
+
+        /// <summary>Lock overlay for a tile: dark veil, lock icon and (optionally) a star price.</summary>
+        public static GameObject LockOverlay(Transform tile, out TMP_Text price, bool withPrice)
+        {
+            Image veil = CreateImage("Locked", tile, new Color(0f, 0f, 0f, 0.55f), UiArt.Rounded);
+            Stretch(veil.rectTransform);
+            Image icon = CreateImage("Lock", veil.transform, new Color(1f, 1f, 1f, 0.85f), UiArt.Icon("Lock"));
+            Place(icon.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, withPrice ? 14f : 0f), new Vector2(44f, 44f), new Vector2(0.5f, 0.5f));
+            price = null;
+            if (withPrice)
+            {
+                Image star = CreateImage("Star", veil.transform, Accent, UiArt.Icon("Star"));
+                Place(star.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-26f, -26f), new Vector2(26f, 26f), new Vector2(0.5f, 0.5f));
+                TextMeshProUGUI text = CreateText("Price", veil.transform, "0", 22f, Accent, TextAlignmentOptions.Left, display: true);
+                Place(text.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(-10f, -26f), new Vector2(90f, 30f), new Vector2(0f, 0.5f));
+                price = text;
+            }
+            veil.gameObject.SetActive(false);
+            return veil.gameObject;
+        }
+
+        public static ShopScreen ShopPage(RectTransform safe, CharacterCatalog characters, ProfileCatalog profiles)
+        {
+            RectTransform content = Frame("Shop Screen", safe, "SHOP", false, out GameObject root, out Button back);
+
+            // Balance (top right of the page).
+            Image balance = CreateImage("Balance", content, new Color(0.04f, 0.05f, 0.08f, 0.9f), UiArt.Rounded);
+            Place(balance.rectTransform, new Vector2(1f, 1f), new Vector2(0f, 4f), new Vector2(260f, 76f), new Vector2(1f, 1f));
+            Image star = CreateImage("Star", balance.transform, Accent, UiArt.Icon("Star"));
+            Place(star.rectTransform, new Vector2(0f, 0.5f), new Vector2(16f, 0f), new Vector2(52f, 52f), new Vector2(0f, 0.5f));
+            TextMeshProUGUI stars = CreateText("Stars", balance.transform, "0", 40f, TextPrimary, TextAlignmentOptions.Left, display: true);
+            Place(stars.rectTransform, new Vector2(0f, 0.5f), new Vector2(80f, 0f), new Vector2(170f, 60f), new Vector2(0f, 0.5f));
+
+            Tabs(content, new[] { "COSTUMES", "AVATARS", "BANNERS" }, 0f, 0f, 280f, 80f, 16f, false,
+                out Button[] tabButtons, out Image[] tabBackgrounds, out TMP_Text[] tabLabels);
+            TextMeshProUGUI status = Label(content, "Status", "", 22f, TextMuted, 0f, -96f, 1500f, 34f);
+
+            var pages = new GameObject[3];
+            ShopScreen.Item MakeItem(RectTransform grid, string name, Sprite art, string title, Vector2 cell, float artHeight)
+            {
+                Image card = CreateImage(name, grid, new Color(1f, 1f, 1f, 0.06f), UiArt.Rounded);
+                Image picture = Masked(card.transform, "Art", UiArt.Rounded, art, out RectTransform mask);
+                At(mask, 10f, -10f, cell.x - 20f, artHeight);
+                picture.preserveAspect = false;
+                Label(card.transform, "Name", title, 22f, TextPrimary, 10f, -18f - artHeight, cell.x - 20f, 30f, TextAlignmentOptions.Center, display: true);
+
+                Image owned = CreateImage("Owned", card.transform, Success, UiArt.RoundedSmall);
+                Place(owned.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 12f), new Vector2(cell.x - 40f, 48f), new Vector2(0.5f, 0f));
+                TextMeshProUGUI ownedText = CreateText("Text", owned.transform, "OWNED", 22f, new Color(0.05f, 0.1f, 0.06f), TextAlignmentOptions.Center, display: true);
+                Stretch(ownedText.rectTransform);
+
+                Button buy = CreateButton("Buy", card.transform, "0", ButtonStyle.Primary, new Vector2(cell.x - 40f, 56f), out TextMeshProUGUI price, 26f);
+                Place((RectTransform)buy.transform, new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(cell.x - 40f, 56f), new Vector2(0.5f, 0f));
+                Stretch(price.rectTransform, 56f, 12f, 4f, 4f);
+                Image coin = CreateImage("Star", buy.transform, AccentDark, UiArt.Icon("Star"));
+                Place(coin.rectTransform, new Vector2(0f, 0.5f), new Vector2(18f, 0f), new Vector2(32f, 32f), new Vector2(0f, 0.5f));
+                return new ShopScreen.Item { buy = buy, label = price, owned = owned.gameObject, priceIcon = coin.gameObject };
+            }
+
+            // Costumes.
+            RectTransform costumePage = At(CreateRect("Costumes Page", content), 0f, -140f, 1840f, 770f);
+            pages[0] = costumePage.gameObject;
+            var costumeCell = new Vector2(330f, 360f);
+            RectTransform costumeGrid = ScrollGrid(costumePage, "Costume List", costumeCell, new Vector2(20f, 20f), 5);
+            int characterCount = characters != null ? characters.Count : 0;
+            var costumes = new ShopScreen.Item[characterCount];
+            for (int i = 0; i < characterCount; i++)
+            {
+                CharacterCatalog.Entry entry = characters.Get(i);
+                costumes[i] = MakeItem(costumeGrid, $"Costume {i + 1}", entry.portrait, entry.name.ToUpperInvariant(), costumeCell, 220f);
+            }
+
+            // Avatars.
+            RectTransform avatarPage = At(CreateRect("Avatars Page", content), 0f, -140f, 1840f, 770f);
+            pages[1] = avatarPage.gameObject;
+            var avatarCell = new Vector2(250f, 300f);
+            RectTransform avatarGrid = ScrollGrid(avatarPage, "Avatar List", avatarCell, new Vector2(18f, 18f), 7);
+            var avatars = new ShopScreen.Item[profiles.AvatarCount];
+            for (int i = 0; i < avatars.Length; i++) avatars[i] = MakeItem(avatarGrid, $"Avatar {i + 1}", profiles.Avatar(i), $"AVATAR {i + 1}", avatarCell, 170f);
+
+            // Banners.
+            RectTransform bannerPage = At(CreateRect("Banners Page", content), 0f, -140f, 1840f, 770f);
+            pages[2] = bannerPage.gameObject;
+            var bannerCell = new Vector2(440f, 250f);
+            RectTransform bannerGrid = ScrollGrid(bannerPage, "Banner List", bannerCell, new Vector2(18f, 18f), 4);
+            var banners = new ShopScreen.Item[profiles.BannerCount];
+            for (int i = 0; i < banners.Length; i++) banners[i] = MakeItem(bannerGrid, $"Banner {i + 1}", profiles.Banner(i), profiles.BannerName(i).ToUpperInvariant(), bannerCell, 110f);
+
+            avatarPage.gameObject.SetActive(false);
+            bannerPage.gameObject.SetActive(false);
+            tabBackgrounds[0].color = Accent;
+            tabLabels[0].color = AccentDark;
+
+            ShopScreen screen = root.AddComponent<ShopScreen>();
+            Wire(screen, "backButton", back);
+            Wire(screen, "starsText", stars);
+            Wire(screen, "statusText", status);
+            WireArray(screen, "tabButtons", tabButtons);
+            WireArray(screen, "tabBackgrounds", tabBackgrounds);
+            WireArray(screen, "tabLabels", tabLabels);
+            WireArray(screen, "pages", pages);
+            var so = new SerializedObject(screen);
+            void SetItems(string field, ShopScreen.Item[] items)
+            {
+                SerializedProperty array = so.FindProperty(field);
+                array.arraySize = items.Length;
+                for (int i = 0; i < items.Length; i++)
+                {
+                    SerializedProperty element = array.GetArrayElementAtIndex(i);
+                    element.FindPropertyRelative("buy").objectReferenceValue = items[i].buy;
+                    element.FindPropertyRelative("label").objectReferenceValue = items[i].label;
+                    element.FindPropertyRelative("owned").objectReferenceValue = items[i].owned;
+                    element.FindPropertyRelative("priceIcon").objectReferenceValue = items[i].priceIcon;
+                }
+            }
+            SetItems("costumes", costumes);
+            SetItems("avatars", avatars);
+            SetItems("banners", banners);
+            so.ApplyModifiedPropertiesWithoutUndo();
             root.SetActive(false);
             return screen;
         }
@@ -569,29 +704,30 @@ namespace WarehouseDuel.EditorTools.UI
             Place(drag.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(640f, 760f), new Vector2(0.5f, 0.5f));
             Wire(drag.gameObject.AddComponent<DragRotate>(), "target", turntable);
 
-            // ---- left: weapon list
-            var tiles = new Button[4];
-            var frames = new Image[4];
-            var icons = new Image[4];
-            var names = new TMP_Text[4];
-            var equipped = new GameObject[4];
-            for (int i = 0; i < 4; i++)
+            // ---- left: weapon list (two columns)
+            int weaponCount = catalog != null ? catalog.Count : 4;
+            var tiles = new Button[weaponCount];
+            var frames = new Image[weaponCount];
+            var icons = new Image[weaponCount];
+            var names = new TMP_Text[weaponCount];
+            var equipped = new GameObject[weaponCount];
+            for (int i = 0; i < weaponCount; i++)
             {
                 WeaponDefinition def = catalog != null ? catalog.Get(i) : null;
                 Button tile = CreateButton($"Weapon {i + 1}", content, "", ButtonStyle.Secondary, new Vector2(470f, 160f));
-                At((RectTransform)tile.transform, 0f, -i * 180f, 470f, 160f);
+                At((RectTransform)tile.transform, (i % 2) * 300f, -(i / 2) * 200f, 284f, 186f);
                 frames[i] = tile.GetComponent<Image>();
                 frames[i].color = i == 0 ? Accent : new Color(1f, 1f, 1f, 0.08f);
                 icons[i] = CreateImage("Icon", tile.transform, i == 0 ? AccentDark : Color.white, def != null ? def.icon : null);
                 icons[i].preserveAspect = true;
-                At(icons[i].rectTransform, 24f, -30f, 210f, 100f);
-                names[i] = Label(tile.transform, "Name", def != null ? def.displayName.ToUpperInvariant() : $"WEAPON {i + 1}", 30f, i == 0 ? AccentDark : TextPrimary, 250f, -54f, 210f, 50f, display: true);
+                At(icons[i].rectTransform, 22f, -40f, 240f, 90f);
+                names[i] = Label(tile.transform, "Name", def != null ? def.displayName.ToUpperInvariant() : $"WEAPON {i + 1}", 24f, i == 0 ? AccentDark : TextPrimary, 14f, -136f, 256f, 40f, TextAlignmentOptions.Center, display: true);
                 ((TextMeshProUGUI)names[i]).enableAutoSizing = true;
                 ((TextMeshProUGUI)names[i]).fontSizeMin = 18f;
                 ((TextMeshProUGUI)names[i]).fontSizeMax = 30f;
                 ((TextMeshProUGUI)names[i]).textWrappingMode = TextWrappingModes.NoWrap;
                 Image tag = CreateImage("Equipped", tile.transform, Success, UiArt.RoundedSmall);
-                At(tag.rectTransform, 300f, -12f, 156f, 34f);
+                At(tag.rectTransform, 132f, -10f, 140f, 30f);
                 TextMeshProUGUI tagText = CreateText("Text", tag.transform, "EQUIPPED", 18f, new Color(0.05f, 0.1f, 0.06f), TextAlignmentOptions.Center, display: true);
                 Stretch(tagText.rectTransform);
                 tag.gameObject.SetActive(i == 0);

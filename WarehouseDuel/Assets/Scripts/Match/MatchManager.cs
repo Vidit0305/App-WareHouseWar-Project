@@ -22,10 +22,10 @@ namespace WarehouseDuel.Match
     }
 
     /// <summary>
-    /// Host-authoritative match flow: WaitingForPlayers → Countdown (3 s) → Playing (180 s) → Ended.
-    /// The clock is a networked TickTimer, so both devices show the same remaining time.
-    /// The result (winner / draw / forfeit) is computed once by the host and replicated, so both players
-    /// always see the same outcome.
+    /// Host-authoritative free-for-all match (2–8 players): WaitingForPlayers → Countdown (3 s) → Playing (180 s) → Ended.
+    /// The clock is a networked TickTimer, so every device shows the same remaining time. The player with the most
+    /// eliminations wins (a tie for first place is a draw). If everyone else leaves, the last player wins by forfeit.
+    /// The result is computed once by the host and replicated.
     /// </summary>
     public sealed class MatchManager : NetworkBehaviour
     {
@@ -92,7 +92,7 @@ namespace WarehouseDuel.Match
 
                 case MatchPhase.Ended:
                     RoomState room = RoomState.Instance;
-                    if (room != null && room.OccupiedCount == RequiredPlayers && room.BothWantRematch) Restart();
+                    if (room != null && room.OccupiedCount >= RequiredPlayers && room.BothWantRematch) Restart();
                     break;
             }
         }
@@ -107,22 +107,25 @@ namespace WarehouseDuel.Match
 
         // ------------------------------------------------------------------ host API
 
-        /// <summary>Host: a player left. During a match the remaining player wins by forfeit.</summary>
+        /// <summary>Host: a player left. The match goes on while two or more remain; the last one standing wins by forfeit.</summary>
         public void HandlePlayerLeft(PlayerRef leaver)
         {
             if (!HasStateAuthority) return;
             if (Phase == MatchPhase.Playing || Phase == MatchPhase.Countdown)
             {
                 PlayerRef remaining = PlayerRef.None;
+                int others = 0;
                 RoomState room = RoomState.Instance;
                 if (room != null)
                 {
                     for (int i = 0; i < RoomState.Capacity; i++)
                     {
-                        if (room.Slots[i].Occupied && room.Slots[i].Player != leaver) remaining = room.Slots[i].Player;
+                        if (!room.Slots[i].Occupied || room.Slots[i].Player == leaver) continue;
+                        remaining = room.Slots[i].Player;
+                        others++;
                     }
                 }
-                EndMatch(MatchEndReason.OpponentLeft, remaining);
+                if (others < 2 && Runner.GameMode != GameMode.Single) EndMatch(MatchEndReason.OpponentLeft, remaining);
             }
             else if (Phase == MatchPhase.WaitingForPlayers)
             {
@@ -130,8 +133,8 @@ namespace WarehouseDuel.Match
             }
         }
 
-        /// <summary>Two players online; one in offline practice (Fusion single-player mode).</summary>
-        public int RequiredPlayers => Runner != null && Runner.GameMode == GameMode.Single ? 1 : RoomState.Capacity;
+        /// <summary>At least two players online; one in offline practice (Fusion single-player mode).</summary>
+        public int RequiredPlayers => Runner != null && Runner.GameMode == GameMode.Single ? 1 : RoomState.MinPlayers;
 
         private bool PlayersReadyToStart()
         {
@@ -143,7 +146,8 @@ namespace WarehouseDuel.Match
             {
                 if (Runner.TryGetPlayerObject(player, out NetworkObject obj) && obj != null && obj.GetComponent<PlayerCharacter>() != null) characters++;
             }
-            return characters >= RequiredPlayers;
+            // Everyone in the room must have spawned (late joiners during the countdown get respawned anyway).
+            return characters >= Mathf.Max(RequiredPlayers, room.OccupiedCount);
         }
 
         private void BeginCountdown()
@@ -181,18 +185,27 @@ namespace WarehouseDuel.Match
                 return;
             }
 
+            // Free-for-all: most eliminations wins; a shared top score is a draw.
             RoomState room = RoomState.Instance;
-            PlayerSlot a = room.Slots[0], b = room.Slots[1];
-            if (a.Kills == b.Kills)
+            int best = -1, leaders = 0;
+            PlayerRef leader = PlayerRef.None;
+            for (int i = 0; i < RoomState.Capacity; i++)
             {
-                IsDraw = true;
-                Winner = PlayerRef.None;
+                PlayerSlot slot = room.Slots[i];
+                if (!slot.Occupied) continue;
+                if (slot.Kills > best)
+                {
+                    best = slot.Kills;
+                    leader = slot.Player;
+                    leaders = 1;
+                }
+                else if (slot.Kills == best)
+                {
+                    leaders++;
+                }
             }
-            else
-            {
-                IsDraw = false;
-                Winner = a.Kills > b.Kills ? a.Player : b.Player;
-            }
+            IsDraw = leaders != 1;
+            Winner = IsDraw ? PlayerRef.None : leader;
         }
 
         private void Restart()

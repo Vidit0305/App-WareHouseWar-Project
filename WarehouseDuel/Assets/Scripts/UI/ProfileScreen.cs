@@ -31,11 +31,13 @@ namespace WarehouseDuel.UI
         [SerializeField] private Image[] avatarImages = new Image[0];
         [SerializeField] private Image[] avatarRings = new Image[0];
         [SerializeField] private TMP_Text avatarStatus;
+        [SerializeField] private GameObject[] avatarLocks = new GameObject[0];
 
         [Header("Banner")]
         [SerializeField] private Button[] bannerTiles = new Button[0];
         [SerializeField] private Image[] bannerImages = new Image[0];
         [SerializeField] private Image[] bannerRings = new Image[0];
+        [SerializeField] private GameObject[] bannerLocks = new GameObject[0];
 
         [Header("Title")]
         [SerializeField] private Button[] titleButtons = new Button[0];
@@ -69,13 +71,21 @@ namespace WarehouseDuel.UI
             for (int i = 0; i < avatarTiles.Length; i++)
             {
                 int index = i;
-                avatarTiles[i].onClick.AddListener(() => PlayerProfile.AvatarIndex = index);
+                avatarTiles[i].onClick.AddListener(() =>
+                {
+                    if (Shop.IsOwned(Shop.Category.Avatar, index)) PlayerProfile.AvatarIndex = index;
+                    else if (avatarStatus != null) avatarStatus.text = $"<color=#FFB020>Locked.</color> Unlock it in the Shop for {Shop.Price(Shop.Category.Avatar, index)} stars.";
+                });
                 if (catalog != null && i < avatarImages.Length) avatarImages[i].sprite = catalog.Avatar(i);
             }
             for (int i = 0; i < bannerTiles.Length; i++)
             {
                 int index = i;
-                bannerTiles[i].onClick.AddListener(() => PlayerProfile.BannerIndex = index);
+                bannerTiles[i].onClick.AddListener(() =>
+                {
+                    if (Shop.IsOwned(Shop.Category.Banner, index)) PlayerProfile.BannerIndex = index;
+                    else if (avatarStatus != null) avatarStatus.text = $"<color=#FFB020>Locked.</color> Unlock it in the Shop for {Shop.Price(Shop.Category.Banner, index)} stars.";
+                });
                 if (catalog != null && i < bannerImages.Length) bannerImages[i].sprite = catalog.Banner(i);
             }
             for (int i = 0; i < titleButtons.Length; i++)
@@ -126,6 +136,9 @@ namespace WarehouseDuel.UI
             customTile.gameObject.SetActive(hasPhoto);
             if (hasPhoto) customImage.sprite = PlayerProfile.CustomAvatar;
             customRing.color = custom ? RingOn : RingOff;
+
+            for (int i = 0; i < avatarLocks.Length; i++) if (avatarLocks[i] != null) avatarLocks[i].SetActive(!Shop.IsOwned(Shop.Category.Avatar, i));
+            for (int i = 0; i < bannerLocks.Length; i++) if (bannerLocks[i] != null) bannerLocks[i].SetActive(!Shop.IsOwned(Shop.Category.Banner, i));
 
             int banner = PlayerProfile.BannerIndex;
             for (int i = 0; i < bannerRings.Length; i++) bannerRings[i].color = i == banner ? RingOn : RingOff;

@@ -8,13 +8,16 @@ namespace WarehouseDuel.Player
     /// Local player's first-person camera and weapon view model (presentation only).
     /// Look angles come straight from the input collector every frame (smooth at any frame rate);
     /// position follows the character's interpolated transform. Adds head bob, aim zoom, recoil kick,
-    /// weapon sway, reload/equip motion and a death camera. Disabled on remote players.
+    /// weapon sway, reload/equip motion, knife slashes, scope (view model hidden when fully scoped),
+    /// explosion camera shake and a death camera. Disabled on remote players.
     ///
     /// The view model is kept within ~0.35 m of the camera, inside the character capsule (radius 0.4 m),
     /// so it can never poke through walls — no extra overlay camera needed (cheaper on mobile).
     /// </summary>
     public sealed class PlayerCameraRig : MonoBehaviour
     {
+        private const float SlashSeconds = 0.3f;
+
         [SerializeField] private Camera playerCamera;
         [SerializeField] private Transform viewModelSocket;
         [SerializeField] private float baseFieldOfView = 72f;
@@ -29,6 +32,7 @@ namespace WarehouseDuel.Player
         private GameObject viewModel;
         private Vector3 weaponOffset;
         private Transform viewMuzzle;
+        private GameObject viewWarhead;
         private WeaponDefinition shownWeapon;
 
         private float bobPhase;
@@ -37,6 +41,9 @@ namespace WarehouseDuel.Player
         private float reloadDip;       // 0..1
         private float equipDip;        // 0..1
         private float aimBlend;        // 0..1
+        private float slash;           // 1 → 0 during a knife slash
+        private float slashSide = 1f;  // alternates the slash direction
+        private float shake;           // explosion trauma 0..1
         private Vector2 sway;
         private float lastYaw, lastPitch;
         private float deathBlend;
@@ -45,8 +52,18 @@ namespace WarehouseDuel.Player
         private Vector3 smoothedPosition;
         private int firstPersonLayer;
 
+        /// <summary>The local player's rig (null until the local player spawned).</summary>
+        public static PlayerCameraRig Local { get; private set; }
+
         public Transform ViewMuzzle => viewMuzzle;
         public Camera Camera => playerCamera;
+
+        /// <summary>0..1 scope overlay strength for the HUD (0 unless the current weapon has a scope and is being aimed).</summary>
+        public float ScopeBlend => shownWeapon != null && shownWeapon.hasScope && character != null && character.IsAlive
+            ? Mathf.InverseLerp(0.55f, 0.9f, aimBlend) : 0f;
+
+        /// <summary>True while looking through a scope (view model hidden, HUD should draw the scope overlay).</summary>
+        public bool IsScoped => ScopeBlend >= 1f;
 
         private void Awake()
         {
@@ -77,12 +94,16 @@ namespace WarehouseDuel.Player
             weapons.ShotFired += OnShotFired;
             weapons.Reloaded += _ => reloadDip = 1f;
             weapons.Equipped += _ => equipDip = 1f;
+            WeaponController.AnyExplosion += OnAnyExplosion;
+            Local = this;
             enabled = true;
         }
 
         private void OnDestroy()
         {
             if (weapons != null) weapons.ShotFired -= OnShotFired;
+            WeaponController.AnyExplosion -= OnAnyExplosion;
+            if (Local == this) Local = null;
             if (playerCamera != null && playerCamera.transform.parent == null) Destroy(playerCamera.gameObject);
         }
 
@@ -91,6 +112,11 @@ namespace WarehouseDuel.Player
             if (!predicted || weapon == null) return;
             kick = Mathf.Min(kick + weapon.viewKick, 0.12f);
             cameraKick = Mathf.Min(cameraKick + weapon.recoilPitch * 0.35f, 6f);
+            if (weapon.IsMelee)
+            {
+                slash = 1f;
+                slashSide = -slashSide;
+            }
             if (viewMuzzle != null && EffectsLibrary.Instance != null)
             {
                 PooledEffect flash = EffectPool.Spawn(EffectsLibrary.Instance.muzzleFlash, viewMuzzle.position, viewMuzzle.rotation, viewMuzzle);
@@ -98,8 +124,22 @@ namespace WarehouseDuel.Player
                 {
                     flash.gameObject.layer = firstPersonLayer;
                     flash.transform.localScale = Vector3.one * (weapon.muzzleFlashScale * 0.6f);
+                    if (flash.TryGetComponent(out EffectTint tint)) tint.SetTint(weapon.muzzleFlashColor);
                 }
             }
+        }
+
+        /// <summary>Camera shake (and a vibration pulse) for explosions near the local player.</summary>
+        private void OnAnyExplosion(Vector3 point, float radius)
+        {
+            if (playerCamera == null || character == null || !character.IsAlive) return;
+            float distance = Vector3.Distance(playerCamera.transform.position, point);
+            float reach = Mathf.Max(1f, radius) * 3.5f;
+            float amount = Mathf.Clamp01(1f - distance / reach);
+            if (amount <= 0f) return;
+            shake = Mathf.Max(shake, amount);
+            if (distance < radius * 1.5f) Haptics.Heavy();
+            else if (amount > 0.25f) Haptics.Medium();
         }
 
         private void LateUpdate()
@@ -126,8 +166,16 @@ namespace WarehouseDuel.Player
             deathBlend = Mathf.MoveTowards(deathBlend, character.IsAlive ? 0f : 1f, dt * (character.IsAlive ? 6f : 2.5f));
             Vector3 eye = smoothedPosition + Vector3.up * Mathf.Lerp(PlayerCharacter.EyeHeight, 0.35f, deathBlend);
 
+            // --- explosion shake (smooth noise, squared trauma so small shakes stay subtle)
+            shake = Mathf.MoveTowards(shake, 0f, dt * 1.4f);
+            float trauma = shake * shake;
+            float noiseTime = Time.time * 22f;
+            float shakePitch = (Mathf.PerlinNoise(noiseTime, 0.31f) - 0.5f) * 8f * trauma;
+            float shakeYaw = (Mathf.PerlinNoise(0.77f, noiseTime) - 0.5f) * 8f * trauma;
+            float shakeRoll = (Mathf.PerlinNoise(noiseTime, 5.13f) - 0.5f) * 6f * trauma;
+
             cameraKick = Mathf.MoveTowards(cameraKick, 0f, dt * 18f);
-            Quaternion look = Quaternion.Euler(pitch - cameraKick, yaw, Mathf.Lerp(0f, 35f, deathBlend));
+            Quaternion look = Quaternion.Euler(pitch - cameraKick + shakePitch, yaw + shakeYaw, Mathf.Lerp(0f, 35f, deathBlend) + shakeRoll);
             playerCamera.transform.SetPositionAndRotation(eye + look * bob, look);
 
             // --- zoom
@@ -159,10 +207,20 @@ namespace WarehouseDuel.Player
             kick = Mathf.MoveTowards(kick, 0f, dt * 0.6f);
             reloadDip = Mathf.MoveTowards(reloadDip, weapons.IsReloading ? 1f : 0f, dt * 4f);
             equipDip = Mathf.MoveTowards(equipDip, 0f, dt * 3.5f);
+            slash = weapon != null && weapon.IsMelee ? Mathf.MoveTowards(slash, 0f, dt / SlashSeconds) : 0f;
 
-            bool visible = character.IsAlive;
+            // Scoped: the scope overlay (HUD) replaces the gun once the zoom has (nearly) finished.
+            bool scoped = weapon != null && weapon.hasScope && aimBlend > 0.85f;
+            bool visible = character.IsAlive && !scoped;
             if (viewModel.activeSelf != visible) viewModel.SetActive(visible);
             viewModel.transform.localPosition = weaponOffset * (1f - aimBlend);
+
+            // Launcher: the rocket on the tube disappears once fired and comes back during the reload.
+            if (viewWarhead != null)
+            {
+                bool loaded = weapons.CurrentMagazine > 0 || (weapons.IsReloading && weapons.ReloadProgress > 0.45f);
+                if (viewWarhead.activeSelf != loaded) viewWarhead.SetActive(loaded);
+            }
 
             // Weapon tuck: when a wall is right in front of the camera, pull the gun back and down
             // instead of letting the (larger) view model poke through it.
@@ -176,8 +234,20 @@ namespace WarehouseDuel.Player
             offset.y -= tuck * 0.05f;
             offset += new Vector3(sway.x, sway.y, -kick) + bob * 0.6f;
             offset.y -= (reloadDip * 0.08f) + (equipDip * 0.15f);
+
+            // Knife slash: a sideways sweep with a forward push; zero at both ends so it never snaps.
+            Quaternion slashRotation = Quaternion.identity;
+            if (slash > 0f)
+            {
+                float u = 1f - slash;
+                float envelope = Mathf.Sin(u * Mathf.PI);
+                float sweep = (Mathf.SmoothStep(0f, 1f, u) * 2f - 1f) * slashSide;
+                offset += new Vector3(-sweep * 0.1f, (0.03f - 0.07f * u), 0.07f) * envelope;
+                slashRotation = Quaternion.Euler(-18f * envelope, sweep * 55f * envelope, sweep * 40f * envelope);
+            }
+
             viewModelSocket.localPosition = offset;
-            viewModelSocket.localRotation = Quaternion.Euler(-kick * 120f + reloadDip * 25f + equipDip * 30f + tuck * 40f, tuck * -15f, reloadDip * -20f);
+            viewModelSocket.localRotation = Quaternion.Euler(-kick * 120f + reloadDip * 25f + equipDip * 30f + tuck * 40f, tuck * -15f, reloadDip * -20f) * slashRotation;
         }
 
         /// <summary>Places the right hand on the grip and the left hand on the weapon's "Handguard" marker.</summary>
@@ -201,11 +271,14 @@ namespace WarehouseDuel.Player
             if (viewModel != null) Destroy(viewModel);
             viewModel = null;
             viewMuzzle = null;
+            viewWarhead = null;
             shownWeapon = weapon;
+            slash = 0f;
             if (weapon == null || weapon.viewModelPrefab == null) return;
 
             viewModel = Instantiate(weapon.viewModelPrefab, viewModelSocket, false);
             viewModel.transform.localScale = Vector3.one * viewModelScale;
+            viewModel.transform.localRotation = Quaternion.Euler(weapon.viewModelEuler);
             weaponOffset = weapon.viewModelOffset;
             viewModel.transform.localPosition = weaponOffset;
             AttachHands(viewModel.transform, handPrefab, WarehouseDuel.Profile.PlayerProfile.CharacterIndex);
@@ -213,6 +286,7 @@ namespace WarehouseDuel.Player
             {
                 t.gameObject.layer = firstPersonLayer;
                 if (t.name == "Muzzle") viewMuzzle = t;
+                else if (t.name == "Warhead") viewWarhead = t.gameObject;
             }
             foreach (Renderer r in viewModel.GetComponentsInChildren<Renderer>(true))
             {

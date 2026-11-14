@@ -23,7 +23,10 @@ namespace WarehouseDuel.Multiplayer
         public float Yaw;
         public float Pitch;
         public NetworkButtons Buttons;
-        /// <summary>Requested weapon slot + 1 (0 = no request).</summary>
+        /// <summary>
+        /// Requested weapon as catalog index + 1 (0 = no request). The host ignores weapons outside the
+        /// player's loadout (primary, pistol, knife).
+        /// </summary>
         public byte WeaponRequest;
     }
 }

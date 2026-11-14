@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d81ce3352d7a90241828c23e8ae72630, type: 3}
+  m_Name: Weapon_Knife
+  m_EditorClassIdentifier: Assembly-CSharp::WarehouseDuel.Weapons.WeaponDefinition
+  displayName: Combat Knife
+  description: Silent and always ready. Two slashes kill; one from behind.
+  icon: {fileID: 21300000, guid: b0d8d4c34114a3f4cbfed94d6abf9e89, type: 3}
+  damage: 55
+  headshotMultiplier: 1.4
+  pellets: 1
+  range: 2.2
+  falloffStart: 2.2
+  falloffEnd: 2.2
+  minDamageMultiplier: 1
+  fireMode: 0
+  roundsPerMinute: 110
+  hipSpread: 0
+  aimSpread: 0
+  magazineSize: 1
+  reserveAmmo: 0
+  reloadSeconds: 0.5
+  recoilPitch: 0.6
+  recoilYaw: 0.4
+  moveSpeedMultiplier: 1.1
+  aimFieldOfView: 66
+  equipSeconds: 0.25
+  viewModelPrefab: {fileID: 383611099564313720, guid: d2f8f6d6d5d082347899a44160e784ed, type: 3}
+  viewModelOffset: {x: 0.01, y: 0.02, z: 0.04}
+  worldModelPrefab: {fileID: 383611099564313720, guid: d2f8f6d6d5d082347899a44160e784ed, type: 3}
+  fireSound: {fileID: 8300000, guid: c409533d6a64ac44a8790d428466c276, type: 3}
+  reloadSound: {fileID: 0}
+  dryFireSound: {fileID: 0}
+  muzzleFlashColor: {r: 1, g: 1, b: 1, a: 1}
+  muzzleFlashScale: 0.1
+  viewKick: 0
+  kind: 1
+  usesAmmo: 0
+  hasScope: 0
+  viewModelEuler: {x: -12, y: -14, z: -22}
+  backstabMultiplier: 2
+  explosionRadius: 4.5
+  explosionDamage: 125
+  explosionFullDamageRadius: 1
+  explosionEdgeMultiplier: 0.15
+  selfDamageMultiplier: 0.3
+  impactSound: {fileID: 8300000, guid: cf7ac3da610da984e8aadbecd437772a, type: 3}
+  impactPlayerSound: {fileID: 8300000, guid: e6e104a480139a440b5af7c00e7a1e72, type: 3}

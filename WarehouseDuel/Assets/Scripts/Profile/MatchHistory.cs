@@ -208,7 +208,7 @@ namespace WarehouseDuel.Profile
         {
             get
             {
-                var counts = new int[4];
+                var counts = new int[8];
                 foreach (Entry e in Entries) if (e.weapon >= 0 && e.weapon < counts.Length) counts[e.weapon]++;
                 int best = -1, bestCount = 0;
                 for (int i = 0; i < counts.Length; i++)

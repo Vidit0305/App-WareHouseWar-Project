@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d81ce3352d7a90241828c23e8ae72630, type: 3}
+  m_Name: Weapon_Sniper
+  m_EditorClassIdentifier: Assembly-CSharp::WarehouseDuel.Weapons.WeaponDefinition
+  displayName: Sniper Rifle
+  description: Bolt-action, 4x scope. One shot to the head kills; wild from the hip,
+    slow to move.
+  icon: {fileID: 21300000, guid: e9fff74ab88a00144b5355ae916146f5, type: 3}
+  damage: 95
+  headshotMultiplier: 2
+  pellets: 1
+  range: 160
+  falloffStart: 160
+  falloffEnd: 160
+  minDamageMultiplier: 1
+  fireMode: 1
+  roundsPerMinute: 45
+  hipSpread: 8
+  aimSpread: 0
+  magazineSize: 5
+  reserveAmmo: 20
+  reloadSeconds: 3.2
+  recoilPitch: 5
+  recoilYaw: 0.8
+  moveSpeedMultiplier: 0.9
+  aimFieldOfView: 18
+  equipSeconds: 0.7
+  viewModelPrefab: {fileID: 1172771052171962966, guid: 89c5e98e52254bd4c9f9d5318c99abeb, type: 3}
+  viewModelOffset: {x: 0, y: 0, z: -0.08}
+  worldModelPrefab: {fileID: 1172771052171962966, guid: 89c5e98e52254bd4c9f9d5318c99abeb, type: 3}
+  fireSound: {fileID: 8300000, guid: 0cf1dc91687665b4ca108bf06dd6ecec, type: 3}
+  reloadSound: {fileID: 8300000, guid: 3e43df72020fc42489e7b5276a15adae, type: 3}
+  dryFireSound: {fileID: 8300000, guid: 1e24a5f06c400404eb1f0ac2fc63fa09, type: 3}
+  muzzleFlashColor: {r: 1, g: 0.92, b: 0.7, a: 1}
+  muzzleFlashScale: 1.7
+  viewKick: 0.1
+  kind: 0
+  usesAmmo: 1
+  hasScope: 1
+  viewModelEuler: {x: 0, y: 0, z: 0}
+  backstabMultiplier: 2
+  explosionRadius: 4.5
+  explosionDamage: 125
+  explosionFullDamageRadius: 1
+  explosionEdgeMultiplier: 0.15
+  selfDamageMultiplier: 0.3
+  impactSound: {fileID: 0}
+  impactPlayerSound: {fileID: 0}

@@ -25,6 +25,7 @@ namespace WarehouseDuel.EditorTools.UI
         public static Sprite Ring => LoadSprite(SpriteFolder, "UI_Ring");
         /// <summary>270° ring segment whose tail fades out — the loading spinner.</summary>
         public static Sprite Arc => LoadSprite(SpriteFolder, "UI_Arc");
+        public static Sprite Scope => LoadSprite(SpriteFolder, "UI_Scope");
         public static Sprite Gradient => LoadSprite(SpriteFolder, "UI_Vignette");
         public static Sprite Avatar => AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Branding/AppIcon_Round.png");
         public static Sprite SplashBackground => AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Art/Branding/Splash_Background.png");
@@ -42,6 +43,7 @@ namespace WarehouseDuel.EditorTools.UI
             SaveSprite(SpriteFolder, "UI_Circle", 128, (x, y) => Disc(x, y, 128, 62f));
             SaveSprite(SpriteFolder, "UI_Ring", 128, (x, y) => Mathf.Min(Disc(x, y, 128, 62f), 1f - Disc(x, y, 128, 52f)));
             SaveSprite(SpriteFolder, "UI_Vignette", 128, Vignette);
+            SaveSprite(SpriteFolder, "UI_Scope", 512, ScopeMask);
             SaveSprite(SpriteFolder, "UI_BottomFade", 64, (x, y) => Mathf.SmoothStep(1f, 0f, y / 63f));
             SaveSprite(SpriteFolder, "UI_Arc", 128, (x, y) =>
             {
@@ -382,6 +384,20 @@ namespace WarehouseDuel.EditorTools.UI
             return Mathf.Clamp01(0.5f - d);
         }
 
+        /// <summary>Sniper scope mask (tinted black): opaque outside the lens, soft inner edge shadow, thin reticle with thicker outer posts.</summary>
+        private static float ScopeMask(int x, int y)
+        {
+            float dx = x + 0.5f - 256f, dy = y + 0.5f - 256f;
+            float r = Mathf.Sqrt(dx * dx + dy * dy);
+            float outside = Mathf.Clamp01((r - 238f) / 3f);
+            float shade = Mathf.Clamp01((r - 170f) / 68f);
+            shade = shade * shade * 0.55f;
+            float thick = r > 120f ? 3.5f : 0.9f;
+            float lines = Mathf.Abs(dx) < thick || Mathf.Abs(dy) < thick ? 0.92f : 0f;
+            if (r < 10f) lines = 0f; // leave the centre open for the red dot
+            return Mathf.Max(outside, Mathf.Max(shade, lines));
+        }
+
         private static float Vignette(int x, int y)
         {
             float d = new Vector2(x / 127f - 0.5f, y / 127f - 0.5f).magnitude * 2f;
@@ -430,7 +446,12 @@ namespace WarehouseDuel.EditorTools.UI
                 report.Warn($"Display font not found at {fontPath}; UI will use the default TMP font.");
                 return;
             }
-            if (AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(assetPath) != null) return;
+            TMP_FontAsset existing = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(assetPath);
+            if (existing != null)
+            {
+                AddSymbolFallback(existing);
+                return;
+            }
 
             TMP_FontAsset fontAsset = TMP_FontAsset.CreateFontAsset(font, 72, 8, GlyphRenderMode.SDFAA, 1024, 1024, AtlasPopulationMode.Dynamic);
             fontAsset.name = "RussoOne SDF";
@@ -441,8 +462,20 @@ namespace WarehouseDuel.EditorTools.UI
             AssetDatabase.AddObjectToAsset(fontAsset.material, fontAsset);
             // Pre-bake common characters so the first frame doesn't rasterise glyphs.
             fontAsset.TryAddCharacters(" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789:/!?.,-–—+()%…'\"#&•<>[]");
+            AddSymbolFallback(fontAsset);
             EditorUtility.SetDirty(fontAsset);
             AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>Russo One has no symbols such as the infinity sign; fall back to TMP's Liberation Sans for them.</summary>
+        private static void AddSymbolFallback(TMP_FontAsset fontAsset)
+        {
+            var fallback = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/TextMesh Pro/Resources/Fonts & Materials/LiberationSans SDF - Fallback.asset");
+            if (fallback == null) return;
+            if (fontAsset.fallbackFontAssetTable == null) fontAsset.fallbackFontAssetTable = new System.Collections.Generic.List<TMP_FontAsset>();
+            if (fontAsset.fallbackFontAssetTable.Contains(fallback)) return;
+            fontAsset.fallbackFontAssetTable.Add(fallback);
+            EditorUtility.SetDirty(fontAsset);
         }
     }
 }

@@ -136,7 +136,7 @@ namespace WarehouseDuel.Core
         public static int PreferredWeapon
         {
             get => PlayerPrefs.GetInt(Prefix + "weapon", 0);
-            set => SetInt("weapon", Mathf.Clamp(value, 0, 3));
+            set => SetInt("weapon", Mathf.Clamp(value, 0, 7));
         }
 
         /// <summary>Lifetime stats shown on the profile screen (local only).</summary>

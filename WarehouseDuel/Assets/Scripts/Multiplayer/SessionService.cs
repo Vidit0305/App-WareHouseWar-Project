@@ -56,6 +56,15 @@ namespace WarehouseDuel.Multiplayer
 
         private readonly Dictionary<PlayerRef, NetworkObject> spawnedCharacters = new Dictionary<PlayerRef, NetworkObject>();
         private bool shutdownRequestedLocally;
+        // Applied to RoomState when the host spawns it.
+        private int pendingMap = GameConstants.Scenes.RandomMap;
+        private bool pendingQuickPlay;
+
+        /// <summary>True while searching for / waiting in a quick match (matchmaking) room.</summary>
+        public bool IsQuickPlay { get; private set; }
+
+        private const string QuickPlayProperty = "qp";
+        private const string MapProperty = "map";
 
         /// <summary>Called by the bootstrap in each scene; keeps one instance alive across scene loads.</summary>
         public static SessionService EnsureInstance(SessionService prefab)
@@ -84,16 +93,22 @@ namespace WarehouseDuel.Multiplayer
 
         // ------------------------------------------------------------------ public API (UI)
 
-        /// <summary>Creates a private two-player room and becomes its host. Retries if the random code is taken.</summary>
-        public async Task<bool> CreateRoomAsync()
+        /// <summary>
+        /// Creates a private room (up to 8 players) on <paramref name="mapChoice"/> (a map index or
+        /// GameConstants.Scenes.RandomMap) and becomes its host. Retries quietly if the random code is taken.
+        /// </summary>
+        public async Task<bool> CreateRoomAsync(int mapChoice = GameConstants.Scenes.RandomMap)
         {
             if (Status == SessionStatus.Connecting || Status == SessionStatus.InRoom) return false;
             IsPractice = false;
+            IsQuickPlay = false;
+            pendingMap = mapChoice;
+            pendingQuickPlay = false;
 
             for (int attempt = 1; attempt <= MaxCreateAttempts; attempt++)
             {
                 string sessionName = Multiplayer.RoomCode.NewSessionName();
-                SetStatus(SessionStatus.Connecting, $"Creating room (attempt {attempt})…");
+                SetStatus(SessionStatus.Connecting, "Creating room…");
 
                 StartGameResult result = await StartRunner(GameMode.Host, sessionName, region: null);
                 if (result.Ok)
@@ -120,6 +135,7 @@ namespace WarehouseDuel.Multiplayer
         {
             if (Status == SessionStatus.Connecting || Status == SessionStatus.InRoom) return false;
             IsPractice = false;
+            IsQuickPlay = false;
 
             if (!Multiplayer.RoomCode.TryParse(code, out string sessionName, out string region, out string error))
             {
@@ -141,6 +157,44 @@ namespace WarehouseDuel.Multiplayer
         }
 
         /// <summary>
+        /// Quick match: joins any open matchmaking room for <paramref name="mapChoice"/> (or any room when random),
+        /// or creates one and hosts it. Stays in the main menu while searching; the host starts the match on its own
+        /// once at least two players are in (see RoomState). Cancel with <see cref="LeaveSession"/>.
+        /// </summary>
+        public async Task<bool> QuickPlayAsync(int mapChoice = GameConstants.Scenes.RandomMap)
+        {
+            if (Status == SessionStatus.Connecting || Status == SessionStatus.InRoom) return false;
+            IsPractice = false;
+            IsQuickPlay = true;
+            pendingMap = mapChoice;
+            pendingQuickPlay = true;
+
+            var properties = new Dictionary<string, SessionProperty> { [QuickPlayProperty] = 1 };
+            if (mapChoice != GameConstants.Scenes.RandomMap) properties[MapProperty] = mapChoice;
+
+            SetStatus(SessionStatus.Connecting, "Searching for players…");
+            StartGameResult result = await StartRunner(GameMode.AutoHostOrClient, null, null, firstScene: null, properties: properties);
+            if (!result.Ok)
+            {
+                IsQuickPlay = false;
+                SetStatus(SessionStatus.Failed, Describe(result.ShutdownReason, result.ErrorMessage));
+                return false;
+            }
+            RoomCode = string.Empty;
+            SetStatus(SessionStatus.InRoom, string.Empty);
+            return true;
+        }
+
+        /// <summary>Host: a quick match has enough players — close the room and load the map.</summary>
+        public void StartQuickMatch()
+        {
+            if (!IsHost || RoomState.Instance == null) return;
+            RoomState.Instance.ResetScores();
+            if (Runner.SessionInfo != null) Runner.SessionInfo.IsOpen = false;
+            LoadNetworkScene(GameConstants.Scenes.Maps[RoomState.Instance.ResolveMap()]);
+        }
+
+        /// <summary>
         /// Offline practice: Fusion Single-Player mode loads the warehouse with only the local player.
         /// Same gameplay code as online; no network involved.
         /// </summary>
@@ -148,6 +202,7 @@ namespace WarehouseDuel.Multiplayer
         {
             if (Status == SessionStatus.Connecting || Status == SessionStatus.InRoom) return false;
             IsPractice = true;
+            IsQuickPlay = false;
             SetStatus(SessionStatus.Connecting, "Loading practice…");
             StartGameResult result = await StartRunner(GameMode.Single, "practice", null, GameConstants.Scenes.WarehouseMap);
             if (!result.Ok)
@@ -159,13 +214,13 @@ namespace WarehouseDuel.Multiplayer
             return true;
         }
 
-        /// <summary>Host: moves both players from the lobby into the warehouse.</summary>
+        /// <summary>Host: moves everyone from the lobby onto the room's map (needs at least two players, all ready).</summary>
         public void StartMatch()
         {
             if (!IsHost || RoomState.Instance == null) return;
-            if (RoomState.Instance.OccupiedCount < RoomState.Capacity || !RoomState.Instance.AllReady) return;
+            if (RoomState.Instance.OccupiedCount < RoomState.MinPlayers || !RoomState.Instance.AllReady) return;
             RoomState.Instance.ResetScores();
-            LoadNetworkScene(GameConstants.Scenes.WarehouseMap);
+            LoadNetworkScene(GameConstants.Scenes.Maps[RoomState.Instance.ResolveMap()]);
         }
 
         /// <summary>Host: everyone back to the lobby (characters and the match are despawned first).</summary>
@@ -201,7 +256,8 @@ namespace WarehouseDuel.Multiplayer
 
         // ------------------------------------------------------------------ runner lifecycle
 
-        private async Task<StartGameResult> StartRunner(GameMode mode, string sessionName, string region, string firstScene = GameConstants.Scenes.Lobby)
+        private async Task<StartGameResult> StartRunner(GameMode mode, string sessionName, string region, string firstScene = GameConstants.Scenes.Lobby,
+            Dictionary<string, SessionProperty> properties = null)
         {
             shutdownRequestedLocally = false;
             spawnedCharacters.Clear();
@@ -214,7 +270,7 @@ namespace WarehouseDuel.Multiplayer
             NetworkSceneManagerDefault sceneManager = runnerObject.AddComponent<NetworkSceneManagerDefault>();
 
             var sceneInfo = new NetworkSceneInfo();
-            if (mode != GameMode.Client)
+            if (mode != GameMode.Client && firstScene != null)
             {
                 sceneInfo.AddSceneRef(SceneRef.FromIndex(BuildIndexOf(firstScene)), LoadSceneMode.Single);
             }
@@ -227,8 +283,9 @@ namespace WarehouseDuel.Multiplayer
                 GameMode = mode,
                 SessionName = sessionName,
                 PlayerCount = RoomState.Capacity,
-                IsVisible = false,
+                IsVisible = properties != null, // matchmaking rooms are listed; private rooms are code-only
                 IsOpen = true,
+                SessionProperties = properties,
                 Scene = sceneInfo,
                 SceneManager = sceneManager,
                 CustomPhotonAppSettings = appSettings,
@@ -288,6 +345,7 @@ namespace WarehouseDuel.Multiplayer
         {
             if (!runner.IsServer || RoomState.Instance != null) return;
             runner.Spawn(roomStatePrefab, Vector3.zero, Quaternion.identity);
+            if (RoomState.Instance != null) RoomState.Instance.Configure(pendingMap, pendingQuickPlay);
         }
 
         private void SpawnGameplayObjects(NetworkRunner runner)
@@ -321,7 +379,8 @@ namespace WarehouseDuel.Multiplayer
             if (MatchManager.Instance != null) Runner.Despawn(MatchManager.Instance.Object);
         }
 
-        private bool InWarehouse => SceneManager.GetActiveScene().name == GameConstants.Scenes.WarehouseMap;
+        /// <summary>True while a map scene (any of the four) is loaded.</summary>
+        private bool InWarehouse => GameConstants.Scenes.IsMap(SceneManager.GetActiveScene().name);
 
         // ------------------------------------------------------------------ INetworkRunnerCallbacks
 
@@ -333,7 +392,7 @@ namespace WarehouseDuel.Multiplayer
                 // RoomState spawns this tick; register the player once it exists.
                 if (RoomState.Instance != null && RoomState.Instance.AddPlayer(player) < 0)
                 {
-                    runner.Disconnect(player); // defensive: Photon already caps the room at 2
+                    runner.Disconnect(player); // defensive: Photon already caps the room at 8
                     return;
                 }
                 if (InWarehouse) SpawnGameplayObjects(runner);
@@ -400,6 +459,7 @@ namespace WarehouseDuel.Multiplayer
         {
             bool expected = shutdownRequestedLocally || shutdownReason == ShutdownReason.Ok;
             Runner = null;
+            IsQuickPlay = false;
             spawnedCharacters.Clear();
             if (runner != null) Destroy(runner.gameObject);
 
@@ -442,7 +502,7 @@ namespace WarehouseDuel.Multiplayer
             {
                 case ShutdownReason.Ok: return string.Empty;
                 case ShutdownReason.GameNotFound: return "Room not found. Check the code — the host may have closed it.";
-                case ShutdownReason.GameIsFull: return "That room is already full (2 players).";
+                case ShutdownReason.GameIsFull: return "That room is already full (8 players).";
                 case ShutdownReason.GameClosed: return "That room is closed.";
                 case ShutdownReason.GameIdAlreadyExists: return "Room code already in use. Try again.";
                 case ShutdownReason.DisconnectedByPluginLogic: return "Disconnected by the server.";

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using WarehouseDuel.Core;
 using WarehouseDuel.UI.Controls;
+using WarehouseDuel.Weapons;
 
 namespace WarehouseDuel.Player
 {
@@ -16,7 +17,7 @@ namespace WarehouseDuel.Player
         public bool Sprint;
         public bool Jump;
         public bool Reload;
-        /// <summary>Requested weapon slot 0-3, or -1 for "no change".</summary>
+        /// <summary>Requested weapon as a catalog index (0-7, must be in the loadout), or -1 for "no change".</summary>
         public int WeaponSlot;
         public bool NextWeapon;
     }
@@ -85,6 +86,27 @@ namespace WarehouseDuel.Player
         }
 
         public void StopSynthetic() => synthetic = false;
+
+        /// <summary>Asks for the weapon in loadout slot <paramref name="slot"/> (0 primary, 1 pistol, 2 knife), e.g. from a HUD button.</summary>
+        public void RequestLoadoutSlot(int slot)
+        {
+            int index = LoadoutWeapon(slot);
+            if (index >= 0) slotLatch = index;
+        }
+
+        /// <summary>Asks for a weapon by catalog index (ignored by the host if it is not in the loadout).</summary>
+        public void RequestWeapon(int catalogIndex)
+        {
+            if (catalogIndex >= 0) slotLatch = catalogIndex;
+        }
+
+        /// <summary>Catalog index of the local player's loadout slot, or -1.</summary>
+        private static int LoadoutWeapon(int slot)
+        {
+            PlayerCharacter local = PlayerCharacter.Local;
+            WeaponController weapons = local != null ? local.WeaponController : null;
+            return weapons != null ? weapons.LoadoutWeapon(slot) : -1;
+        }
 
         public InputSnapshot ConsumeSnapshot()
         {
@@ -181,10 +203,10 @@ namespace WarehouseDuel.Player
                 jumpLatch |= keyboard.spaceKey.wasPressedThisFrame;
                 reloadLatch |= keyboard.rKey.wasPressedThisFrame;
                 nextWeaponLatch |= keyboard.qKey.wasPressedThisFrame;
-                if (keyboard.digit1Key.wasPressedThisFrame) slotLatch = 0;
-                if (keyboard.digit2Key.wasPressedThisFrame) slotLatch = 1;
-                if (keyboard.digit3Key.wasPressedThisFrame) slotLatch = 2;
-                if (keyboard.digit4Key.wasPressedThisFrame) slotLatch = 3;
+                // 1/2/3 = loadout slots (primary, pistol, knife), mapped to catalog indices for the network.
+                if (keyboard.digit1Key.wasPressedThisFrame) RequestLoadoutSlot(0);
+                if (keyboard.digit2Key.wasPressedThisFrame) RequestLoadoutSlot(1);
+                if (keyboard.digit3Key.wasPressedThisFrame) RequestLoadoutSlot(2);
             }
             if (mouse != null && cursorLocked && Mathf.Abs(mouse.scroll.ReadValue().y) > 0.1f) nextWeaponLatch = true;
             if (touch != null)

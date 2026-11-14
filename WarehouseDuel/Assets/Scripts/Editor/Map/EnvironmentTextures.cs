@@ -16,16 +16,24 @@ namespace WarehouseDuel.EditorTools.Map
     {
         public const string Folder = "Assets/Art/Textures/Environment";
 
-        public enum Kind { ConcreteFloor, Concrete, Corrugated, Steel, Hazard, Container, Wood, Cardboard, Barrel, PaintedMetal, Grating, WornPaint }
+        public enum Kind
+        {
+            ConcreteFloor, Concrete, Corrugated, Steel, Hazard, Container, Wood, Cardboard, Barrel, PaintedMetal, Grating, WornPaint,
+            // Outdoor maps (appended).
+            Sand, Sandstone, Plaster, Sandbag, Rock, Grass, Dirt, Bark, Leaves, Snow, Ice,
+        }
 
         private static readonly Dictionary<Kind, Texture2D> Cache = new Dictionary<Kind, Texture2D>();
 
         public static void ClearCache() => Cache.Clear();
 
+        /// <summary>Large ground surfaces get 512² so their detail survives the bigger tiling.</summary>
+        private static bool IsLarge(Kind kind) => kind == Kind.ConcreteFloor || kind == Kind.Sand || kind == Kind.Grass || kind == Kind.Snow;
+
         public static Texture2D Get(Kind kind)
         {
             if (Cache.TryGetValue(kind, out Texture2D cached) && cached != null) return cached;
-            int size = kind == Kind.ConcreteFloor ? 512 : 256;
+            int size = IsLarge(kind) ? 512 : 256;
             string path = $"{Folder}/T_{kind}.png";
             FolderStructure.EnsureFolder(Folder);
 
@@ -174,6 +182,133 @@ namespace WarehouseDuel.EditorTools.Map
                     bool bar = gx < 0.22f || gy < 0.22f;
                     float g = bar ? 0.85f + 0.08f * Fbm(u * 8f, v * 8f, 8, 3) : 0.12f;
                     return new Color(g, g, g);
+                }
+                case Kind.Sand:
+                {
+                    float g = 0.86f + 0.08f * (Fbm(u * 6f, v * 6f, 6, 6) - 0.5f) + 0.06f * (Fbm(u * 32f, v * 32f, 32, 32) - 0.5f);
+                    float ripple = Mathf.Sin((v * 9f + Fbm(u * 3f, v * 3f, 3, 3) * 1.5f) * Mathf.PI * 2f); // wind ripples
+                    g += ripple * 0.035f;
+                    float grain = Hash(x * 3 + 1, y * 7 + 2);
+                    if (grain > 0.96f) g += 0.07f;
+                    else if (grain < 0.03f) g -= 0.08f;
+                    return new Color(g * 1.03f, g, g * 0.94f);
+                }
+                case Kind.Sandstone:
+                {
+                    // 0.5 m courses of 1 m blocks (2 m tile), staggered, with eroded faces and mortar joints.
+                    const int rows = 4;
+                    int row = y * rows / size;
+                    float inRow = Mathf.Repeat(v * rows, 1f);
+                    float along = Mathf.Repeat(u * 2f + (row % 2) * 0.5f, 2f);
+                    float inBlock = Mathf.Repeat(along, 1f);
+                    int block = Mathf.FloorToInt(along) + row * 2;
+                    float g = 0.8f + 0.12f * Hash(block, 11) + 0.08f * (Fbm(u * 8f, v * 8f, 8, 8) - 0.5f);
+                    g -= Mathf.Clamp01(Fbm(u * 5f, v * 5f, 5, 5) * 1.7f - 1.05f) * 0.18f;
+                    float edge = Mathf.Min(Mathf.Min(inRow, 1f - inRow) / rows, Mathf.Min(inBlock, 1f - inBlock) / 2f);
+                    if (edge < 0.006f) g *= 0.62f;
+                    else if (edge < 0.014f) g *= 0.9f;
+                    return new Color(g * 1.03f, g, g * 0.92f);
+                }
+                case Kind.Plaster:
+                {
+                    float g = 0.88f + 0.06f * (Fbm(u * 6f, v * 6f, 6, 6) - 0.5f) + 0.04f * (Fbm(u * 24f, v * 24f, 24, 24) - 0.5f);
+                    float patch = Fbm(u * 4f + 7.3f, v * 4f, 4, 4);
+                    if (patch > 0.62f)
+                    {
+                        // Plaster has fallen off: mud bricks show through.
+                        int row = y * 10 / size;
+                        float inRow = Mathf.Repeat(v * 10f, 1f);
+                        float along = Mathf.Repeat(u * 5f + (row % 2) * 0.5f, 5f);
+                        float inBrick = Mathf.Repeat(along, 1f);
+                        float brick = 0.66f + 0.1f * Hash(row, Mathf.FloorToInt(along));
+                        if (Mathf.Min(inRow, 1f - inRow) < 0.08f || Mathf.Min(inBrick, 1f - inBrick) < 0.04f) brick = 0.82f;
+                        g = Mathf.Lerp(g, brick, Mathf.SmoothStep(0f, 1f, (patch - 0.62f) * 12f));
+                    }
+                    g -= Crack(x, y, size) * 0.2f;
+                    return new Color(g * 1.02f, g * 0.98f, g * 0.92f);
+                }
+                case Kind.Sandbag:
+                {
+                    // 1.2 m tile: four 0.3 m rows of 0.6 m bags, staggered, each bulging in the middle.
+                    const int rows = 4;
+                    int row = y * rows / size;
+                    float fy = Mathf.Repeat(v * rows, 1f);
+                    float along = Mathf.Repeat(u * 2f + (row % 2) * 0.5f, 2f);
+                    float fx = Mathf.Repeat(along, 1f);
+                    float bulge = Mathf.Sqrt(Mathf.Clamp01(Mathf.Sin(fx * Mathf.PI) * Mathf.Sin(fy * Mathf.PI)));
+                    float weave = 0.95f + 0.05f * Mathf.Sin(u * 96f * Mathf.PI * 2f) * Mathf.Sin(v * 96f * Mathf.PI * 2f);
+                    int bag = Mathf.FloorToInt(along) + row * 2;
+                    float g = (0.5f + 0.45f * bulge) * weave * (0.92f + 0.1f * Hash(bag, 5)) + 0.05f * (Fbm(u * 8f, v * 8f, 8, 8) - 0.5f);
+                    return new Color(g * 1.02f, g, g * 0.9f);
+                }
+                case Kind.Rock:
+                {
+                    float g = 0.78f + 0.16f * (Fbm(u * 4f, v * 4f, 4, 4) - 0.5f) + 0.08f * (Fbm(u * 16f, v * 16f, 16, 16) - 0.5f);
+                    g += Mathf.Sin((v * 5f + Fbm(u * 3f, v * 3f, 3, 3) * 0.8f) * Mathf.PI * 2f) * 0.045f;   // strata
+                    float facet = Mathf.Floor(Fbm(u * 3f + 2.1f, v * 3f, 3, 3) * 6f) / 6f;                 // flat facets
+                    g += (facet - 0.5f) * 0.12f;
+                    g -= Crack(x, y, size) * 0.28f;
+                    if (Hash(x * 5, y * 3) > 0.985f) g += 0.08f;
+                    return new Color(g, g, g * 0.98f);
+                }
+                case Kind.Grass:
+                {
+                    float clumps = Fbm(u * 6f, v * 6f, 6, 6);
+                    float blades = Fbm(u * 64f, v * 16f, 64, 16);
+                    float g = 0.74f + 0.31f * (blades - 0.5f) + 0.14f * (clumps - 0.5f);
+                    float dry = Mathf.Clamp01(Fbm(u * 3f + 5f, v * 3f, 3, 3) * 2f - 1.1f);
+                    var c = new Color(g * 0.96f, g, g * 0.86f);
+                    c = Color.Lerp(c, new Color(g * 1.25f, g * 1.12f, g * 0.7f), dry * 0.7f);          // yellowed patches
+                    float speck = Hash(x * 7 + 3, y * 11);
+                    if (speck > 0.992f) c = new Color(1f, 0.95f, 0.75f);                                // tiny flowers
+                    else if (speck < 0.012f) c *= 0.7f;
+                    return c;
+                }
+                case Kind.Dirt:
+                {
+                    float g = 0.8f + 0.14f * (Fbm(u * 5f, v * 5f, 5, 5) - 0.5f) + 0.08f * (Fbm(u * 24f, v * 24f, 24, 24) - 0.5f);
+                    float pebble = Fbm(u * 40f, v * 40f, 40, 40);
+                    if (pebble > 0.72f) g += 0.12f;
+                    else if (pebble < 0.25f) g -= 0.06f;
+                    g -= Mathf.Clamp01(Fbm(u * 2f, v * 8f, 2, 8) * 2f - 1.2f) * 0.12f;                // ruts
+                    return new Color(g * 1.03f, g, g * 0.93f);
+                }
+                case Kind.Bark:
+                {
+                    // Vertical fissures (box side faces have V pointing up) with a little moss.
+                    float warp = Fbm(u * 4f, v * 2f, 4, 2) * 0.9f;
+                    float ridge = Mathf.Abs(Mathf.Sin((u * 7f + warp) * Mathf.PI));
+                    float g = 0.55f + 0.38f * Mathf.Pow(ridge, 0.6f) + 0.06f * (Fbm(u * 16f, v * 32f, 16, 32) - 0.5f);
+                    float moss = Mathf.Clamp01(Fbm(u * 3f + 9f, v * 3f, 3, 3) * 2f - 1.2f);
+                    var c = new Color(g * 1.02f, g, g * 0.95f);
+                    return Color.Lerp(c, new Color(0.55f, 0.75f, 0.4f) * g * 1.3f, moss * 0.5f);
+                }
+                case Kind.Leaves:
+                {
+                    float big = Fbm(u * 5f, v * 5f, 5, 5);
+                    float small = Fbm(u * 28f, v * 28f, 28, 28);
+                    float g = 0.62f + 0.3f * small + 0.16f * (big - 0.5f);
+                    if (small < 0.35f) g *= 0.72f;                                                      // gaps between clusters
+                    if (Hash(x * 13, y * 17) > 0.985f) g += 0.12f;
+                    return new Color(g * 0.95f, g, g * 0.85f);
+                }
+                case Kind.Snow:
+                {
+                    float g = 0.93f + 0.05f * (Fbm(u * 5f, v * 5f, 5, 5) - 0.5f) + 0.025f * (Fbm(u * 32f, v * 32f, 32, 32) - 0.5f);
+                    g += Mathf.Sin((v * 6f + u * 2f + Fbm(u * 2f, v * 2f, 2, 2) * 1.2f) * Mathf.PI * 2f) * 0.02f; // wind drifts
+                    var c = new Color(g * 0.97f, g * 0.99f, g);
+                    float shade = Mathf.Clamp01(0.5f - Fbm(u * 4f + 3f, v * 4f, 4, 4)) * 0.12f;         // blue hollows
+                    c -= new Color(shade, shade * 0.6f, 0f, 0f);
+                    if (Hash(x * 3 + 7, y * 5 + 1) > 0.993f) c = Color.white;                            // sparkle
+                    return c;
+                }
+                case Kind.Ice:
+                {
+                    float g = 0.82f + 0.1f * (Fbm(u * 3f, v * 3f, 3, 3) - 0.5f);
+                    g += (Fbm(u * 2f, v * 18f, 2, 18) - 0.5f) * 0.08f;
+                    g += Crack(x, y, size) * 0.15f;                                                     // white fractures
+                    if (Hash(x * 9, y * 4) > 0.99f) g += 0.08f;                                         // bubbles
+                    return new Color(g * 0.95f, g * 0.99f, g);
                 }
                 default: // WornPaint
                 {
@@ -341,18 +476,37 @@ namespace WarehouseDuel.EditorTools.Map
     /// <summary>
     /// Box meshes whose UVs are measured in metres, so a texture tiles at the same real-world size on every
     /// box no matter how it is scaled (Unity's cube stretches 0..1 UVs over each face). One mesh per size,
-    /// stored as sub-assets of a single file.
+    /// stored as sub-assets of a single file ("bank").
+    /// The warehouse kit, its scene and the menu backdrops use the default bank; each outdoor map uses its own bank
+    /// (<see cref="UseBank"/>), so rebuilding one map never deletes meshes that another scene still references.
     /// </summary>
     internal static class BoxMeshes
     {
         public const string AssetPath = "Assets/Art/Meshes/EnvironmentBoxes.asset";
         private static readonly Dictionary<string, Mesh> Cache = new Dictionary<string, Mesh>();
+        private static string bankPath = AssetPath;
 
-        /// <summary>Deletes the mesh bank (call once at the start of a full rebuild so stale sizes go away).</summary>
-        public static void Reset()
+        /// <summary>The bank new box meshes are written to.</summary>
+        public static string CurrentBank => bankPath;
+
+        /// <summary>Directs <see cref="Get"/> to another bank (null = the default bank).</summary>
+        public static void UseBank(string path)
         {
+            path = string.IsNullOrEmpty(path) ? AssetPath : path;
+            if (path == bankPath) return;
+            bankPath = path;
             Cache.Clear();
-            if (AssetDatabase.LoadMainAssetAtPath(AssetPath) != null) AssetDatabase.DeleteAsset(AssetPath);
+        }
+
+        /// <summary>Deletes the default mesh bank (call once at the start of a full warehouse rebuild so stale sizes go away).</summary>
+        public static void Reset() => ResetBank(AssetPath);
+
+        /// <summary>Switches to <paramref name="path"/> and deletes its contents.</summary>
+        public static void ResetBank(string path)
+        {
+            UseBank(path);
+            Cache.Clear();
+            if (AssetDatabase.LoadMainAssetAtPath(bankPath) != null) AssetDatabase.DeleteAsset(bankPath);
         }
 
         public static Mesh Get(Vector3 size)
@@ -361,7 +515,7 @@ namespace WarehouseDuel.EditorTools.Map
             string key = $"Box_{s.x:0.00}x{s.y:0.00}x{s.z:0.00}";
             if (Cache.TryGetValue(key, out Mesh cached) && cached != null) return cached;
 
-            foreach (UnityEngine.Object asset in AssetDatabase.LoadAllAssetsAtPath(AssetPath))
+            foreach (UnityEngine.Object asset in AssetDatabase.LoadAllAssetsAtPath(bankPath))
             {
                 if (asset is Mesh existing && existing.name == key)
                 {
@@ -373,8 +527,8 @@ namespace WarehouseDuel.EditorTools.Map
             Mesh mesh = Build(s);
             mesh.name = key;
             FolderStructure.EnsureFolder("Assets/Art/Meshes");
-            if (AssetDatabase.LoadMainAssetAtPath(AssetPath) == null) AssetDatabase.CreateAsset(mesh, AssetPath);
-            else AssetDatabase.AddObjectToAsset(mesh, AssetPath);
+            if (AssetDatabase.LoadMainAssetAtPath(bankPath) == null) AssetDatabase.CreateAsset(mesh, bankPath);
+            else AssetDatabase.AddObjectToAsset(mesh, bankPath);
             Cache[key] = mesh;
             return mesh;
         }

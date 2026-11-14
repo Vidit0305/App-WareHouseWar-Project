@@ -40,6 +40,18 @@ MonoBehaviour:
   fireSound: {fileID: 8300000, guid: 0bb09d551a08e09419ddb318196ef5f9, type: 3}
   reloadSound: {fileID: 8300000, guid: 45cd6ef0f9fd59b41ae24ec021098c32, type: 3}
   dryFireSound: {fileID: 8300000, guid: 1e24a5f06c400404eb1f0ac2fc63fa09, type: 3}
-  muzzleFlashColor: {r: 1, g: 0.8, b: 0.4, a: 1}
+  muzzleFlashColor: {r: 1, g: 0.65, b: 0.3, a: 1}
   muzzleFlashScale: 1.5
   viewKick: 0.1
+  kind: 0
+  usesAmmo: 1
+  hasScope: 0
+  viewModelEuler: {x: 0, y: 0, z: 0}
+  backstabMultiplier: 2
+  explosionRadius: 4.5
+  explosionDamage: 125
+  explosionFullDamageRadius: 1
+  explosionEdgeMultiplier: 0.15
+  selfDamageMultiplier: 0.3
+  impactSound: {fileID: 0}
+  impactPlayerSound: {fileID: 0}

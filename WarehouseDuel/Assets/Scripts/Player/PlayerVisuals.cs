@@ -20,7 +20,11 @@ namespace WarehouseDuel.Player
         [SerializeField] private Transform weaponSocket;
         [SerializeField] private Renderer[] teamColored;
         [SerializeField] private GameObject protectionBubble;
-        [SerializeField] private Color[] slotColors = { new Color(0.2f, 0.55f, 1f), new Color(1f, 0.35f, 0.25f) };
+        [SerializeField] private Color[] slotColors =
+        {
+            new Color(0.2f, 0.55f, 1f), new Color(1f, 0.35f, 0.25f), new Color(0.3f, 0.85f, 0.4f), new Color(1f, 0.75f, 0.15f),
+            new Color(0.7f, 0.4f, 1f), new Color(0.2f, 0.9f, 0.95f), new Color(1f, 0.45f, 0.75f), new Color(0.95f, 0.95f, 0.95f),
+        };
 
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
 

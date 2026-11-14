@@ -1,0 +1,58 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d81ce3352d7a90241828c23e8ae72630, type: 3}
+  m_Name: Weapon_RPG
+  m_EditorClassIdentifier: Assembly-CSharp::WarehouseDuel.Weapons.WeaponDefinition
+  displayName: RPG
+  description: Rocket launcher. Splash damage kills anything near the blast. One
+    rocket per reload.
+  icon: {fileID: 21300000, guid: fdb7b94b99286ae4d8cbe702d3ce05dd, type: 3}
+  damage: 1
+  headshotMultiplier: 1
+  pellets: 1
+  range: 70
+  falloffStart: 70
+  falloffEnd: 70
+  minDamageMultiplier: 1
+  fireMode: 1
+  roundsPerMinute: 50
+  hipSpread: 1.5
+  aimSpread: 0.4
+  magazineSize: 1
+  reserveAmmo: 4
+  reloadSeconds: 2.8
+  recoilPitch: 4
+  recoilYaw: 1
+  moveSpeedMultiplier: 0.88
+  aimFieldOfView: 50
+  equipSeconds: 0.6
+  viewModelPrefab: {fileID: 5446148784799400501, guid: c177f43df27dc7c4196bc61ae2b8a288, type: 3}
+  viewModelOffset: {x: 0.02, y: -0.02, z: -0.05}
+  worldModelPrefab: {fileID: 5446148784799400501, guid: c177f43df27dc7c4196bc61ae2b8a288, type: 3}
+  fireSound: {fileID: 8300000, guid: f2f894b38c2c4414b84701c4b2279ef8, type: 3}
+  reloadSound: {fileID: 8300000, guid: 7d171f2ec7809de4fa4b622a9ab1f10c, type: 3}
+  dryFireSound: {fileID: 8300000, guid: 1e24a5f06c400404eb1f0ac2fc63fa09, type: 3}
+  muzzleFlashColor: {r: 1, g: 0.6, b: 0.25, a: 1}
+  muzzleFlashScale: 2.2
+  viewKick: 0.12
+  kind: 2
+  usesAmmo: 1
+  hasScope: 0
+  viewModelEuler: {x: 0, y: 0, z: 0}
+  backstabMultiplier: 2
+  explosionRadius: 4.5
+  explosionDamage: 125
+  explosionFullDamageRadius: 1
+  explosionEdgeMultiplier: 0.15
+  selfDamageMultiplier: 0.3
+  impactSound: {fileID: 8300000, guid: 395a9303b89eea9479c9e02fbc9b3807, type: 3}
+  impactPlayerSound: {fileID: 8300000, guid: 395a9303b89eea9479c9e02fbc9b3807, type: 3}

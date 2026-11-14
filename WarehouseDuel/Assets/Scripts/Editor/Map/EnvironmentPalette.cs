@@ -23,6 +23,10 @@ namespace WarehouseDuel.EditorTools.Map
             Wood, WoodDark, Cardboard, BarrelRed, BarrelBlue, RackOrange, RackBlue,
             Machine, MachineDark, Grating, FloorPaint, FloorPaintWhite,
             LampGlow, PanelGreen, PanelRed, SpawnBlue, SpawnRed, Skylight,
+            // Outdoor maps (appended: existing ids keep their values).
+            Sand, SandDark, Sandstone, Adobe, Sandbag, DesertRock,
+            Grass, Dirt, Rock, RockMoss, Bark, Leaves, LeavesDark, Pine, PalmLeaf,
+            Snow, Ice, IcyRock, MilitaryGreen, Plank,
         }
 
         private static readonly Dictionary<Id, Material> Cache = new Dictionary<Id, Material>();
@@ -91,6 +95,26 @@ namespace WarehouseDuel.EditorTools.Map
                 case Id.SpawnBlue: Emissive(m, Hex(0x3C9BFF), 1.2f); break;
                 case Id.SpawnRed: Emissive(m, Hex(0xFF5A3C), 1.2f); break;
                 case Id.Skylight: Emissive(m, Hex(0xFFE2B8), 1.6f); break;
+                case Id.Sand: Base(m, Hex(0xDDB984)); break;
+                case Id.SandDark: Base(m, Hex(0xC39561)); break;
+                case Id.Sandstone: Base(m, Hex(0xC99B66)); break;
+                case Id.Adobe: Base(m, Hex(0xD6AE80)); break;
+                case Id.Sandbag: Base(m, Hex(0xBBA479)); break;
+                case Id.DesertRock: Base(m, Hex(0xAC7B52)); break;
+                case Id.Grass: Base(m, Hex(0x6E9B40)); break;
+                case Id.Dirt: Base(m, Hex(0x7F5D3D)); break;
+                case Id.Rock: Base(m, Hex(0x8E8C87)); break;
+                case Id.RockMoss: Base(m, Hex(0x707F5B)); break;
+                case Id.Bark: Base(m, Hex(0x634530)); break;
+                case Id.Leaves: Base(m, Hex(0x5E9C3B)); break;
+                case Id.LeavesDark: Base(m, Hex(0x417832)); break;
+                case Id.Pine: Base(m, Hex(0x31603F)); break;
+                case Id.PalmLeaf: Base(m, Hex(0x7AA345)); break;
+                case Id.Snow: Base(m, Hex(0xF3F7FB)); m.SetFloat("_Smoothness", 0.3f); break;
+                case Id.Ice: Base(m, Hex(0xB4D4E8)); m.SetFloat("_Smoothness", 0.65f); break;
+                case Id.IcyRock: Base(m, Hex(0x8F9AA8)); break;
+                case Id.MilitaryGreen: Base(m, Hex(0x5C6646)); break;
+                case Id.Plank: Base(m, Hex(0xAA7D50)); break;
             }
             ApplySurface(m, id);
         }
@@ -126,6 +150,26 @@ namespace WarehouseDuel.EditorTools.Map
                 case Id.Grating: kind = EnvironmentTextures.Kind.Grating; metresPerTile = 1f; break;
                 case Id.FloorPaint:
                 case Id.FloorPaintWhite: kind = EnvironmentTextures.Kind.WornPaint; metresPerTile = 2f; break;
+                case Id.Sand:
+                case Id.SandDark: kind = EnvironmentTextures.Kind.Sand; metresPerTile = 5f; break;
+                case Id.Sandstone: kind = EnvironmentTextures.Kind.Sandstone; metresPerTile = 2f; break;
+                case Id.Adobe: kind = EnvironmentTextures.Kind.Plaster; metresPerTile = 2.5f; break;
+                case Id.Sandbag: kind = EnvironmentTextures.Kind.Sandbag; metresPerTile = 1.2f; break;
+                case Id.DesertRock:
+                case Id.Rock:
+                case Id.RockMoss:
+                case Id.IcyRock: kind = EnvironmentTextures.Kind.Rock; metresPerTile = 3f; break;
+                case Id.Grass: kind = EnvironmentTextures.Kind.Grass; metresPerTile = 4f; break;
+                case Id.Dirt: kind = EnvironmentTextures.Kind.Dirt; metresPerTile = 3f; break;
+                case Id.Bark: kind = EnvironmentTextures.Kind.Bark; metresPerTile = 1.5f; break;
+                case Id.Leaves:
+                case Id.LeavesDark:
+                case Id.Pine:
+                case Id.PalmLeaf: kind = EnvironmentTextures.Kind.Leaves; metresPerTile = 2f; break;
+                case Id.Snow: kind = EnvironmentTextures.Kind.Snow; metresPerTile = 5f; break;
+                case Id.Ice: kind = EnvironmentTextures.Kind.Ice; metresPerTile = 3f; break;
+                case Id.MilitaryGreen: kind = EnvironmentTextures.Kind.PaintedMetal; metresPerTile = 1f; break;
+                case Id.Plank: kind = EnvironmentTextures.Kind.Wood; metresPerTile = 1f; break;
                 default: return; // emissive surfaces stay flat
             }
             m.SetTexture("_BaseMap", EnvironmentTextures.Get(kind));

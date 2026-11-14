@@ -43,3 +43,15 @@ MonoBehaviour:
   muzzleFlashColor: {r: 1, g: 0.8, b: 0.4, a: 1}
   muzzleFlashScale: 1
   viewKick: 0.035
+  kind: 0
+  usesAmmo: 1
+  hasScope: 0
+  viewModelEuler: {x: 0, y: 0, z: 0}
+  backstabMultiplier: 2
+  explosionRadius: 4.5
+  explosionDamage: 125
+  explosionFullDamageRadius: 1
+  explosionEdgeMultiplier: 0.15
+  selfDamageMultiplier: 0.3
+  impactSound: {fileID: 0}
+  impactPlayerSound: {fileID: 0}

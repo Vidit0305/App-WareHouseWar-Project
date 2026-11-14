@@ -9,7 +9,8 @@ namespace WarehouseDuel.EditorTools.Effects
     /// <summary>
     /// Generates the effect textures, materials and pooled particle prefabs:
     /// muzzle flash, environment impact (sparks + dust + bullet hole), player hit puff,
-    /// elimination burst and spawn shimmer. All particle counts are small for mobile.
+    /// elimination burst, spawn shimmer, rocket explosion, rocket smoke trail and scorch decal.
+    /// All particle counts are small for mobile.
     /// </summary>
     internal static class EffectsBuilder
     {
@@ -23,6 +24,9 @@ namespace WarehouseDuel.EditorTools.Effects
         public static GameObject BulletHole => Load("FX_BulletHole");
         public static GameObject Elimination => Load("FX_Elimination");
         public static GameObject SpawnShimmer => Load("FX_Spawn");
+        public static GameObject Explosion => Load("FX_Explosion");
+        public static GameObject RocketTrail => Load("FX_RocketTrail");
+        public static GameObject ScorchMark => Load("FX_Scorch");
 
         public static void BuildAll(SetupReport report)
         {
@@ -34,11 +38,13 @@ namespace WarehouseDuel.EditorTools.Effects
             Texture2D star = StarTexture("T_FlashStar", 64);
             Texture2D smoke = RadialTexture("T_Smoke", 64, 1.4f, 0.35f);
             Texture2D hole = BulletHoleTexture("T_BulletHole", 64);
+            Texture2D scorch = ScorchTexture("T_Scorch", 128);
 
             Material additiveGlow = MaterialFor("M_FX_Glow", "WarehouseDuel/Additive Unlit", glow, Color.white);
             Material additiveStar = MaterialFor("M_FX_FlashStar", "WarehouseDuel/Additive Unlit", star, Color.white);
             Material smokeMaterial = MaterialFor("M_FX_Smoke", "WarehouseDuel/Alpha Unlit", smoke, Color.white);
             Material holeMaterial = MaterialFor("M_FX_BulletHole", "WarehouseDuel/Alpha Unlit", hole, Color.white);
+            Material scorchMaterial = MaterialFor("M_FX_Scorch", "WarehouseDuel/Alpha Unlit", scorch, Color.white);
 
             Save("FX_MuzzleFlash", BuildMuzzleFlash(additiveStar, additiveGlow), 0.12f);
             Save("FX_ImpactEnvironment", BuildImpact(additiveGlow, smokeMaterial, new Color(1f, 0.75f, 0.35f), new Color(0.55f, 0.52f, 0.48f, 0.6f)), 0.8f);
@@ -46,8 +52,34 @@ namespace WarehouseDuel.EditorTools.Effects
             Save("FX_BulletHole", BuildBulletHole(holeMaterial), 8f);
             Save("FX_Elimination", BuildElimination(additiveGlow, smokeMaterial), 1.6f);
             Save("FX_Spawn", BuildSpawn(additiveGlow), 1.2f);
+            Save("FX_Explosion", BuildExplosion(additiveGlow, additiveStar, smokeMaterial), 3f);
+            Save("FX_RocketTrail", BuildRocketTrail(smokeMaterial, additiveGlow), 1.9f);
+            Save("FX_Scorch", BuildDecal("FX_Scorch", scorchMaterial, 1.7f), 12f);
+            AssignWeaponEffects();
 
-            report.Pass($"Effects: 6 pooled particle prefabs in {PrefabFolder}.");
+            // The flash is recoloured per weapon (WeaponDefinition.muzzleFlashColor) by an EffectTint.
+            report.Pass($"Effects: 9 pooled particle prefabs in {PrefabFolder}.");
+        }
+
+        /// <summary>
+        /// Writes the explosive/melee effects into the EffectsLibrary asset (creating it if needed). ContentBuilder fills
+        /// the original six fields right after this and leaves these untouched.
+        /// </summary>
+        private static void AssignWeaponEffects()
+        {
+            FolderStructure.EnsureFolder("Assets/Resources");
+            string path = ContentBuilder.EffectsLibraryPath;
+            var library = AssetDatabase.LoadAssetAtPath<EffectsLibrary>(path);
+            if (library == null)
+            {
+                library = ScriptableObject.CreateInstance<EffectsLibrary>();
+                AssetDatabase.CreateAsset(library, path);
+            }
+            library.explosion = Explosion;
+            library.rocketTrail = RocketTrail;
+            library.scorchMark = ScorchMark;
+            EditorUtility.SetDirty(library);
+            AssetDatabase.SaveAssets();
         }
 
         // ------------------------------------------------------------------ prefabs
@@ -87,6 +119,7 @@ namespace WarehouseDuel.EditorTools.Effects
             shape.angle = 12f;
             shape.radius = 0.01f;
             Stretch(sparks, 0.08f);
+            root.AddComponent<WarehouseDuel.Weapons.EffectTint>();
             return root;
         }
 
@@ -202,6 +235,149 @@ namespace WarehouseDuel.EditorTools.Effects
             shape.radius = 0.55f;
             shape.rotation = new Vector3(90f, 0f, 0f);
             FadeAndGrow(ring, 0.3f);
+            return root;
+        }
+
+        /// <summary>Rocket explosion: flash, fireball, flying sparks, debris chunks, rolling smoke and a dust ring along the surface.</summary>
+        private static GameObject BuildExplosion(Material glow, Material star, Material smoke)
+        {
+            var root = new GameObject("FX_Explosion");
+
+            ParticleSystem flash = CreateSystem(root, "Flash", star);
+            var main = flash.main;
+            main.startLifetime = 0.12f;
+            main.startSpeed = 0f;
+            main.startSize = 5.5f;
+            main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+            main.startColor = new Color(1f, 0.85f, 0.55f, 1f);
+            Burst(flash, 1);
+            FadeAndGrow(flash, 1.3f);
+
+            ParticleSystem fire = CreateSystem(root, "Fireball", glow);
+            main = fire.main;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.25f, 0.5f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(1.5f, 4.5f);
+            main.startSize = new ParticleSystem.MinMaxCurve(1.2f, 2.2f);
+            main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+            main.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 0.55f, 0.15f, 0.9f), new Color(1f, 0.8f, 0.35f, 0.9f));
+            main.gravityModifier = -0.2f;
+            Burst(fire, 12);
+            var shape = fire.shape;
+            shape.shapeType = ParticleSystemShapeType.Hemisphere; // dome around +Z = surface normal
+            shape.radius = 0.6f;
+            FadeAndGrow(fire, 1.8f);
+
+            ParticleSystem sparks = CreateSystem(root, "Sparks", glow);
+            main = sparks.main;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.4f, 0.9f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(7f, 16f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.05f, 0.1f);
+            main.startColor = new Color(1f, 0.75f, 0.3f);
+            main.gravityModifier = 1.2f;
+            Burst(sparks, 30);
+            shape = sparks.shape;
+            shape.shapeType = ParticleSystemShapeType.Hemisphere;
+            shape.radius = 0.3f;
+            Stretch(sparks, 0.04f);
+
+            ParticleSystem debris = CreateSystem(root, "Debris", smoke);
+            main = debris.main;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.6f, 1.1f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(4f, 9f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.06f, 0.14f);
+            main.startColor = new Color(0.12f, 0.11f, 0.1f, 1f);
+            main.gravityModifier = 2f;
+            Burst(debris, 16);
+            shape = debris.shape;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = 50f;
+            shape.radius = 0.2f;
+
+            ParticleSystem puff = CreateSystem(root, "Smoke", smoke);
+            main = puff.main;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(1.6f, 2.8f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.6f, 2.2f);
+            main.startSize = new ParticleSystem.MinMaxCurve(1.4f, 2.6f);
+            main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+            main.startColor = new Color(0.22f, 0.2f, 0.19f, 0.75f);
+            main.gravityModifier = -0.08f;
+            Burst(puff, 10);
+            shape = puff.shape;
+            shape.shapeType = ParticleSystemShapeType.Hemisphere;
+            shape.radius = 0.8f;
+            FadeAndGrow(puff, 2.2f);
+
+            ParticleSystem ring = CreateSystem(root, "DustRing", smoke);
+            main = ring.main;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.6f, 1.0f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(5f, 8f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.6f, 1.0f);
+            main.startColor = new Color(0.45f, 0.42f, 0.38f, 0.6f);
+            Burst(ring, 14);
+            shape = ring.shape;
+            shape.shapeType = ParticleSystemShapeType.Circle; // circle lies in the XY plane = along the surface
+            shape.radius = 0.4f;
+            shape.radiusThickness = 0f;
+            var limit = ring.limitVelocityOverLifetime;
+            limit.enabled = true;
+            limit.limit = 1.2f;
+            limit.dampen = 0.25f;
+            FadeAndGrow(ring, 2.5f);
+            return root;
+        }
+
+        /// <summary>
+        /// Smoke trail for the instant rocket. Nothing is emitted on spawn: <see cref="WarehouseDuel.Weapons.RocketTrail"/>
+        /// places puffs along the muzzle-to-impact line (EmitParams carry position, size and lifetime).
+        /// </summary>
+        private static GameObject BuildRocketTrail(Material smoke, Material glow)
+        {
+            var root = new GameObject("FX_RocketTrail");
+
+            ParticleSystem puffs = CreateSystem(root, "Smoke", smoke);
+            var main = puffs.main;
+            main.maxParticles = 100;
+            main.startLifetime = 1.4f;
+            main.startSpeed = 0f;
+            main.startSize = 0.25f;
+            main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+            main.startColor = new Color(0.78f, 0.76f, 0.74f, 0.55f);
+            main.gravityModifier = -0.03f;
+            var shape = puffs.shape;
+            shape.enabled = false;
+            FadeAndGrow(puffs, 3.2f);
+
+            ParticleSystem streak = CreateSystem(root, "Streak", glow);
+            main = streak.main;
+            main.maxParticles = 60;
+            main.startLifetime = 0.15f;
+            main.startSpeed = 0f;
+            main.startSize = 0.16f;
+            main.startColor = new Color(1f, 0.7f, 0.35f, 0.9f);
+            shape = streak.shape;
+            shape.enabled = false;
+            FadeAndGrow(streak, 0.4f);
+
+            root.AddComponent<WarehouseDuel.Weapons.RocketTrail>().Configure(puffs, streak);
+            return root;
+        }
+
+        /// <summary>A flat decal quad facing +Z (the surface normal), like the bullet hole but bigger.</summary>
+        private static GameObject BuildDecal(string name, Material material, float size)
+        {
+            GameObject quad = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            quad.name = name;
+            Object.DestroyImmediate(quad.GetComponent<Collider>());
+            var renderer = quad.GetComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            quad.transform.localScale = Vector3.one * size;
+
+            var root = new GameObject(name);
+            quad.transform.SetParent(root.transform, false);
+            quad.transform.localPosition = new Vector3(0f, 0f, 0.015f);
+            quad.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
             return root;
         }
 
@@ -338,6 +514,20 @@ namespace WarehouseDuel.EditorTools.Effects
                 float a = Mathf.Max(hole, scorch);
                 float shade = d < 0.35f ? 0.05f : 0.18f;
                 return new Color(shade, shade, shade, a);
+            });
+        }
+
+        /// <summary>Soft, blotchy black burn mark with a darker core (alpha only; colour stays near black).</summary>
+        private static Texture2D ScorchTexture(string name, int size)
+        {
+            return SaveTexture(name, size, (u, v) =>
+            {
+                float d = Vector2.Distance(new Vector2(u, v), new Vector2(0.5f, 0.5f)) * 2f;
+                float noise = Mathf.PerlinNoise(u * 7f + 1.3f, v * 7f + 4.1f) * 0.6f + Mathf.PerlinNoise(u * 19f, v * 19f) * 0.4f;
+                float edge = Mathf.Clamp01(1f - d * (0.85f + noise * 0.45f));
+                float a = Mathf.Pow(edge, 0.8f) * 0.85f;
+                float shade = Mathf.Lerp(0.02f, 0.09f, d);
+                return new Color(shade, shade * 0.95f, shade * 0.9f, Mathf.Clamp01(a));
             });
         }
 
