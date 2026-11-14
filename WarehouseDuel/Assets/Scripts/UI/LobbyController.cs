@@ -83,7 +83,6 @@ namespace WarehouseWar.UI
         private SessionService session;
         private int[] loadout;
         private int shownCard;
-        private bool profileSent;
         private float copyFeedbackUntil;
 
         private void Start()
@@ -131,15 +130,7 @@ namespace WarehouseWar.UI
 
         private void Update()
         {
-            // The room object can arrive a few frames after the scene; send our profile once it exists.
-            if (!profileSent && RoomState.Instance != null && RoomState.Instance.Object != null && RoomState.Instance.SlotOf(LocalPlayer) >= 0)
-            {
-                profileSent = true;
-                RoomState.Instance.RequestProfile(GameSettings.PlayerName, (byte)loadout[0],
-                    (byte)PlayerProfile.AvatarIndex, (byte)PlayerProfile.BannerIndex, (byte)PlayerProfile.TitleIndex, (byte)PlayerProfile.Level, (byte)PlayerProfile.CharacterIndex,
-                    (byte)loadout[1], (byte)loadout[2]);
-            }
-
+            // Name, look and loadout are sent by RoomState itself as soon as this device has a slot (all modes).
             if (pingText != null && session != null)
             {
                 pingText.text = session.IsHost ? "HOST" : $"{session.RoundTripMilliseconds:0} ms";
@@ -248,7 +239,7 @@ namespace WarehouseWar.UI
                 bool active = i == shownCard;
                 if (c.frame != null) c.frame.color = active ? Selected : Unselected;
             }
-            if (character != null) character.SetWeapon(loadout[card]);
+            if (character != null) character.SetLoadout(loadout, loadout[card]);
         }
 
         /// <summary>Short stat line for a loadout card, e.g. "DMG 20 · 600 RPM · 30 RDS".</summary>

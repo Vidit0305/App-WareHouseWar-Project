@@ -110,11 +110,11 @@ namespace WarehouseWar.EditorTools.UI
             CharacterCatalog characters = AssetDatabase.LoadAssetAtPath<CharacterCatalog>(WarehouseWar.EditorTools.Gameplay.CharacterBuilder.CatalogPath);
             Sprite costumeArt = characters != null && characters.Count > 3 ? characters.Get(3).portrait : UiArt.Icon("Profile");
             Button armoryCard = SideCard(home, "Armory Card", "ARMORY", "Equip three weapons", "8 WEAPONS", profiles.Banner(5),
-                catalog.Get(4) != null ? catalog.Get(4).icon : null, false, -200f, new Color(0.95f, 0.62f, 0.08f, 1f));
+                catalog.Get(4) != null ? catalog.Get(4).icon : null, false, -196f, new Color(0.95f, 0.62f, 0.08f, 1f));
             Button characterCard = SideCard(home, "Wardrobe Card", "WARDROBE", "Change your costume", "COSTUMES", profiles.Banner(2),
-                costumeArt, true, -416f, new Color(0.62f, 0.3f, 1f, 1f));
+                costumeArt, true, -380f, new Color(0.62f, 0.3f, 1f, 1f));
             Button shopCard = SideCard(home, "Shop Card", "SHOP", "Spend your stars", "NEW ITEMS", profiles.Banner(3),
-                UiArt.Icon("Star"), false, -632f, new Color(0.25f, 0.85f, 0.45f, 1f));
+                UiArt.Icon("Star"), false, -564f, new Color(0.25f, 0.85f, 0.45f, 1f));
             Button leaderboard = CreateButton("Leaderboard", home, "LEADERBOARD", ButtonStyle.Secondary, new Vector2(420f, 110f), out TextMeshProUGUI leaderboardLabel, 32f);
             RectTransform leaderboardRect = Place((RectTransform)leaderboard.transform, new Vector2(0f, 0f), new Vector2(30f, 30f), new Vector2(420f, 110f), new Vector2(0f, 0f));
             leaderboard.GetComponent<Image>().color = new Color(0.12f, 0.14f, 0.19f, 0.95f);
@@ -125,8 +125,8 @@ namespace WarehouseWar.EditorTools.UI
             AddTransition(leaderboardRect, new Vector2(-220f, 0f), 0.2f);
 
             // ---- right: game modes
-            Button online = ModeCard(home, "Online Mode", "ONLINE WAR", "Create a room or join friends", "8 PLAYERS", profiles.Banner(7), catalog.Get(0) != null ? catalog.Get(0).icon : null, -200f, Accent);
-            Button practice = ModeCard(home, "Practice Mode", "PRACTICE", "Fight 5 bots on any map", "VS BOTS", profiles.Banner(0), catalog.Get(3) != null ? catalog.Get(3).icon : null, -420f, Success);
+            Button online = ModeCard(home, "Online Mode", "ONLINE WAR", "Create a room or join friends", "8 PLAYERS", profiles.Banner(7), catalog.Get(0) != null ? catalog.Get(0).icon : null, -196f, Accent);
+            Button practice = ModeCard(home, "Practice Mode", "PRACTICE", "Fight 5 bots on any map", "VS BOTS", profiles.Banner(0), catalog.Get(3) != null ? catalog.Get(3).icon : null, -380f, Success);
 
             // ---- bottom right: PLAY
             Button play = CreateButton("Play", home, "PLAY", ButtonStyle.Primary, new Vector2(440f, 150f), out TextMeshProUGUI playLabel, 72f);
@@ -284,23 +284,8 @@ namespace WarehouseWar.EditorTools.UI
             Save(scene, GameConstants.Scenes.MainMenu, report);
         }
 
-        /// <summary>Big yellow (or dark) card on the left: title, subtitle and an icon on the right.</summary>
-        private static Button FeatureCard(RectTransform parent, string name, string title, string subtitle, Sprite icon, bool primary, float y, Color? colour = null)
-        {
-            Button card = CreateButton(name, parent, title, primary ? ButtonStyle.Primary : ButtonStyle.Secondary, new Vector2(420f, 170f), out TextMeshProUGUI label, 40f);
-            RectTransform rect = Place((RectTransform)card.transform, new Vector2(0f, 1f), new Vector2(30f, y), new Vector2(420f, 170f), new Vector2(0f, 1f));
-            if (!primary) card.GetComponent<Image>().color = colour ?? new Color(0.12f, 0.14f, 0.19f, 0.95f);
-            Color ink = primary ? AccentDark : TextPrimary;
-            label.alignment = TextAlignmentOptions.TopLeft;
-            MenuScreensBuilder.At(label.rectTransform, 28f, -26f, 260f, 56f);
-            label.rectTransform.anchorMin = label.rectTransform.anchorMax = new Vector2(0f, 1f);
-            MenuScreensBuilder.Label(card.transform, "Subtitle", subtitle, 21f, primary ? new Color(0.15f, 0.12f, 0.05f, 0.8f) : colour.HasValue ? new Color(1f, 1f, 1f, 0.8f) : TextMuted, 30f, -88f, 230f, 60f);
-            Image glyph = CreateImage("Icon", card.transform, ink, icon);
-            glyph.preserveAspect = true;
-            Place(glyph.rectTransform, new Vector2(1f, 0.5f), new Vector2(-20f, -4f), new Vector2(150f, 110f), new Vector2(1f, 0.5f));
-            AddTransition(rect, new Vector2(-220f, 0f), y < -300f ? 0.15f : 0.1f);
-            return card;
-        }
+        /// <summary>Size shared by every main-menu card (Armory, Wardrobe, Shop, Online, Practice).</summary>
+        private static readonly Vector2 MenuCardSize = new Vector2(420f, 164f);
 
         /// <summary>
         /// Left-hand feature card in the same style as the game-mode cards: banner art washed with the card's colour,
@@ -309,8 +294,8 @@ namespace WarehouseWar.EditorTools.UI
         private static Button SideCard(RectTransform parent, string name, string title, string subtitle, string tag, Sprite art, Sprite icon,
                                        bool fullColourIcon, float y, Color colour)
         {
-            Button card = CreateButton(name, parent, "", ButtonStyle.Ghost, new Vector2(460f, 196f));
-            RectTransform rect = Place((RectTransform)card.transform, new Vector2(0f, 1f), new Vector2(30f, y), new Vector2(460f, 196f), new Vector2(0f, 1f));
+            Button card = CreateButton(name, parent, "", ButtonStyle.Ghost, MenuCardSize);
+            RectTransform rect = Place((RectTransform)card.transform, new Vector2(0f, 1f), new Vector2(30f, y), MenuCardSize, new Vector2(0f, 1f));
             card.GetComponent<Image>().color = new Color(0.08f, 0.09f, 0.13f, 1f);
             card.gameObject.AddComponent<Mask>().showMaskGraphic = true;
             Image artImage = CreateImage("Art", card.transform, Color.white, art);
@@ -326,12 +311,12 @@ namespace WarehouseWar.EditorTools.UI
             edge.rectTransform.sizeDelta = new Vector2(10f, 0f);
             Image glyph = CreateImage("Icon", card.transform, fullColourIcon ? Color.white : new Color(1f, 1f, 1f, 0.92f), icon);
             glyph.preserveAspect = true;
-            if (fullColourIcon) Place(glyph.rectTransform, new Vector2(1f, 0f), new Vector2(-6f, 0f), new Vector2(190f, 190f), new Vector2(1f, 0f));
-            else Place(glyph.rectTransform, new Vector2(1f, 0.5f), new Vector2(-18f, -10f), new Vector2(200f, 120f), new Vector2(1f, 0.5f));
-            MenuScreensBuilder.Label(card.transform, "Title", title, 42f, TextPrimary, 30f, -22f, 400f, 56f, display: true);
-            MenuScreensBuilder.Label(card.transform, "Subtitle", subtitle, 21f, new Color(1f, 1f, 1f, 0.85f), 32f, -80f, 240f, 60f);
+            if (fullColourIcon) Place(glyph.rectTransform, new Vector2(1f, 0f), new Vector2(-6f, 0f), new Vector2(162f, 162f), new Vector2(1f, 0f));
+            else Place(glyph.rectTransform, new Vector2(1f, 0.5f), new Vector2(-16f, -8f), new Vector2(170f, 100f), new Vector2(1f, 0.5f));
+            MenuScreensBuilder.Label(card.transform, "Title", title, 38f, TextPrimary, 28f, -16f, 360f, 50f, display: true);
+            MenuScreensBuilder.Label(card.transform, "Subtitle", subtitle, 20f, new Color(1f, 1f, 1f, 0.85f), 30f, -66f, 220f, 50f);
             Image tagBack = CreateImage("Tag", card.transform, colour, UiArt.RoundedSmall);
-            MenuScreensBuilder.At(tagBack.rectTransform, 30f, -146f, 150f, 34f);
+            MenuScreensBuilder.At(tagBack.rectTransform, 28f, -122f, 140f, 30f);
             TextMeshProUGUI tagText = CreateText("Text", tagBack.transform, tag, 17f, new Color(0.06f, 0.06f, 0.06f), TextAlignmentOptions.Center, display: true);
             Stretch(tagText.rectTransform);
             AddTransition(rect, new Vector2(-240f, 0f), y < -300f ? 0.15f : 0.1f);
@@ -341,8 +326,8 @@ namespace WarehouseWar.EditorTools.UI
         /// <summary>Game-mode card on the right: banner art, title, subtitle, a tag and a weapon silhouette.</summary>
         private static Button ModeCard(RectTransform parent, string name, string title, string subtitle, string tag, Sprite art, Sprite icon, float y, Color tagColor)
         {
-            Button card = CreateButton(name, parent, "", ButtonStyle.Ghost, new Vector2(460f, 196f));
-            RectTransform rect = Place((RectTransform)card.transform, new Vector2(1f, 1f), new Vector2(-30f, y), new Vector2(460f, 196f), new Vector2(1f, 1f));
+            Button card = CreateButton(name, parent, "", ButtonStyle.Ghost, MenuCardSize);
+            RectTransform rect = Place((RectTransform)card.transform, new Vector2(1f, 1f), new Vector2(-30f, y), MenuCardSize, new Vector2(1f, 1f));
             card.GetComponent<Image>().color = new Color(0.08f, 0.09f, 0.13f, 1f);
             card.gameObject.AddComponent<Mask>().showMaskGraphic = true;
             Image artImage = CreateImage("Art", card.transform, Color.white, art);
@@ -352,11 +337,11 @@ namespace WarehouseWar.EditorTools.UI
             Stretch(shade.rectTransform);
             Image weapon = CreateImage("Weapon", card.transform, new Color(1f, 1f, 1f, 0.9f), icon);
             weapon.preserveAspect = true;
-            Place(weapon.rectTransform, new Vector2(1f, 0f), new Vector2(-16f, 14f), new Vector2(220f, 100f), new Vector2(1f, 0f));
-            MenuScreensBuilder.Label(card.transform, "Title", title, 42f, TextPrimary, 26f, -22f, 400f, 56f, display: true);
-            MenuScreensBuilder.Label(card.transform, "Subtitle", subtitle, 21f, new Color(1f, 1f, 1f, 0.8f), 28f, -80f, 260f, 60f);
+            Place(weapon.rectTransform, new Vector2(1f, 0f), new Vector2(-16f, 12f), new Vector2(180f, 84f), new Vector2(1f, 0f));
+            MenuScreensBuilder.Label(card.transform, "Title", title, 38f, TextPrimary, 26f, -16f, 370f, 50f, display: true);
+            MenuScreensBuilder.Label(card.transform, "Subtitle", subtitle, 20f, new Color(1f, 1f, 1f, 0.8f), 28f, -66f, 230f, 50f);
             Image tagBack = CreateImage("Tag", card.transform, tagColor, UiArt.RoundedSmall);
-            MenuScreensBuilder.At(tagBack.rectTransform, 26f, -146f, 150f, 34f);
+            MenuScreensBuilder.At(tagBack.rectTransform, 26f, -122f, 140f, 30f);
             TextMeshProUGUI tagText = CreateText("Text", tagBack.transform, tag, 17f, new Color(0.08f, 0.08f, 0.08f), TextAlignmentOptions.Center, display: true);
             Stretch(tagText.rectTransform);
             AddTransition(rect, new Vector2(240f, 0f), y < -300f ? 0.15f : 0.1f);

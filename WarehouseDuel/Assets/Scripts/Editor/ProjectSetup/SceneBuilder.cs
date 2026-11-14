@@ -214,8 +214,7 @@ namespace WarehouseWar.EditorTools
             var scaler = go.GetComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = ReferenceResolution;
-            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            scaler.matchWidthOrHeight = 0.5f; // balanced for 16:9 phones, 20:9 phones and 4:3 tablets
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand; // full 1920x1080 layout always visible
             return canvas;
         }
 

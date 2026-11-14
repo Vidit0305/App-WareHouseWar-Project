@@ -427,19 +427,6 @@ namespace WarehouseWar.EditorTools.Map
             }
         }
 
-        /// <summary>Value noise that tiles with the given lattice period.</summary>
-        private static float Noise(float x, float y, int period)
-        {
-            int ix = Mathf.FloorToInt(x), iy = Mathf.FloorToInt(y);
-            float fx = x - ix, fy = y - iy;
-            fx = fx * fx * (3f - 2f * fx);
-            fy = fy * fy * (3f - 2f * fy);
-            int x0 = Mod(ix, period), x1 = Mod(ix + 1, period), y0 = Mod(iy, period), y1 = Mod(iy + 1, period);
-            float a = Mathf.Lerp(Hash(x0, y0), Hash(x1, y0), fx);
-            float b = Mathf.Lerp(Hash(x0, y1), Hash(x1, y1), fx);
-            return Mathf.Lerp(a, b, fy);
-        }
-
         /// <summary>Tileable fractal noise: x/y in lattice units over [0, periodX/periodY).</summary>
         private static float Fbm(float x, float y, int periodX, int periodY)
         {

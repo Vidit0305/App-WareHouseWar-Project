@@ -135,6 +135,7 @@ namespace WarehouseWar.EditorTools.UI
             content.sizeDelta = new Vector2(0f, 0f);
             content.anchoredPosition = Vector2.zero;
             VerticalLayoutGroup layout = Column(content, spacing, null, TextAnchor.UpperLeft);
+            layout.padding = new RectOffset(layout.padding.left, layout.padding.right, layout.padding.top, 60); // last row scrolls fully into view
             layout.childControlWidth = true;
             layout.childForceExpandWidth = true;
             ContentSizeFitter fitter = content.gameObject.AddComponent<ContentSizeFitter>();
@@ -168,7 +169,7 @@ namespace WarehouseWar.EditorTools.UI
             GridLayoutGroup grid = content.gameObject.AddComponent<GridLayoutGroup>();
             grid.cellSize = cell;
             grid.spacing = spacing;
-            grid.padding = new RectOffset(8, 8, 8, 8);
+            grid.padding = new RectOffset(8, 8, 8, 60); // room below the last row so it scrolls fully into view
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
             grid.constraintCount = columns;
             content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;

@@ -122,8 +122,7 @@ namespace WarehouseWar.EditorTools.Testing
             foreach (var animator in Object.FindObjectsByType<WarehouseWar.Player.SoldierAnimator>(FindObjectsSortMode.None))
             {
                 int weapon = new SerializedObject(animator).FindProperty("startWeapon").intValue;
-                typeof(WarehouseWar.Player.SoldierAnimator).GetMethod("ShowWeapon", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                    ?.Invoke(animator, new object[] { weapon });
+                animator.SetLoadout(new[] { weapon, 4, 6 }, weapon); // held gun + sniper on the back + knife on the hip
             }
 
             // Runtime-only states that would otherwise show in an edit-time picture.

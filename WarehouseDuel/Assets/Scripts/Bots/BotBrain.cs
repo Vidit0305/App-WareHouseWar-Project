@@ -85,13 +85,14 @@ namespace WarehouseWar.Bots
             if (environmentMask == 0) environmentMask = Physics.DefaultRaycastLayers;
             path = new NavMeshPath();
 
-            reactionMin = Random.Range(0.28f, 0.38f);
-            reactionMax = reactionMin + Random.Range(0.15f, 0.3f);
-            aimErrorStart = Random.Range(6f, 11f);
-            aimErrorFloor = Random.Range(0.6f, 1.6f);
-            aimSettleRate = Random.Range(1.6f, 2.6f);
-            turnSpeed = Random.Range(220f, 340f);
-            headshotBias = Random.Range(0.05f, 0.35f);
+            // Tuned to be beatable: slower reactions, wider and slower-settling aim error, slower turning.
+            reactionMin = Random.Range(0.45f, 0.6f);
+            reactionMax = reactionMin + Random.Range(0.25f, 0.45f);
+            aimErrorStart = Random.Range(9f, 15f);
+            aimErrorFloor = Random.Range(1.4f, 2.6f);
+            aimSettleRate = Random.Range(1.0f, 1.6f);
+            turnSpeed = Random.Range(160f, 240f);
+            headshotBias = Random.Range(0f, 0.15f);
             preferredDistanceJitter = Random.Range(-2f, 2f);
             strafeSign = Random.value < 0.5f ? -1f : 1f;
             nextSenseTime = Random.Range(0f, SenseInterval);
@@ -341,7 +342,7 @@ namespace WarehouseWar.Bots
             {
                 // Semi-auto: a fresh trigger pull each shot, with a human cadence.
                 float cadence = weapon.SecondsBetweenShots;
-                return Toggle(now, cadence * 0.5f, cadence * 0.5f + Random.Range(0.05f, weapon.hasScope ? 0.6f : 0.25f));
+                return Toggle(now, cadence * 0.5f, cadence * 0.5f + Random.Range(0.15f, weapon.hasScope ? 0.9f : 0.45f));
             }
 
             // Automatic: bursts with short pauses (longer bursts up close).
@@ -349,13 +350,13 @@ namespace WarehouseWar.Bots
             if (!fireHeld)
             {
                 fireHeld = true;
-                float burst = distance < 10f ? Random.Range(0.4f, 0.9f) : Random.Range(0.18f, 0.45f);
+                float burst = distance < 10f ? Random.Range(0.3f, 0.7f) : Random.Range(0.15f, 0.35f);
                 burstEndTime = now + burst;
             }
             if (now >= burstEndTime)
             {
                 fireHeld = false;
-                burstPauseEndTime = now + Random.Range(0.12f, distance < 10f ? 0.25f : 0.45f);
+                burstPauseEndTime = now + Random.Range(0.3f, distance < 10f ? 0.55f : 0.8f);
                 return false;
             }
             return true;

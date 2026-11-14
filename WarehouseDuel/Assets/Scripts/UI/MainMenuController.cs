@@ -78,7 +78,8 @@ namespace WarehouseWar.UI
             GameSettings.ApplyEngineSettings();
             if (character != null)
             {
-                character.SetWeapon(GameSettings.PreferredWeapon);
+                int[] loadout = GameSettings.Loadout;
+                character.SetLoadout(loadout, loadout[0]);
                 if (character.TryGetComponent(out SoldierLook look)) look.Apply(WarehouseWar.Profile.PlayerProfile.CharacterIndex);
             }
 

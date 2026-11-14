@@ -65,6 +65,7 @@ namespace WarehouseWar.UI
             equipButton.onClick.AddListener(() =>
             {
                 GameSettings.SetLoadoutWeapon(activeSlot, selected);
+                if (character != null) character.SetLoadout(GameSettings.Loadout, selected);
                 Refresh();
             });
         }
@@ -77,7 +78,8 @@ namespace WarehouseWar.UI
 
         public override void Close()
         {
-            if (character != null) character.SetWeapon(GameSettings.Loadout[0]);
+            int[] loadout = GameSettings.Loadout;
+            if (character != null) character.SetLoadout(loadout, loadout[0]);
             base.Close();
         }
 
@@ -90,7 +92,7 @@ namespace WarehouseWar.UI
         private void Select(int index)
         {
             selected = index;
-            if (character != null) character.SetWeapon(index);
+            if (character != null) character.SetLoadout(GameSettings.Loadout, index);
             Refresh();
         }
 
@@ -132,7 +134,7 @@ namespace WarehouseWar.UI
             weaponDescription.text = weapon.description;
             SetStat(0, weapon.DisplayDamage / 100f, weapon.pellets > 1 ? $"{weapon.damage:0}×{weapon.pellets}" : weapon.IsExplosive ? $"{weapon.DisplayDamage:0} SPLASH" : $"{weapon.DisplayDamage:0}");
             SetStat(1, weapon.roundsPerMinute / 900f, weapon.IsMelee ? $"{weapon.roundsPerMinute:0} SLASH" : $"{weapon.roundsPerMinute:0} RPM");
-            SetStat(2, weapon.DisplayRange / 60f, weapon.DisplayRange < 10f ? $"{weapon.DisplayRange:0.#} m" : $"{weapon.DisplayRange:0} m");
+            SetStat(2, weapon.DisplayRange / 120f, weapon.DisplayRange < 10f ? $"{weapon.DisplayRange:0.#} m" : $"{weapon.DisplayRange:0} m");
             SetStat(3, weapon.usesAmmo ? weapon.magazineSize / 32f : 1f, weapon.usesAmmo ? weapon.magazineSize.ToString() : "∞");
 
             int inSlot = System.Array.IndexOf(loadout, selected);

@@ -29,6 +29,8 @@ namespace WarehouseWar.Player
         private float swapStart = -10f;
         private int pendingWeapon = -1, shownWeapon = -1;
         private GameObject weaponModel;
+        private int[] loadout;
+        private readonly System.Collections.Generic.List<GameObject> stowed = new System.Collections.Generic.List<GameObject>(2);
         private float readyBlend;
         private bool ready;
         private float seed;
@@ -54,6 +56,54 @@ namespace WarehouseWar.Player
             if (ready) return;
             inspectStart = Time.time;
             nextInspect = Time.time + InspectDuration + Random.Range(5f, 9f);
+        }
+
+        /// <summary>
+        /// Shows a full loadout: <paramref name="heldWeapon"/> in the hands, the other equipped weapons stowed on the body
+        /// (long guns crossed on the back, pistol / knife in hip holsters).
+        /// </summary>
+        public void SetLoadout(int[] weapons, int heldWeapon)
+        {
+            loadout = weapons != null ? (int[])weapons.Clone() : null;
+            if (heldWeapon == shownWeapon && pendingWeapon < 0) RebuildStowed();
+            else SetWeapon(heldWeapon);
+        }
+
+        private void RebuildStowed()
+        {
+            foreach (GameObject model in stowed) if (model != null) Destroy(model);
+            stowed.Clear();
+            if (loadout == null || catalog == null || spine == null) return;
+
+            int longGuns = 0, sidearms = 0;
+            foreach (int index in loadout)
+            {
+                if (index == shownWeapon || stowed.Count >= 2) continue;
+                WeaponDefinition def = catalog.Get(index);
+                if (def == null || def.worldModelPrefab == null) continue;
+                GameObject model = Instantiate(def.worldModelPrefab, spine, false);
+                bool small = def.IsMelee || index == WeaponCatalog.SidearmIndex;
+                if (small)
+                {
+                    // Hip holster / sheath, barrel or blade pointing down.
+                    float side = sidearms++ == 0 ? 1f : -1f; // first on the right hip (the side the showcase camera sees)
+                    model.transform.localPosition = new Vector3(0.335f * side, -0.1f, 0.04f);
+                    model.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                    model.transform.localScale = Vector3.one * 1.3f;
+                }
+                else
+                {
+                    // Slung across the back, muzzle up over the shoulder; two long guns cross.
+                    // First gun over the right shoulder (visible to the showcase camera), a second one crosses it.
+                    float angle = longGuns == 0 ? -40f : 40f;
+                    float x = longGuns == 0 ? 0.12f : -0.12f;
+                    model.transform.localPosition = new Vector3(x, 0.42f, -0.32f - 0.05f * longGuns);
+                    model.transform.localRotation = Quaternion.AngleAxis(angle, Vector3.forward) * Quaternion.Euler(-90f, 0f, 0f);
+                    model.transform.localScale = Vector3.one * 1.35f;
+                    longGuns++;
+                }
+                stowed.Add(model);
+            }
         }
 
         /// <summary>Plays the lower/swap/raise animation and switches the held weapon.</summary>
@@ -129,6 +179,7 @@ namespace WarehouseWar.Player
             weaponModel = Instantiate(def.worldModelPrefab, weaponSocket, false);
             weaponModel.transform.localScale = Vector3.one * WeaponDefinition.HeldScale;
             shownWeapon = index;
+            RebuildStowed();
         }
 
         /// <summary>0 → 1 → 0 smooth bump over t ∈ [0, 1].</summary>

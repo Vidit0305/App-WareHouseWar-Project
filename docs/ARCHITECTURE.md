@@ -1,4 +1,4 @@
-# Warehouse Duel — Technical Architecture
+# Warehouse War — Technical Architecture (original v1 design notes)
 
 1v1 online FPS for Android/iOS. Unity 6.3 LTS + URP + Photon Fusion 2 (Host Mode) + Input System.
 This document covers the requirements analysis, packages, architecture, Fusion configuration, folder layout,

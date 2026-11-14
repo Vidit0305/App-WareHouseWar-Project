@@ -114,10 +114,39 @@ namespace WarehouseWar.Multiplayer
 
         public override void Render()
         {
+            SendLocalProfileOnce();
             foreach (string _ in changes.DetectChanges(this))
             {
                 Changed?.Invoke();
                 break;
+            }
+        }
+
+        private bool localProfileSent;
+
+        /// <summary>
+        /// Every mode (room, quick match, practice): as soon as this device has a slot, send its name, look and the
+        /// three weapons equipped in the Armory, so the match always uses the player's own loadout.
+        /// </summary>
+        private void SendLocalProfileOnce()
+        {
+            if (localProfileSent || Runner == null || !Runner.IsRunning || Object == null || !Object.IsValid) return;
+            if (SlotOf(Runner.LocalPlayer) < 0) return;
+            localProfileSent = true;
+            int[] loadout = GameSettings.Loadout;
+            RequestProfile(GameSettings.PlayerName, (byte)loadout[0],
+                (byte)WarehouseWar.Profile.PlayerProfile.AvatarIndex, (byte)WarehouseWar.Profile.PlayerProfile.BannerIndex,
+                (byte)WarehouseWar.Profile.PlayerProfile.TitleIndex, (byte)WarehouseWar.Profile.PlayerProfile.Level,
+                (byte)WarehouseWar.Profile.PlayerProfile.CharacterIndex, (byte)loadout[1], (byte)loadout[2]);
+        }
+
+        /// <summary>Host: a player's weapons changed - give an already spawned character the new loadout.</summary>
+        private static void RefreshCharacterLoadout(PlayerRef owner)
+        {
+            foreach (WarehouseWar.Player.PlayerCharacter character in WarehouseWar.Player.PlayerCharacter.All)
+            {
+                if (character == null || character.Object == null || !character.Object.IsValid || character.Owner != owner) continue;
+                if (character.WeaponController != null) character.WeaponController.ResetLoadout();
             }
         }
 
@@ -179,6 +208,9 @@ namespace WarehouseWar.Multiplayer
                 {
                     Player = player,
                     Name = $"Player {i + 1}",
+                    Weapon = 0,
+                    Weapon2 = 3,
+                    Weapon3 = 6,
                     Occupied = true,
                 });
                 Revision++;
@@ -390,6 +422,7 @@ namespace WarehouseWar.Multiplayer
                         s.Level = level;
                         s.Character = character;
                     });
+                    RefreshCharacterLoadout(source);
                     break;
                 }
                 case Request.Weapon when data.Length >= 2:
@@ -407,6 +440,7 @@ namespace WarehouseWar.Multiplayer
                             s.Weapon3 = weapon3;
                         }
                     });
+                    RefreshCharacterLoadout(source);
                     break;
                 }
                 case Request.Ready when data.Length >= 2:

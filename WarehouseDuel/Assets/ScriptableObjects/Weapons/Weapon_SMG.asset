@@ -18,14 +18,14 @@ MonoBehaviour:
   damage: 14
   headshotMultiplier: 1.5
   pellets: 1
-  range: 60
-  falloffStart: 12
-  falloffEnd: 30
-  minDamageMultiplier: 0.5
+  range: 160
+  falloffStart: 25
+  falloffEnd: 70
+  minDamageMultiplier: 0.6
   fireMode: 0
   roundsPerMinute: 900
-  hipSpread: 3
-  aimSpread: 1.4
+  hipSpread: 1.8
+  aimSpread: 0.7
   magazineSize: 32
   reserveAmmo: 160
   reloadSeconds: 1.7

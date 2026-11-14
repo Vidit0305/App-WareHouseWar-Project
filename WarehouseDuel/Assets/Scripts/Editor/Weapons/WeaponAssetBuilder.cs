@@ -56,8 +56,8 @@ namespace WarehouseWar.EditorTools.Weapons
                 d.displayName = "Assault Rifle";
                 d.description = "Reliable all-rounder. Full-auto, medium recoil.";
                 d.damage = 20f; d.headshotMultiplier = 1.6f; d.pellets = 1;
-                d.range = 90f; d.falloffStart = 25f; d.falloffEnd = 60f; d.minDamageMultiplier = 0.7f;
-                d.fireMode = FireMode.Automatic; d.roundsPerMinute = 600f; d.hipSpread = 2.2f; d.aimSpread = 0.5f;
+                d.range = 250f; d.falloffStart = 45f; d.falloffEnd = 110f; d.minDamageMultiplier = 0.75f;
+                d.fireMode = FireMode.Automatic; d.roundsPerMinute = 600f; d.hipSpread = 1.2f; d.aimSpread = 0.25f;
                 d.magazineSize = 30; d.reserveAmmo = 120; d.reloadSeconds = 2.0f;
                 d.recoilPitch = 1.1f; d.recoilYaw = 0.35f; d.moveSpeedMultiplier = 1f; d.aimFieldOfView = 52f; d.equipSeconds = 0.4f;
                 d.viewKick = 0.035f; d.muzzleFlashScale = 1f; d.muzzleFlashColor = new Color(1f, 0.8f, 0.4f);
@@ -72,8 +72,8 @@ namespace WarehouseWar.EditorTools.Weapons
                 d.displayName = "SMG";
                 d.description = "Very fast fire rate, low recoil. Best up close.";
                 d.damage = 14f; d.headshotMultiplier = 1.5f; d.pellets = 1;
-                d.range = 60f; d.falloffStart = 12f; d.falloffEnd = 30f; d.minDamageMultiplier = 0.5f;
-                d.fireMode = FireMode.Automatic; d.roundsPerMinute = 900f; d.hipSpread = 3.0f; d.aimSpread = 1.4f;
+                d.range = 160f; d.falloffStart = 25f; d.falloffEnd = 70f; d.minDamageMultiplier = 0.6f;
+                d.fireMode = FireMode.Automatic; d.roundsPerMinute = 900f; d.hipSpread = 1.8f; d.aimSpread = 0.7f;
                 d.magazineSize = 32; d.reserveAmmo = 160; d.reloadSeconds = 1.7f;
                 d.recoilPitch = 0.55f; d.recoilYaw = 0.3f; d.moveSpeedMultiplier = 1.06f; d.aimFieldOfView = 58f; d.equipSeconds = 0.3f;
                 d.viewKick = 0.025f; d.muzzleFlashScale = 0.8f; d.muzzleFlashColor = new Color(1f, 0.85f, 0.5f);
@@ -89,7 +89,7 @@ namespace WarehouseWar.EditorTools.Weapons
                 d.displayName = "Shotgun";
                 d.description = "Eight pellets. Devastating up close, slow to fire, limited ammo.";
                 d.damage = 12f; d.headshotMultiplier = 1.25f; d.pellets = 8;
-                d.range = 35f; d.falloffStart = 6f; d.falloffEnd = 18f; d.minDamageMultiplier = 0.25f;
+                d.range = 60f; d.falloffStart = 8f; d.falloffEnd = 28f; d.minDamageMultiplier = 0.3f;
                 d.fireMode = FireMode.SemiAutomatic; d.roundsPerMinute = 70f; d.hipSpread = 6f; d.aimSpread = 4.5f;
                 d.magazineSize = 6; d.reserveAmmo = 24; d.reloadSeconds = 2.4f;
                 d.recoilPitch = 6f; d.recoilYaw = 1.2f; d.moveSpeedMultiplier = 0.95f; d.aimFieldOfView = 60f; d.equipSeconds = 0.45f;
@@ -105,8 +105,8 @@ namespace WarehouseWar.EditorTools.Weapons
                 d.displayName = "Pistol";
                 d.description = "Accurate semi-auto sidearm. Small magazine, quick reload.";
                 d.damage = 26f; d.headshotMultiplier = 1.75f; d.pellets = 1;
-                d.range = 70f; d.falloffStart = 20f; d.falloffEnd = 45f; d.minDamageMultiplier = 0.7f;
-                d.fireMode = FireMode.SemiAutomatic; d.roundsPerMinute = 300f; d.hipSpread = 1.2f; d.aimSpread = 0.3f;
+                d.range = 160f; d.falloffStart = 35f; d.falloffEnd = 80f; d.minDamageMultiplier = 0.7f;
+                d.fireMode = FireMode.SemiAutomatic; d.roundsPerMinute = 300f; d.hipSpread = 0.8f; d.aimSpread = 0.15f;
                 d.magazineSize = 12; d.reserveAmmo = 60; d.reloadSeconds = 1.4f;
                 d.recoilPitch = 2.2f; d.recoilYaw = 0.5f; d.moveSpeedMultiplier = 1.08f; d.aimFieldOfView = 56f; d.equipSeconds = 0.25f;
                 d.viewKick = 0.05f; d.muzzleFlashScale = 0.8f; d.muzzleFlashColor = new Color(1f, 0.85f, 0.55f);
@@ -122,7 +122,7 @@ namespace WarehouseWar.EditorTools.Weapons
                 d.displayName = "Sniper Rifle";
                 d.description = "Bolt-action, 4x scope. One shot to the head kills; wild from the hip, slow to move.";
                 d.damage = 95f; d.headshotMultiplier = 2f; d.pellets = 1;
-                d.range = 160f; d.falloffStart = 160f; d.falloffEnd = 160f; d.minDamageMultiplier = 1f;
+                d.range = 400f; d.falloffStart = 400f; d.falloffEnd = 400f; d.minDamageMultiplier = 1f;
                 d.fireMode = FireMode.SemiAutomatic; d.roundsPerMinute = 45f; d.hipSpread = 8f; d.aimSpread = 0f;
                 d.magazineSize = 5; d.reserveAmmo = 20; d.reloadSeconds = 3.2f;
                 d.recoilPitch = 5f; d.recoilYaw = 0.8f; d.moveSpeedMultiplier = 0.9f; d.aimFieldOfView = 18f; d.equipSeconds = 0.7f;
@@ -140,8 +140,8 @@ namespace WarehouseWar.EditorTools.Weapons
                 d.displayName = "Machine Gun";
                 d.description = "Belt-fed LMG with a 100-round box. Suppress everything; heavy, kicks hard, long reload.";
                 d.damage = 17f; d.headshotMultiplier = 1.5f; d.pellets = 1;
-                d.range = 85f; d.falloffStart = 25f; d.falloffEnd = 60f; d.minDamageMultiplier = 0.65f;
-                d.fireMode = FireMode.Automatic; d.roundsPerMinute = 750f; d.hipSpread = 3.4f; d.aimSpread = 1.0f;
+                d.range = 250f; d.falloffStart = 45f; d.falloffEnd = 110f; d.minDamageMultiplier = 0.7f;
+                d.fireMode = FireMode.Automatic; d.roundsPerMinute = 750f; d.hipSpread = 2.0f; d.aimSpread = 0.6f;
                 d.magazineSize = 100; d.reserveAmmo = 200; d.reloadSeconds = 4.0f;
                 d.recoilPitch = 1.35f; d.recoilYaw = 0.55f; d.moveSpeedMultiplier = 0.85f; d.aimFieldOfView = 50f; d.equipSeconds = 0.6f;
                 d.viewKick = 0.04f; d.muzzleFlashScale = 1.25f; d.muzzleFlashColor = new Color(1f, 0.72f, 0.32f);
@@ -179,7 +179,7 @@ namespace WarehouseWar.EditorTools.Weapons
                 d.displayName = "RPG";
                 d.description = "Rocket launcher. Splash damage kills anything near the blast. One rocket per reload.";
                 d.damage = 1f; d.headshotMultiplier = 1f; d.pellets = 1; // the splash does the damage
-                d.range = 70f; d.falloffStart = 70f; d.falloffEnd = 70f; d.minDamageMultiplier = 1f;
+                d.range = 150f; d.falloffStart = 150f; d.falloffEnd = 150f; d.minDamageMultiplier = 1f;
                 d.fireMode = FireMode.SemiAutomatic; d.roundsPerMinute = 50f; d.hipSpread = 1.5f; d.aimSpread = 0.4f;
                 d.magazineSize = 1; d.reserveAmmo = 4; d.reloadSeconds = 2.8f;
                 d.recoilPitch = 4f; d.recoilYaw = 1f; d.moveSpeedMultiplier = 0.88f; d.aimFieldOfView = 50f; d.equipSeconds = 0.6f;

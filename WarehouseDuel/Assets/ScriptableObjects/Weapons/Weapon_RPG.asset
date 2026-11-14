@@ -19,9 +19,9 @@ MonoBehaviour:
   damage: 1
   headshotMultiplier: 1
   pellets: 1
-  range: 70
-  falloffStart: 70
-  falloffEnd: 70
+  range: 150
+  falloffStart: 150
+  falloffEnd: 150
   minDamageMultiplier: 1
   fireMode: 1
   roundsPerMinute: 50
