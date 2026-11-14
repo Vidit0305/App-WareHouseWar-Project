@@ -4,7 +4,7 @@ using Fusion.Editor;
 using Fusion.Photon.Realtime;
 using UnityEditor;
 
-namespace WarehouseDuel.EditorTools.Gameplay
+namespace WarehouseWar.EditorTools.Gameplay
 {
     /// <summary>
     /// Configures Photon Fusion for this game (APIs verified against the Fusion 2.1.4 SDK):

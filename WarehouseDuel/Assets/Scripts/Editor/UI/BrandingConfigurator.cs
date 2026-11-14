@@ -3,7 +3,7 @@ using UnityEditor.Android;
 using UnityEditor.Build;
 using UnityEngine;
 
-namespace WarehouseDuel.EditorTools.UI
+namespace WarehouseWar.EditorTools.UI
 {
     /// <summary>
     /// App identity art: imports the branding textures and assigns the Android launcher icons

@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace WarehouseDuel.UI
+namespace WarehouseWar.UI
 {
     /// <summary>A full-screen menu page (profile, leaderboard, armory, settings) with a back button.</summary>
     public abstract class MenuScreen : MonoBehaviour

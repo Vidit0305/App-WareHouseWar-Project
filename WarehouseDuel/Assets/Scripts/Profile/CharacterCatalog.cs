@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace WarehouseDuel.Profile
+namespace WarehouseWar.Profile
 {
     /// <summary>
     /// The playable characters: name, role, description, portrait, and the materials that replace the soldier's

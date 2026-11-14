@@ -1,10 +1,10 @@
 using System;
 using Fusion;
 using UnityEngine;
-using WarehouseDuel.Multiplayer;
-using WarehouseDuel.Player;
+using WarehouseWar.Multiplayer;
+using WarehouseWar.Player;
 
-namespace WarehouseDuel.Match
+namespace WarehouseWar.Match
 {
     public enum MatchPhase : byte
     {
@@ -146,6 +146,11 @@ namespace WarehouseDuel.Match
             {
                 if (Runner.TryGetPlayerObject(player, out NetworkObject obj) && obj != null && obj.GetComponent<PlayerCharacter>() != null) characters++;
             }
+            // Practice bots have no Fusion player; count their spawned characters directly.
+            foreach (PlayerCharacter bot in PlayerCharacter.All)
+            {
+                if (bot != null && bot.IsBot && room.SlotOf(bot.Owner) >= 0) characters++;
+            }
             // Everyone in the room must have spawned (late joiners during the countdown get respawned anyway).
             return characters >= Mathf.Max(RequiredPlayers, room.OccupiedCount);
         }
@@ -166,6 +171,10 @@ namespace WarehouseDuel.Match
                 {
                     character.Respawn(withProtection: false);
                 }
+            }
+            foreach (PlayerCharacter bot in PlayerCharacter.All)
+            {
+                if (bot != null && bot.IsBot) bot.Respawn(withProtection: false);
             }
         }
 

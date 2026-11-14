@@ -3,11 +3,11 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using WarehouseDuel.Core;
-using WarehouseDuel.UI;
-using static WarehouseDuel.EditorTools.UI.UiFactory;
+using WarehouseWar.Core;
+using WarehouseWar.UI;
+using static WarehouseWar.EditorTools.UI.UiFactory;
 
-namespace WarehouseDuel.EditorTools.UI
+namespace WarehouseWar.EditorTools.UI
 {
     /// <summary>
     /// Splash scene: the key art fills the screen (cropped, never stretched, on any aspect ratio), a dark

@@ -1,13 +1,13 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using WarehouseDuel.Audio;
-using WarehouseDuel.Core;
-using WarehouseDuel.Multiplayer;
-using WarehouseDuel.Player;
-using WarehouseDuel.UI.Widgets;
+using WarehouseWar.Audio;
+using WarehouseWar.Core;
+using WarehouseWar.Multiplayer;
+using WarehouseWar.Player;
+using WarehouseWar.UI.Widgets;
 
-namespace WarehouseDuel.UI
+namespace WarehouseWar.UI
 {
     /// <summary>
     /// Main menu hub: the soldier stands centre stage; around him the profile chip, Armory / Profile cards,
@@ -67,7 +67,8 @@ namespace WarehouseDuel.UI
         [SerializeField] private Button messageOkButton;
 
         private SessionService session;
-        private bool pickingForQuickMatch;
+        private enum MapPurpose { CreateRoom, QuickMatch, Practice }
+        private MapPurpose mapPurpose;
         private float searchStartedAt;
         private string playIdleText = "PLAY";
 
@@ -78,10 +79,11 @@ namespace WarehouseDuel.UI
             if (character != null)
             {
                 character.SetWeapon(GameSettings.PreferredWeapon);
-                if (character.TryGetComponent(out SoldierLook look)) look.Apply(WarehouseDuel.Profile.PlayerProfile.CharacterIndex);
+                if (character.TryGetComponent(out SoldierLook look)) look.Apply(WarehouseWar.Profile.PlayerProfile.CharacterIndex);
             }
 
-            codeInput.characterLimit = 7;
+            codeInput.characterLimit = RoomCode.CodeLength;
+            codeInput.contentType = TMP_InputField.ContentType.IntegerNumber;
             codeInput.onValueChanged.AddListener(_ => joinErrorText.text = string.Empty);
             codeInput.onSubmit.AddListener(_ => JoinRoom());
 
@@ -94,7 +96,7 @@ namespace WarehouseDuel.UI
             }
             mapBackButton.onClick.AddListener(() => PopupFx.Hide(mapPanel));
             onlineModeButton.onClick.AddListener(() => ShowDialog(onlinePanel));
-            practiceModeButton.onClick.AddListener(StartPractice);
+            practiceModeButton.onClick.AddListener(() => OpenMapPicker(MapPurpose.Practice));
             profileChipButton.onClick.AddListener(() => OpenScreen(profileScreen));
             characterCardButton.onClick.AddListener(() => OpenScreen(characterScreen));
             shopCardButton.onClick.AddListener(() => OpenScreen(shopScreen));
@@ -113,7 +115,7 @@ namespace WarehouseDuel.UI
                 screen.gameObject.SetActive(false);
             }
 
-            createRoomButton.onClick.AddListener(() => OpenMapPicker(quickMatch: false));
+            createRoomButton.onClick.AddListener(() => OpenMapPicker(MapPurpose.CreateRoom));
             joinRoomButton.onClick.AddListener(() =>
             {
                 joinErrorText.text = string.Empty;
@@ -133,7 +135,7 @@ namespace WarehouseDuel.UI
             mapPanel.SetActive(false);
             RefreshWins();
             GameSettings.Changed += RefreshWins;
-            WarehouseDuel.Profile.Shop.Changed += RefreshWins;
+            WarehouseWar.Profile.Shop.Changed += RefreshWins;
 
             if (session != null)
             {
@@ -150,7 +152,7 @@ namespace WarehouseDuel.UI
         {
             if (session != null) session.StatusChanged -= OnSessionStatus;
             GameSettings.Changed -= RefreshWins;
-            WarehouseDuel.Profile.Shop.Changed -= RefreshWins;
+            WarehouseWar.Profile.Shop.Changed -= RefreshWins;
         }
 
         private void Update()
@@ -172,13 +174,18 @@ namespace WarehouseDuel.UI
                 session.LeaveSession(); // tap again to cancel the search
                 return;
             }
-            OpenMapPicker(quickMatch: true);
+            OpenMapPicker(MapPurpose.QuickMatch);
         }
 
-        private void OpenMapPicker(bool quickMatch)
+        private void OpenMapPicker(MapPurpose purpose)
         {
-            pickingForQuickMatch = quickMatch;
-            if (mapPanelTitle != null) mapPanelTitle.text = quickMatch ? "QUICK MATCH — CHOOSE A MAP" : "CREATE ROOM — CHOOSE A MAP";
+            mapPurpose = purpose;
+            if (mapPanelTitle != null)
+            {
+                mapPanelTitle.text = purpose == MapPurpose.QuickMatch ? "QUICK MATCH — CHOOSE A MAP"
+                    : purpose == MapPurpose.Practice ? "PRACTICE — CHOOSE A MAP"
+                    : "CREATE ROOM — CHOOSE A MAP";
+            }
             ShowDialog(null);
             mapPanel.SetActive(true);
         }
@@ -186,7 +193,12 @@ namespace WarehouseDuel.UI
         private async void OnMapChosen(int map)
         {
             PopupFx.Hide(mapPanel);
-            if (!pickingForQuickMatch)
+            if (mapPurpose == MapPurpose.Practice)
+            {
+                StartPractice(map);
+                return;
+            }
+            if (mapPurpose == MapPurpose.CreateRoom)
             {
                 CreateRoom(map);
                 return;
@@ -257,7 +269,7 @@ namespace WarehouseDuel.UI
         private void RefreshWins()
         {
             if (winsText != null) winsText.text = GameSettings.MatchesWon.ToString();
-            if (starsText != null) starsText.text = WarehouseDuel.Profile.Shop.Stars.ToString();
+            if (starsText != null) starsText.text = WarehouseWar.Profile.Shop.Stars.ToString();
         }
 
         private async void CreateRoom(int map)
@@ -287,11 +299,11 @@ namespace WarehouseDuel.UI
             }
         }
 
-        private async void StartPractice()
+        private async void StartPractice(int map)
         {
             if (!EnsureSession()) return;
-            ShowBusy("Loading the warehouse…");
-            bool ok = await session.StartPracticeAsync();
+            ShowBusy("Loading practice…");
+            bool ok = await session.StartPracticeAsync(map);
             if (!ok) ShowFailure(null);
         }
 

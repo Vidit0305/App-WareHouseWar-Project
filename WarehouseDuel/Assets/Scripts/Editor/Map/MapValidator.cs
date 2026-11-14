@@ -4,10 +4,10 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using WarehouseDuel.Core;
-using WarehouseDuel.Environment;
+using WarehouseWar.Core;
+using WarehouseWar.Environment;
 
-namespace WarehouseDuel.EditorTools.Map
+namespace WarehouseWar.EditorTools.Map
 {
     /// <summary>
     /// Automated checks on a map scene (any of <see cref="GameConstants.Scenes.Maps"/>), using real physics queries

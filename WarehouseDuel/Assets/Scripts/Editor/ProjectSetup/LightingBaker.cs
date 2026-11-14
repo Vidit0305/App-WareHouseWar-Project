@@ -3,7 +3,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace WarehouseDuel.EditorTools
+namespace WarehouseWar.EditorTools
 {
     /// <summary>
     /// Bakes the environment lighting (ambient probe + reflection) for a generated scene without lightmaps.
@@ -12,14 +12,14 @@ namespace WarehouseDuel.EditorTools
     /// </summary>
     internal static class LightingBaker
     {
-        private const string SettingsPath = "Assets/Settings/WarehouseDuel_Lighting.lighting";
+        private const string SettingsPath = "Assets/Settings/WarehouseWar_Lighting.lighting";
 
         public static void BakeEnvironment(Scene scene, SetupReport report)
         {
             var settings = AssetDatabase.LoadAssetAtPath<LightingSettings>(SettingsPath);
             if (settings == null)
             {
-                settings = new LightingSettings { name = "WarehouseDuel_Lighting" };
+                settings = new LightingSettings { name = "WarehouseWar_Lighting" };
                 AssetDatabase.CreateAsset(settings, SettingsPath);
             }
             settings.bakedGI = false;

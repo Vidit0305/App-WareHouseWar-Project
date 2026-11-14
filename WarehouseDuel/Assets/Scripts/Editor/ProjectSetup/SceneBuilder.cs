@@ -6,11 +6,11 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using WarehouseDuel.Core;
-using WarehouseDuel.UI;
+using WarehouseWar.Core;
+using WarehouseWar.UI;
 using Object = UnityEngine.Object;
 
-namespace WarehouseDuel.EditorTools
+namespace WarehouseWar.EditorTools
 {
     /// <summary>
     /// Generates the four Phase 1 scenes from code, so every component reference is created by Unity
@@ -104,7 +104,7 @@ namespace WarehouseDuel.EditorTools
 
             Place(CreateImage("Accent Line", canvas.transform, Accent).rectTransform, new Vector2(0f, 20f), new Vector2(240f, 6f));
 
-            TextMeshProUGUI tagline = CreateText("Tagline", canvas.transform, "1V1 ONLINE ARENA", 34f, TextMuted);
+            TextMeshProUGUI tagline = CreateText("Tagline", canvas.transform, "UP TO 8 PLAYERS ONLINE", 34f, TextMuted);
             tagline.characterSpacing = 20f;
             Place(tagline.rectTransform, new Vector2(0f, -40f), new Vector2(1200f, 60f));
 

@@ -3,9 +3,9 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
-using WarehouseDuel.Profile;
+using WarehouseWar.Profile;
 
-namespace WarehouseDuel.EditorTools.Gameplay
+namespace WarehouseWar.EditorTools.Gameplay
 {
     /// <summary>
     /// The ten playable characters. Each one has its own uniform pattern (camo texture), vest/skin/boots colours,
@@ -77,6 +77,30 @@ namespace WarehouseDuel.EditorTools.Gameplay
                 pattern = Pattern.Digital, palette = new Color32[] { new Color32(58, 60, 64, 255), new Color32(42, 44, 48, 255), new Color32(74, 76, 80, 255), new Color32(50, 52, 56, 255) },
                 vest = new Color32(70, 72, 76, 255), skin = SkinDark, boots = new Color32(16, 16, 18, 255), strap = new Color32(24, 24, 26, 255), mask = Black,
                 helmet = false, backdrop = new Color32(110, 20, 20, 255) },
+            new Def { name = "Viper", role = "Recon specialist", description = "Toxic green digital camo with a black helmet. Strikes first and disappears.",
+                pattern = Pattern.Digital, palette = new Color32[] { new Color32(70, 150, 60, 255), new Color32(40, 96, 40, 255), new Color32(120, 196, 70, 255), new Color32(24, 52, 26, 255) },
+                vest = new Color32(28, 34, 28, 255), skin = SkinMedium, boots = new Color32(20, 22, 20, 255), strap = new Color32(30, 36, 30, 255), mask = Black,
+                backdrop = new Color32(30, 90, 40, 255) },
+            new Def { name = "Crimson", role = "Shock trooper", description = "Blood-red camo and a black vest. Nobody forgets the squad in red.",
+                pattern = Pattern.Blobs, palette = new Color32[] { new Color32(150, 30, 30, 255), new Color32(100, 18, 20, 255), new Color32(190, 50, 40, 255), new Color32(60, 12, 14, 255) },
+                vest = new Color32(24, 22, 24, 255), skin = SkinLight, boots = new Color32(18, 16, 16, 255), strap = new Color32(30, 26, 26, 255), mask = Black,
+                backdrop = new Color32(120, 20, 24, 255) },
+            new Def { name = "Navy Seal", role = "Amphibious raider", description = "Ocean-blue camo, dark helmet and a rebreather mask. Comes in from the water.",
+                pattern = Pattern.Blobs, palette = new Color32[] { new Color32(40, 80, 130, 255), new Color32(26, 52, 92, 255), new Color32(70, 120, 170, 255), new Color32(18, 34, 60, 255) },
+                vest = new Color32(22, 30, 44, 255), skin = SkinDark, boots = new Color32(14, 18, 24, 255), strap = new Color32(20, 26, 36, 255), mask = Black,
+                backdrop = new Color32(20, 60, 120, 255) },
+            new Def { name = "Sandstorm", role = "Desert vanguard", description = "Tiger-stripe sand camo and a tan helmet. Built for long fights in the open.",
+                pattern = Pattern.Stripes, palette = new Color32[] { new Color32(204, 170, 110, 255), new Color32(120, 90, 54, 255), new Color32(228, 200, 146, 255), new Color32(170, 136, 86, 255) },
+                vest = new Color32(140, 112, 72, 255), skin = SkinMedium, boots = new Color32(90, 66, 42, 255), strap = new Color32(100, 80, 56, 255), mask = new Color32(180, 150, 104, 255),
+                backdrop = new Color32(170, 120, 50, 255) },
+            new Def { name = "Shadow", role = "Special forces", description = "All black from helmet to boots. The last thing you see in a dark corridor.",
+                pattern = Pattern.Solid, palette = new Color32[] { new Color32(30, 30, 34, 255), new Color32(24, 24, 28, 255), new Color32(38, 38, 42, 255), new Color32(20, 20, 24, 255) },
+                vest = new Color32(16, 16, 18, 255), skin = SkinLight, boots = new Color32(10, 10, 12, 255), strap = new Color32(14, 14, 16, 255), mask = Black,
+                backdrop = new Color32(40, 40, 60, 255) },
+            new Def { name = "Gold Elite", role = "Legendary veteran", description = "A golden uniform earned through a hundred wars. For players who want everyone to know.",
+                pattern = Pattern.Solid, palette = new Color32[] { new Color32(214, 168, 52, 255), new Color32(190, 146, 40, 255), new Color32(236, 196, 80, 255), new Color32(170, 128, 34, 255) },
+                vest = new Color32(40, 34, 24, 255), skin = SkinMedium, boots = new Color32(30, 24, 16, 255), strap = new Color32(60, 48, 26, 255), mask = Black,
+                backdrop = new Color32(150, 110, 20, 255) },
         };
 
         // ------------------------------------------------------------------ accessories

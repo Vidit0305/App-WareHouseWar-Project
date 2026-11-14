@@ -5,10 +5,10 @@ using UnityEditor.Build;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using WarehouseDuel.Core;
+using WarehouseWar.Core;
 using Object = UnityEngine.Object;
 
-namespace WarehouseDuel.EditorTools
+namespace WarehouseWar.EditorTools
 {
     /// <summary>
     /// Read-only health check of the project. Changes nothing; reports what is missing and how to fix it.
@@ -34,7 +34,7 @@ namespace WarehouseDuel.EditorTools
             report.PrintToConsole("Project validation");
             if (showDialog)
             {
-                EditorUtility.DisplayDialog("Warehouse Duel — Validation", report.Summary + "\n\nDetails are in the Console.", "OK");
+                EditorUtility.DisplayDialog("Warehouse War — Validation", report.Summary + "\n\nDetails are in the Console.", "OK");
             }
             return report;
         }

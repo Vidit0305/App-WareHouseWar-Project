@@ -1,6 +1,6 @@
 // Minimal URP unlit additive shader for muzzle flashes, sparks and glows.
 // Uses particle vertex colour, so ParticleSystem colour-over-lifetime works. SRP Batcher compatible.
-Shader "WarehouseDuel/Additive Unlit"
+Shader "WarehouseWar/Additive Unlit"
 {
     Properties
     {

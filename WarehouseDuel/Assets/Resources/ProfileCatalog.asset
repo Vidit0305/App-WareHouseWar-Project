@@ -29,6 +29,14 @@ MonoBehaviour:
   - {fileID: 21300000, guid: d053b50ec4b3bd04ab42443dd3a5d8dc, type: 3}
   - {fileID: 21300000, guid: 2f7684210379ed541877b15ea47b5e61, type: 3}
   - {fileID: 21300000, guid: 30749e8a7030a06438716e5d9e9911c4, type: 3}
+  - {fileID: 21300000, guid: 4f99c3685c0ea7845bd9ee5be9f33136, type: 3}
+  - {fileID: 21300000, guid: da0c018c88fb82f44a8da0f685dff4d2, type: 3}
+  - {fileID: 21300000, guid: b857f809e8edaab4db40a91cdeadf681, type: 3}
+  - {fileID: 21300000, guid: 4f372816b8a0acf45acd3fe0dbdb030f, type: 3}
+  - {fileID: 21300000, guid: 35fcb620d2875174eb44f158796569eb, type: 3}
+  - {fileID: 21300000, guid: c43fdb3d98087f34e9531e4f84ee8602, type: 3}
+  - {fileID: 21300000, guid: 5916e8eb30268924d9731c6dae658c64, type: 3}
+  - {fileID: 21300000, guid: 734df1a9139798640b81f9227b14cb77, type: 3}
   banners:
   - {fileID: 21300000, guid: 7bd6e0f3bca02ca499b12c4d733b8dca, type: 3}
   - {fileID: 21300000, guid: dc09cda047b045044b22fcb304b70c38, type: 3}
@@ -46,6 +54,14 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 9dd07be3aa799cc448520d55b30eec76, type: 3}
   - {fileID: 21300000, guid: a2d51e8124e3c0f48b79242bcdd2b827, type: 3}
   - {fileID: 21300000, guid: 4f73a3b3539864d4eb5936241bc8356c, type: 3}
+  - {fileID: 21300000, guid: eb26c369487108c42ad68dc033e13c0f, type: 3}
+  - {fileID: 21300000, guid: 350f5717240e817498b01315b24c8178, type: 3}
+  - {fileID: 21300000, guid: 926ae13918a0017448518b5c0fb722c7, type: 3}
+  - {fileID: 21300000, guid: 35dc9722f92f4c644bbdf653f88c9292, type: 3}
+  - {fileID: 21300000, guid: c428bb23d38ecc04f9d38b88f69322fa, type: 3}
+  - {fileID: 21300000, guid: 5afdf347390de2f4ba3138933a35d4c7, type: 3}
+  - {fileID: 21300000, guid: dc9f58c8cf0beb1459b09722935bea6b, type: 3}
+  - {fileID: 21300000, guid: e2bc776c04da2804aa083e49d3bc52b8, type: 3}
   bannerNames:
   - Steel
   - Hazard
@@ -63,3 +79,11 @@ MonoBehaviour:
   - Dog Tags
   - Barbed Wire
   - Skull Squad
+  - Ocean
+  - Jungle
+  - Crimson
+  - Midnight
+  - Gold Rush
+  - Toxic
+  - Thunder
+  - Royal

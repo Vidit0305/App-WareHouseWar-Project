@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using WarehouseDuel.Profile;
-using WarehouseDuel.Weapons;
+using WarehouseWar.Profile;
+using WarehouseWar.Weapons;
 
-namespace WarehouseDuel.UI
+namespace WarehouseWar.UI
 {
     /// <summary>
     /// Leaderboard: standings of you and every rival you have dueled (from this device's match history),

@@ -4,11 +4,11 @@ using System.Text;
 using Fusion;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using WarehouseDuel.Core;
-using WarehouseDuel.Match;
-using WarehouseDuel.Player;
+using WarehouseWar.Core;
+using WarehouseWar.Match;
+using WarehouseWar.Player;
 
-namespace WarehouseDuel.Multiplayer
+namespace WarehouseWar.Multiplayer
 {
     /// <summary>
     /// Automated two-instance multiplayer test (only active when launched with -autotest).
@@ -16,8 +16,8 @@ namespace WarehouseDuel.Multiplayer
     /// the client reads it and joins, both ready up, the host starts the match, and bot input fights it out.
     /// At the end each instance writes what IT saw (winner, kills, deaths) so the two views can be compared.
     ///
-    ///   WarehouseDuel.exe -autotest host   -autotest-dir C:\tmp\wd -autotest-seconds 45 -batchmode? (needs rendering off: use -nographics)
-    ///   WarehouseDuel.exe -autotest client -autotest-dir C:\tmp\wd
+    ///   WarehouseWar.exe -autotest host   -autotest-dir C:\tmp\wd -autotest-seconds 45 -batchmode? (needs rendering off: use -nographics)
+    ///   WarehouseWar.exe -autotest client -autotest-dir C:\tmp\wd
     /// </summary>
     public sealed class AutoTestDriver : MonoBehaviour
     {

@@ -1,6 +1,6 @@
 // Minimal URP unlit alpha-blended shader for smoke puffs and bullet-hole decals.
 // Uses particle/vertex colour. SRP Batcher compatible.
-Shader "WarehouseDuel/Alpha Unlit"
+Shader "WarehouseWar/Alpha Unlit"
 {
     Properties
     {

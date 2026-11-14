@@ -1,9 +1,9 @@
 using System;
 using System.IO;
 using UnityEngine;
-using WarehouseDuel.Core;
+using WarehouseWar.Core;
 
-namespace WarehouseDuel.Profile
+namespace WarehouseWar.Profile
 {
     /// <summary>
     /// The local player's identity: name, avatar (preset or a photo stored on this device), banner, title,
@@ -30,7 +30,7 @@ namespace WarehouseDuel.Profile
         {
             new TitleInfo { name = "Rookie", requirement = "Unlocked from the start", unlocked = () => true },
             new TitleInfo { name = "Gunslinger", requirement = "Get 10 eliminations", unlocked = () => GameSettings.TotalKills >= 10 },
-            new TitleInfo { name = "Duelist", requirement = "Win 5 online matches", unlocked = () => GameSettings.MatchesWon >= 5 },
+            new TitleInfo { name = "Warrior", requirement = "Win 5 online matches", unlocked = () => GameSettings.MatchesWon >= 5 },
             new TitleInfo { name = "Veteran", requirement = "Play 25 online matches", unlocked = () => GameSettings.MatchesPlayed >= 25 },
             new TitleInfo { name = "Sharpshooter", requirement = "Get 50 eliminations", unlocked = () => GameSettings.TotalKills >= 50 },
             new TitleInfo { name = "Untouchable", requirement = "Win a match without dying", unlocked = () => MatchHistory.HasFlawlessWin },

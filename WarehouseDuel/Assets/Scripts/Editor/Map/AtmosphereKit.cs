@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace WarehouseDuel.EditorTools.Map
+namespace WarehouseWar.EditorTools.Map
 {
     /// <summary>
     /// Cinematic atmosphere shared by the 3D scenes: post-processing looks (ACES tonemapping, bloom, warm/teal
@@ -96,7 +96,7 @@ namespace WarehouseDuel.EditorTools.Map
             if (data == null) data = camera.gameObject.AddComponent<UniversalAdditionalCameraData>();
             data.renderPostProcessing = true;
             data.antialiasing = AntialiasingMode.FastApproximateAntialiasing;
-            if (camera.GetComponent<WarehouseDuel.Core.CameraEffects>() == null) camera.gameObject.AddComponent<WarehouseDuel.Core.CameraEffects>();
+            if (camera.GetComponent<WarehouseWar.Core.CameraEffects>() == null) camera.gameObject.AddComponent<WarehouseWar.Core.CameraEffects>();
         }
 
         // ------------------------------------------------------------------ light shafts
@@ -138,7 +138,7 @@ namespace WarehouseDuel.EditorTools.Map
             if (material == null)
             {
                 FolderStructure.EnsureFolder(MaterialFolder);
-                material = new Material(Shader.Find("WarehouseDuel/Additive Unlit"));
+                material = new Material(Shader.Find("WarehouseWar/Additive Unlit"));
                 AssetDatabase.CreateAsset(material, path);
             }
             material.SetTexture("_BaseMap", ShaftTexture());

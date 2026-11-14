@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WarehouseDuel.Multiplayer
+namespace WarehouseWar.Multiplayer
 {
     /// <summary>
     /// Placed in every scene that needs networking. Makes sure exactly one SessionService exists,

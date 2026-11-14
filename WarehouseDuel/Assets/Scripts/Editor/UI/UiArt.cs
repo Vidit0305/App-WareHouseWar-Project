@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.TextCore.LowLevel;
 
-namespace WarehouseDuel.EditorTools.UI
+namespace WarehouseWar.EditorTools.UI
 {
     /// <summary>
     /// Generates every UI image the game uses (no external art needed):

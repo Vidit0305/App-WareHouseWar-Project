@@ -3,16 +3,19 @@ using System.Text;
 using Fusion;
 using Fusion.Sockets;
 using UnityEngine;
-using WarehouseDuel.Core;
+using WarehouseWar.Core;
 
-namespace WarehouseDuel.Multiplayer
+namespace WarehouseWar.Multiplayer
 {
     /// <summary>One player's entry in the room (up to 8). Slot 0 = host; each slot has its own spawn point.</summary>
     public struct PlayerSlot : INetworkStruct
     {
         public PlayerRef Player;
         public NetworkString<_16> Name;
+        /// <summary>Equipped weapons (catalog indices): Weapon is the first, Weapon2/Weapon3 the others.</summary>
         public byte Weapon;
+        public byte Weapon2;
+        public byte Weapon3;
         /// <summary>Preset avatar / banner / title index and level, for the opponent's player card.</summary>
         public byte Avatar;
         public byte Banner;
@@ -184,6 +187,61 @@ namespace WarehouseDuel.Multiplayer
             return -1;
         }
 
+        // ------------------------------------------------------------------ practice bots (host only)
+
+        /// <summary>Bots use fake PlayerRefs (encoded value BotRefBase + n) that no real Fusion player ever gets.</summary>
+        public const int BotRefBase = 100;
+
+        public static PlayerRef BotRef(int botIndex) => PlayerRef.FromEncoded(BotRefBase + botIndex);
+
+        public static bool IsBot(PlayerRef player) => player.RawEncoded >= BotRefBase;
+
+        /// <summary>
+        /// Host: adds (or finds) bot number <paramref name="botIndex"/> in the first free slot with the given look and
+        /// loadout. Bots are always ready. Returns the slot, or -1 if the room is full.
+        /// </summary>
+        public int AddBot(int botIndex, string botName, byte weapon, byte weapon2, byte weapon3, byte character, byte avatar, byte banner, byte title, byte level)
+        {
+            if (!HasStateAuthority) return -1;
+            PlayerRef bot = BotRef(botIndex);
+            int existing = SlotOf(bot);
+            if (existing >= 0) return existing;
+
+            for (int i = 0; i < Capacity; i++)
+            {
+                if (Slots[i].Occupied) continue;
+                Slots.Set(i, new PlayerSlot
+                {
+                    Player = bot,
+                    Name = botName,
+                    Weapon = ClampWeapon(weapon),
+                    Weapon2 = ClampWeapon(weapon2),
+                    Weapon3 = ClampWeapon(weapon3),
+                    Character = character,
+                    Avatar = avatar,
+                    Banner = banner,
+                    Title = title,
+                    Level = level,
+                    Occupied = true,
+                    Ready = true,
+                });
+                Revision++;
+                return i;
+            }
+            return -1;
+        }
+
+        /// <summary>Number of bots currently in the room.</summary>
+        public int BotCount
+        {
+            get
+            {
+                int count = 0;
+                for (int i = 0; i < Capacity; i++) if (Slots[i].Occupied && IsBot(Slots[i].Player)) count++;
+                return count;
+            }
+        }
+
         public void RemovePlayer(PlayerRef player)
         {
             if (!HasStateAuthority) return;
@@ -232,7 +290,8 @@ namespace WarehouseDuel.Multiplayer
                 for (int i = 0; i < Capacity; i++)
                 {
                     if (!Slots[i].Occupied) continue;
-                    if (!Slots[i].WantsRematch) return false;
+                    // Practice bots always want another round.
+                    if (!Slots[i].WantsRematch && !IsBot(Slots[i].Player)) return false;
                     voters++;
                 }
                 return voters >= MinPlayers;
@@ -260,11 +319,12 @@ namespace WarehouseDuel.Multiplayer
         public static readonly ReliableKey RequestKey = ReliableKey.FromInts(0x57_44_52_51, 1, 0, 0);
 
         /// <summary>Any player: set my display name, lobby weapon and profile look (avatar, banner, title, level).</summary>
-        public void RequestProfile(string playerName, byte weapon, byte avatar = 0, byte banner = 0, byte title = 0, byte level = 1, byte character = 0)
+        public void RequestProfile(string playerName, byte weapon, byte avatar = 0, byte banner = 0, byte title = 0, byte level = 1, byte character = 0,
+                                   byte weapon2 = 3, byte weapon3 = 6)
         {
             byte[] name = Encoding.UTF8.GetBytes(GameSettings.SanitizeName(playerName ?? string.Empty));
             int length = Mathf.Min(name.Length, 64);
-            var payload = new byte[3 + length + 5];
+            var payload = new byte[3 + length + 7];
             payload[0] = (byte)Request.Profile;
             payload[1] = weapon;
             payload[2] = (byte)length;
@@ -274,10 +334,13 @@ namespace WarehouseDuel.Multiplayer
             payload[5 + length] = title;
             payload[6 + length] = level;
             payload[7 + length] = character;
+            payload[8 + length] = weapon2;
+            payload[9 + length] = weapon3;
             Send(payload);
         }
 
-        public void RequestWeapon(byte weapon) => Send(new[] { (byte)Request.Weapon, weapon });
+        /// <summary>Any player: set my three equipped weapons.</summary>
+        public void RequestLoadout(byte weapon, byte weapon2, byte weapon3) => Send(new[] { (byte)Request.Weapon, weapon, weapon2, weapon3 });
         public void RequestReady(bool ready) => Send(new[] { (byte)Request.Ready, (byte)(ready ? 1 : 0) });
         public void RequestRematch(bool wants) => Send(new[] { (byte)Request.Rematch, (byte)(wants ? 1 : 0) });
 
@@ -312,10 +375,15 @@ namespace WarehouseDuel.Multiplayer
                     byte title = hasLook ? (byte)Mathf.Min(data[5 + length], 31) : (byte)0;
                     byte level = hasLook ? (byte)Mathf.Clamp(data[6 + length], 1, 99) : (byte)1;
                     byte character = data.Length >= 3 + length + 5 ? (byte)Mathf.Min(data[7 + length], 31) : (byte)0;
+                    bool hasLoadout = data.Length >= 3 + length + 7;
+                    byte weapon2 = hasLoadout ? ClampWeapon(data[8 + length]) : (byte)3;
+                    byte weapon3 = hasLoadout ? ClampWeapon(data[9 + length]) : (byte)6;
                     Modify(index, (ref PlayerSlot s) =>
                     {
                         s.Name = clean;
                         s.Weapon = weapon;
+                        s.Weapon2 = weapon2;
+                        s.Weapon3 = weapon3;
                         s.Avatar = avatar;
                         s.Banner = banner;
                         s.Title = title;
@@ -327,7 +395,18 @@ namespace WarehouseDuel.Multiplayer
                 case Request.Weapon when data.Length >= 2:
                 {
                     byte weapon = ClampWeapon(data[1]);
-                    Modify(index, (ref PlayerSlot s) => s.Weapon = weapon);
+                    bool all = data.Length >= 4;
+                    byte weapon2 = all ? ClampWeapon(data[2]) : (byte)0;
+                    byte weapon3 = all ? ClampWeapon(data[3]) : (byte)0;
+                    Modify(index, (ref PlayerSlot s) =>
+                    {
+                        s.Weapon = weapon;
+                        if (all)
+                        {
+                            s.Weapon2 = weapon2;
+                            s.Weapon3 = weapon3;
+                        }
+                    });
                     break;
                 }
                 case Request.Ready when data.Length >= 2:
@@ -352,6 +431,6 @@ namespace WarehouseDuel.Multiplayer
             Revision++;
         }
 
-        private static byte ClampWeapon(byte weapon) => (byte)Mathf.Clamp(weapon, 0, WarehouseDuel.Weapons.WeaponCatalog.MaxWeapons - 1);
+        private static byte ClampWeapon(byte weapon) => (byte)Mathf.Clamp(weapon, 0, WarehouseWar.Weapons.WeaponCatalog.MaxWeapons - 1);
     }
 }

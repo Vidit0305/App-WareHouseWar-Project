@@ -6,11 +6,11 @@ using Fusion.Photon.Realtime;
 using Fusion.Sockets;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using WarehouseDuel.Core;
-using WarehouseDuel.Match;
-using WarehouseDuel.Player;
+using WarehouseWar.Core;
+using WarehouseWar.Match;
+using WarehouseWar.Player;
 
-namespace WarehouseDuel.Multiplayer
+namespace WarehouseWar.Multiplayer
 {
     public enum SessionStatus
     {
@@ -104,16 +104,20 @@ namespace WarehouseDuel.Multiplayer
             IsQuickPlay = false;
             pendingMap = mapChoice;
             pendingQuickPlay = false;
+            SetStatus(SessionStatus.Connecting, "Creating room…");
+            // The 6-digit code stores the region in its last digit, so host in the closest region that has one.
+            string hostRegion = await PickCodeRegionAsync();
 
             for (int attempt = 1; attempt <= MaxCreateAttempts; attempt++)
             {
                 string sessionName = Multiplayer.RoomCode.NewSessionName();
                 SetStatus(SessionStatus.Connecting, "Creating room…");
 
-                StartGameResult result = await StartRunner(GameMode.Host, sessionName, region: null);
+                StartGameResult result = await StartRunner(GameMode.Host, sessionName, hostRegion);
                 if (result.Ok)
                 {
                     string region = Runner.SessionInfo.Region;
+                    if (!Multiplayer.RoomCode.Encodable(region)) region = Multiplayer.RoomCode.NearestEncodable(region);
                     RoomCode = Multiplayer.RoomCode.ToDisplay(sessionName, region);
                     SetStatus(SessionStatus.InRoom, string.Empty);
                     return true;
@@ -128,6 +132,32 @@ namespace WarehouseDuel.Multiplayer
 
             SetStatus(SessionStatus.Failed, "Could not create a unique room code. Please try again.");
             return false;
+        }
+
+        /// <summary>Lowest-ping Photon region that a room code can encode, or null (Photon's best region) if pinging fails.</summary>
+        private static async Task<string> PickCodeRegionAsync()
+        {
+            try
+            {
+                var regions = await NetworkRunner.GetAvailableRegions();
+                string best = null;
+                int bestPing = int.MaxValue;
+                if (regions != null)
+                {
+                    foreach (var info in regions)
+                    {
+                        if (!Multiplayer.RoomCode.Encodable(info.RegionCode) || info.RegionPing <= 0 || info.RegionPing >= bestPing) continue;
+                        best = info.RegionCode;
+                        bestPing = info.RegionPing;
+                    }
+                }
+                return best;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"[Session] Region ping failed, using best region: {e.Message}");
+                return null;
+            }
         }
 
         /// <summary>Joins a friend's room by code. Validates the code before connecting.</summary>
@@ -198,13 +228,16 @@ namespace WarehouseDuel.Multiplayer
         /// Offline practice: Fusion Single-Player mode loads the warehouse with only the local player.
         /// Same gameplay code as online; no network involved.
         /// </summary>
-        public async Task<bool> StartPracticeAsync()
+        public async Task<bool> StartPracticeAsync(int mapChoice = GameConstants.Scenes.RandomMap)
         {
             if (Status == SessionStatus.Connecting || Status == SessionStatus.InRoom) return false;
             IsPractice = true;
             IsQuickPlay = false;
+            int map = mapChoice >= 0 && mapChoice < GameConstants.Scenes.Maps.Length ? mapChoice : UnityEngine.Random.Range(0, GameConstants.Scenes.Maps.Length);
+            pendingMap = map;
+            pendingQuickPlay = false;
             SetStatus(SessionStatus.Connecting, "Loading practice…");
-            StartGameResult result = await StartRunner(GameMode.Single, "practice", null, GameConstants.Scenes.WarehouseMap);
+            StartGameResult result = await StartRunner(GameMode.Single, "practice", null, GameConstants.Scenes.Maps[map]);
             if (!result.Ok)
             {
                 SetStatus(SessionStatus.Failed, Describe(result.ShutdownReason, result.ErrorMessage));
@@ -353,6 +386,43 @@ namespace WarehouseDuel.Multiplayer
             if (!runner.IsServer) return;
             if (MatchManager.Instance == null) runner.Spawn(matchManagerPrefab, Vector3.zero, Quaternion.identity);
             foreach (PlayerRef player in runner.ActivePlayers) SpawnCharacter(runner, player);
+            if (runner.GameMode == GameMode.Single) SpawnBots(runner);
+        }
+
+        /// <summary>Practice only: bots that join the local player (free-for-all, they fight everyone).</summary>
+        public const int PracticeBots = 5;
+
+        /// <summary>
+        /// Host, practice only: fills the room with <see cref="PracticeBots"/> bots (random look and loadout) and spawns
+        /// their characters. Bots have no Fusion player: their character carries a fake PlayerRef (see RoomState.BotRef)
+        /// and is driven by Bots.BotBrain on this device. Also builds the navigation mesh they walk on.
+        /// </summary>
+        private void SpawnBots(NetworkRunner runner)
+        {
+            RoomState room = RoomState.Instance;
+            if (room == null || !runner.IsServer) return;
+            Bots.BotNavigation.EnsureBuilt();
+
+            for (int i = 0; i < PracticeBots; i++)
+            {
+                PlayerRef bot = RoomState.BotRef(i);
+                if (room.SlotOf(bot) < 0)
+                {
+                    Bots.BotRoster.Pick(i, out string botName, out byte w1, out byte w2, out byte w3, out byte look,
+                        out byte avatar, out byte banner, out byte title, out byte level);
+                    if (room.AddBot(i, botName, w1, w2, w3, look, avatar, banner, title, level) < 0) break;
+                }
+                if (spawnedCharacters.ContainsKey(bot)) continue;
+
+                int slot = room.SlotOf(bot);
+                Environment.SpawnPoint spawn = Environment.SpawnPoint.ForSlot(Mathf.Max(0, slot));
+                Vector3 position = spawn != null ? spawn.Position : Vector3.up;
+                Quaternion rotation = spawn != null ? spawn.Rotation : Quaternion.identity;
+                PlayerRef botRef = bot;
+                NetworkObject character = runner.Spawn(playerPrefab, position, rotation, null,
+                    (r, obj) => obj.GetComponent<PlayerCharacter>().InitBot(botRef));
+                if (character != null) spawnedCharacters[bot] = character;
+            }
         }
 
         private void SpawnCharacter(NetworkRunner runner, PlayerRef player)
@@ -461,6 +531,7 @@ namespace WarehouseDuel.Multiplayer
             Runner = null;
             IsQuickPlay = false;
             spawnedCharacters.Clear();
+            Bots.BotNavigation.Clear();
             if (runner != null) Destroy(runner.gameObject);
 
             if (expected) SetStatus(SessionStatus.Offline, string.Empty);

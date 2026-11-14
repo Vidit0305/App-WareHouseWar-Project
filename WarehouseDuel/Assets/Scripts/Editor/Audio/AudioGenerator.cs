@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using WarehouseDuel.Audio;
-using FilterType = WarehouseDuel.EditorTools.Audio.Synth.FilterType;
-using NoiseColor = WarehouseDuel.EditorTools.Audio.Synth.NoiseColor;
-using Wave = WarehouseDuel.EditorTools.Audio.Synth.Wave;
+using WarehouseWar.Audio;
+using FilterType = WarehouseWar.EditorTools.Audio.Synth.FilterType;
+using NoiseColor = WarehouseWar.EditorTools.Audio.Synth.NoiseColor;
+using Wave = WarehouseWar.EditorTools.Audio.Synth.Wave;
 
-namespace WarehouseDuel.EditorTools.Audio
+namespace WarehouseWar.EditorTools.Audio
 {
     /// <summary>
     /// Generates all of the game's audio as original WAV files from code (no third-party assets, no licensing questions):
@@ -46,7 +46,7 @@ namespace WarehouseDuel.EditorTools.Audio
             public float Seconds => Left.Length / (float)SampleRate;
         }
 
-        [MenuItem("Tools/Warehouse Duel/Generate Audio", priority = 40)]
+        [MenuItem("Tools/Warehouse War/Generate Audio", priority = 40)]
         public static void GenerateFromMenu()
         {
             var report = new SetupReport();

@@ -163,3 +163,92 @@ MonoBehaviour:
     - {fileID: 2100000, guid: c4a6e31f84607f9478a4cc08f013f0f7, type: 2}
     helmet: 0
     faceMask: 1
+  - name: Viper
+    role: Recon specialist
+    description: Toxic green digital camo with a black helmet. Strikes first and
+      disappears.
+    portrait: {fileID: 21300000, guid: f41c054224b3e2e4791d5f5fde08bff3, type: 3}
+    materials:
+    - {fileID: 2100000, guid: aaad4b854e1291c45b197addaf394ec8, type: 2}
+    - {fileID: 2100000, guid: ac8a7080c2ca00542af4fa88a236f769, type: 2}
+    - {fileID: 2100000, guid: b39dc378f4d6f5244a786a4ac61835e1, type: 2}
+    - {fileID: 2100000, guid: beed11f8ff7d9be4297420991ac2870a, type: 2}
+    - {fileID: 2100000, guid: dc3ed53628c11e84f9e0042e3ff44b4d, type: 2}
+    - {fileID: 2100000, guid: 1fb870e03d29f4e4d9bddf3aef984cd5, type: 2}
+    - {fileID: 2100000, guid: 70c729ee97989204194e1709df9da554, type: 2}
+    helmet: 1
+    faceMask: 1
+  - name: Crimson
+    role: Shock trooper
+    description: Blood-red camo and a black vest. Nobody forgets the squad in red.
+    portrait: {fileID: 21300000, guid: b30ab52ca7fff904084dfc1b913c151c, type: 3}
+    materials:
+    - {fileID: 2100000, guid: ccfaff588a7ffe7479ff01f2995476b8, type: 2}
+    - {fileID: 2100000, guid: 11582fa0221af0e4e9530d965585da9a, type: 2}
+    - {fileID: 2100000, guid: ff21e8fd3a56cee49893522f0f6d8361, type: 2}
+    - {fileID: 2100000, guid: 3b9d4c69c81ff3f4d8dd73f0b26a517a, type: 2}
+    - {fileID: 2100000, guid: 417d00f4ee8ac7d48b5634f65d985e8e, type: 2}
+    - {fileID: 2100000, guid: 0ffcfb63c9cba3c49a2e34c24259727f, type: 2}
+    - {fileID: 2100000, guid: d81f81be183887842afd3cf924079c88, type: 2}
+    helmet: 1
+    faceMask: 1
+  - name: Navy Seal
+    role: Amphibious raider
+    description: Ocean-blue camo, dark helmet and a rebreather mask. Comes in from
+      the water.
+    portrait: {fileID: 21300000, guid: 0180aa8862298c74d90b6f069288b62e, type: 3}
+    materials:
+    - {fileID: 2100000, guid: f235e13bdb3dced4d969434aa8f8d583, type: 2}
+    - {fileID: 2100000, guid: 9d671de2815db494ebeece51ecb86a2b, type: 2}
+    - {fileID: 2100000, guid: 192fa5f251080ee41bbdeb0b7639ffdd, type: 2}
+    - {fileID: 2100000, guid: 0b53bb47afb255f4892d2c645533bd99, type: 2}
+    - {fileID: 2100000, guid: 31cf79af9dcf36d428d53de40eab815f, type: 2}
+    - {fileID: 2100000, guid: e65206a70b0d9a9469002b790feedabe, type: 2}
+    - {fileID: 2100000, guid: 0a3c5f99165fd9d4a91c29d8eade9b4c, type: 2}
+    helmet: 1
+    faceMask: 1
+  - name: Sandstorm
+    role: Desert vanguard
+    description: Tiger-stripe sand camo and a tan helmet. Built for long fights in
+      the open.
+    portrait: {fileID: 21300000, guid: cbc5f5242d5288d45a3a19a3f73e025c, type: 3}
+    materials:
+    - {fileID: 2100000, guid: a81de5c89c205164bafcaa08f5322e85, type: 2}
+    - {fileID: 2100000, guid: 6c1baaaf9e52ab140b05defca4319ca5, type: 2}
+    - {fileID: 2100000, guid: 26f85d1a5a29ef6429c0e4bd2db12c75, type: 2}
+    - {fileID: 2100000, guid: 829aad04c3fd8e34ca18fd5c03bccb88, type: 2}
+    - {fileID: 2100000, guid: 81fad6c10ea559d4e93454a95b59a809, type: 2}
+    - {fileID: 2100000, guid: 370d50650247a094494c047c218d4c42, type: 2}
+    - {fileID: 2100000, guid: 4fe46008211ac6b4da12a287807d4eb7, type: 2}
+    helmet: 1
+    faceMask: 1
+  - name: Shadow
+    role: Special forces
+    description: All black from helmet to boots. The last thing you see in a dark
+      corridor.
+    portrait: {fileID: 21300000, guid: 286d788218d99e645a4105c94dd29317, type: 3}
+    materials:
+    - {fileID: 2100000, guid: 4ba86c7ca20a44c40af41c14964f8f88, type: 2}
+    - {fileID: 2100000, guid: 622bc1b463d7fcd49a24b590c4d3cb98, type: 2}
+    - {fileID: 2100000, guid: 362ec127728302d4c87e968dce2d3bab, type: 2}
+    - {fileID: 2100000, guid: 0c3c8a823659be64b8713dd8fb25cc0d, type: 2}
+    - {fileID: 2100000, guid: cd6efbc08ac196b4899af034dc79659d, type: 2}
+    - {fileID: 2100000, guid: 18ca344a701288b43b488b496fcda384, type: 2}
+    - {fileID: 2100000, guid: 758d850c2ab559c418833c5e1e655b66, type: 2}
+    helmet: 1
+    faceMask: 1
+  - name: Gold Elite
+    role: Legendary veteran
+    description: A golden uniform earned through a hundred wars. For players who
+      want everyone to know.
+    portrait: {fileID: 21300000, guid: 404ca64e80c797a4595e3b2356b8f719, type: 3}
+    materials:
+    - {fileID: 2100000, guid: 9738b09daac91034782511ff400886e6, type: 2}
+    - {fileID: 2100000, guid: 1dd58c949800b3e4a9c5df587c00306e, type: 2}
+    - {fileID: 2100000, guid: 2919c695ac788b0468788a1b0cc25fc8, type: 2}
+    - {fileID: 2100000, guid: e321ab620763fcf419a17de7b30ce8b6, type: 2}
+    - {fileID: 2100000, guid: 95b9e74a5c5d7c841827ba838032dab1, type: 2}
+    - {fileID: 2100000, guid: e6fdcaffd87317341a63d04c8a8f1247, type: 2}
+    - {fileID: 2100000, guid: 08d8acd7ec0f6d64ba56435ec4221e8c, type: 2}
+    helmet: 1
+    faceMask: 1

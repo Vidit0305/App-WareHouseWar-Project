@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace WarehouseDuel.UI.Widgets
+namespace WarehouseWar.UI.Widgets
 {
     /// <summary>Keeps this Graphic's colour equal to another one (e.g. the two bars of the hit marker).</summary>
     [RequireComponent(typeof(Graphic))]

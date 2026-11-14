@@ -1,7 +1,7 @@
 using System;
 using System.IO;
 
-namespace WarehouseDuel.EditorTools.Audio
+namespace WarehouseWar.EditorTools.Audio
 {
     /// <summary>
     /// Small offline synthesiser / DSP toolkit used to generate every sound in the game from code

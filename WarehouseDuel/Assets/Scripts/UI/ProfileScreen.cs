@@ -1,10 +1,10 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using WarehouseDuel.Core;
-using WarehouseDuel.Profile;
+using WarehouseWar.Core;
+using WarehouseWar.Profile;
 
-namespace WarehouseDuel.UI
+namespace WarehouseWar.UI
 {
     /// <summary>
     /// Profile editor: callsign, avatar (presets or a photo from the device), banner, title, and lifetime stats.

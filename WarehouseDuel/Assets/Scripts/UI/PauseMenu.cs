@@ -1,8 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
-using WarehouseDuel.Multiplayer;
+using WarehouseWar.Multiplayer;
 
-namespace WarehouseDuel.UI
+namespace WarehouseWar.UI
 {
     /// <summary>
     /// In-match menu. The match keeps running (it's online), so this only blocks local input.

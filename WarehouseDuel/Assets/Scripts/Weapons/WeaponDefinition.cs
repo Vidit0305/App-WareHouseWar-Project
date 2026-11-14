@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WarehouseDuel.Weapons
+namespace WarehouseWar.Weapons
 {
     public enum FireMode : byte
     {
@@ -23,7 +23,7 @@ namespace WarehouseDuel.Weapons
     /// All tuning and presentation data for one weapon. Gameplay code reads only from here,
     /// so balancing never requires code changes. Assets live in Assets/ScriptableObjects/Weapons.
     /// </summary>
-    [CreateAssetMenu(menuName = "Warehouse Duel/Weapon Definition", fileName = "Weapon_")]
+    [CreateAssetMenu(menuName = "Warehouse War/Weapon Definition", fileName = "Weapon_")]
     public sealed class WeaponDefinition : ScriptableObject
     {
         [Header("Identity")]
@@ -115,6 +115,12 @@ namespace WarehouseDuel.Weapons
 
         /// <summary>Seconds between shots implied by <see cref="roundsPerMinute"/>.</summary>
         public float SecondsBetweenShots => 60f / roundsPerMinute;
+
+        /// <summary>
+        /// Scale for guns held by the chunky voxel soldiers (menu/lobby showcase and other players in a match).
+        /// Real-size models look like toys against the blocky arms, so held weapons are drawn larger.
+        /// </summary>
+        public const float HeldScale = 1.55f;
 
         /// <summary>Damage shown in menus: splash for explosives, all pellets for shotguns.</summary>
         public float DisplayDamage => IsExplosive ? explosionDamage : damage * pellets;

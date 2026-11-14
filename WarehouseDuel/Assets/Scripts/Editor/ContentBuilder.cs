@@ -2,26 +2,26 @@ using System;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using WarehouseDuel.Core;
-using WarehouseDuel.EditorTools.Audio;
-using WarehouseDuel.EditorTools.Effects;
-using WarehouseDuel.EditorTools.Map;
-using WarehouseDuel.EditorTools.UI;
-using WarehouseDuel.EditorTools.Weapons;
-using WarehouseDuel.Weapons;
+using WarehouseWar.Core;
+using WarehouseWar.EditorTools.Audio;
+using WarehouseWar.EditorTools.Effects;
+using WarehouseWar.EditorTools.Map;
+using WarehouseWar.EditorTools.UI;
+using WarehouseWar.EditorTools.Weapons;
+using WarehouseWar.Weapons;
 
-namespace WarehouseDuel.EditorTools
+namespace WarehouseWar.EditorTools
 {
     /// <summary>
     /// Generates all non-network content: project settings, audio, UI art, effects, weapons and the warehouse map.
     /// Used by <c>GameBuilder</c> (full build) and runnable on its own from the command line:
-    ///   Unity.exe -batchmode -quit -projectPath WarehouseDuel -executeMethod WarehouseDuel.EditorTools.ContentBuilder.BuildContentBatch
+    ///   Unity.exe -batchmode -quit -projectPath WarehouseWar -executeMethod WarehouseWar.EditorTools.ContentBuilder.BuildContentBatch
     /// </summary>
     public static class ContentBuilder
     {
         public const string EffectsLibraryPath = "Assets/Resources/EffectsLibrary.asset";
 
-        [MenuItem("Tools/Warehouse Duel/Build Content Only (no networking)", priority = 5)]
+        [MenuItem("Tools/Warehouse War/Build Content Only (no networking)", priority = 5)]
         public static void BuildContentMenu()
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;

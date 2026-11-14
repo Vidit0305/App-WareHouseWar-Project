@@ -1,9 +1,9 @@
 using Fusion;
 using UnityEngine;
-using WarehouseDuel.Audio;
-using WarehouseDuel.Weapons;
+using WarehouseWar.Audio;
+using WarehouseWar.Weapons;
 
-namespace WarehouseDuel.Player
+namespace WarehouseWar.Player
 {
     /// <summary>
     /// Player sounds on every peer: footsteps, jump/land, weapon fire/reload/switch, knife hits, explosions, hurt and death.

@@ -1,9 +1,9 @@
 using UnityEngine;
 using UnityEngine.Rendering;
-using WarehouseDuel.Core;
-using WarehouseDuel.Weapons;
+using WarehouseWar.Core;
+using WarehouseWar.Weapons;
 
-namespace WarehouseDuel.Player
+namespace WarehouseWar.Player
 {
     /// <summary>
     /// Third-person look of a player, seen by the opponent: team colour, held weapon, procedural walk cycle,
@@ -161,13 +161,13 @@ namespace WarehouseDuel.Player
         /// <summary>The owner's character from the room (falls back to my own choice offline).</summary>
         private int WantedCharacter()
         {
-            if (WarehouseDuel.Multiplayer.RoomState.Instance != null
-                && WarehouseDuel.Multiplayer.RoomState.Instance.TryGetSlot(character.Owner, out WarehouseDuel.Multiplayer.PlayerSlot slot)
+            if (WarehouseWar.Multiplayer.RoomState.Instance != null
+                && WarehouseWar.Multiplayer.RoomState.Instance.TryGetSlot(character.Owner, out WarehouseWar.Multiplayer.PlayerSlot slot)
                 && slot.Occupied)
             {
                 return slot.Character;
             }
-            return character.IsLocal ? WarehouseDuel.Profile.PlayerProfile.CharacterIndex : 0;
+            return character.IsLocal ? WarehouseWar.Profile.PlayerProfile.CharacterIndex : 0;
         }
 
         private void ApplyTeamColor(int slot)
@@ -191,6 +191,7 @@ namespace WarehouseDuel.Player
             if (weapon == null || weapon.worldModelPrefab == null || weaponSocket == null) return;
 
             worldWeapon = Instantiate(weapon.worldModelPrefab, weaponSocket, false);
+            worldWeapon.transform.localScale = Vector3.one * WeaponDefinition.HeldScale;
             foreach (Transform t in worldWeapon.GetComponentsInChildren<Transform>(true))
             {
                 t.gameObject.layer = gameObject.layer;

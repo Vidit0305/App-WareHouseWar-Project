@@ -3,14 +3,14 @@ using Fusion;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using WarehouseDuel.Audio;
-using WarehouseDuel.Core;
-using WarehouseDuel.Match;
-using WarehouseDuel.Multiplayer;
-using WarehouseDuel.Profile;
-using WarehouseDuel.Weapons;
+using WarehouseWar.Audio;
+using WarehouseWar.Core;
+using WarehouseWar.Match;
+using WarehouseWar.Multiplayer;
+using WarehouseWar.Profile;
+using WarehouseWar.Weapons;
 
-namespace WarehouseDuel.UI
+namespace WarehouseWar.UI
 {
     /// <summary>
     /// End-of-match screen for free-for-all: the host-decided result (victory / defeat / draw / forfeit), a ranking of

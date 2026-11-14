@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
-namespace WarehouseDuel.Core
+namespace WarehouseWar.Core
 {
     /// <summary>
     /// Applies the "Cinematic effects" setting to this camera: post-processing (colour grading, bloom, vignette)

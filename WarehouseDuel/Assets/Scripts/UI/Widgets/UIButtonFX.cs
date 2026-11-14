@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace WarehouseDuel.UI.Widgets
+namespace WarehouseWar.UI.Widgets
 {
     /// <summary>
     /// Tactile button feel: squash on press, springy bounce on release, and an optional gentle "call to action"

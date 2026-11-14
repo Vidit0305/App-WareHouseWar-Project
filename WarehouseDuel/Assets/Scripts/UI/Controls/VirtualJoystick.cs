@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace WarehouseDuel.UI.Controls
+namespace WarehouseWar.UI.Controls
 {
     /// <summary>
     /// Floating movement joystick. Put this on a large transparent touch zone (raycast target);

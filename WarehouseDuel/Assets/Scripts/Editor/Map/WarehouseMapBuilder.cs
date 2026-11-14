@@ -5,11 +5,11 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
-using WarehouseDuel.Core;
-using WarehouseDuel.Environment;
-using Id = WarehouseDuel.EditorTools.Map.EnvironmentPalette.Id;
+using WarehouseWar.Core;
+using WarehouseWar.Environment;
+using Id = WarehouseWar.EditorTools.Map.EnvironmentPalette.Id;
 
-namespace WarehouseDuel.EditorTools.Map
+namespace WarehouseWar.EditorTools.Map
 {
     /// <summary>
     /// Generates the playable warehouse inside Assets/Scenes/WarehouseMap.unity.
@@ -134,7 +134,7 @@ namespace WarehouseDuel.EditorTools.Map
             new Placement(Piece.HangingLamp, 0f, 7.8f, 0f),
         };
 
-        [MenuItem("Tools/Warehouse Duel/Phase 2 - Build Warehouse Map", priority = 30)]
+        [MenuItem("Tools/Warehouse War/Phase 2 - Build Warehouse Map", priority = 30)]
         public static void BuildFromMenu()
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
@@ -144,7 +144,7 @@ namespace WarehouseDuel.EditorTools.Map
             EditorUtility.DisplayDialog("Warehouse map", report.Summary + "\n\nDetails are in the Console.", "OK");
         }
 
-        [MenuItem("Tools/Warehouse Duel/Phase 2 - Validate Warehouse Map", priority = 31)]
+        [MenuItem("Tools/Warehouse War/Phase 2 - Validate Warehouse Map", priority = 31)]
         public static void ValidateFromMenu()
         {
             var report = new SetupReport();

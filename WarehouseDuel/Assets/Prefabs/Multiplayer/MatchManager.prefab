@@ -64,7 +64,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e2f63a58aaf0ad24b9ad0620e4025865, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WarehouseDuel.Match.MatchManager
+  m_EditorClassIdentifier: Assembly-CSharp::WarehouseWar.Match.MatchManager
   rules: {fileID: 11400000, guid: c48ea7f8009ca224e8f8653b7cc1f7d3, type: 2}
   _Phase: 0
   _MatchNumber: 0

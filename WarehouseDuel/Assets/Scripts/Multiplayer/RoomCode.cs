@@ -1,55 +1,69 @@
-using System.Collections.Generic;
 using System.Text;
 
-namespace WarehouseDuel.Multiplayer
+namespace WarehouseWar.Multiplayer
 {
     /// <summary>
-    /// Private room codes. A code is 5 random characters (the Photon session name) plus one character
-    /// that encodes the host's Photon region, shown as "K7QPM-E".
-    /// Photon sessions only exist inside one region; encoding it lets a friend on a different network
-    /// (whose "best region" may differ) still find the room.
-    /// The alphabet leaves out 0/O, 1/I/L so codes are easy to read aloud.
+    /// Private room codes: a 6-digit number such as "482915". The first five digits are random (the Photon
+    /// session name) and the last digit says which Photon region the host is in, so a friend on a different
+    /// network (whose "best region" may differ) still finds the room.
+    /// Hosts whose best region has no digit are moved to the nearest region that has one (see <see cref="Encodable"/>).
     /// </summary>
     public static class RoomCode
     {
-        public const string Alphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
         public const int SessionLength = 5;
+        public const int CodeLength = SessionLength + 1;
 
-        private static readonly Dictionary<char, string> RegionByChar = new Dictionary<char, string>
-        {
-            ['A'] = "asia", ['U'] = "au", ['C'] = "cae", ['E'] = "eu", ['H'] = "hk", ['N'] = "in",
-            ['J'] = "jp", ['K'] = "kr", ['S'] = "sa", ['T'] = "tr", ['D'] = "uae", ['M'] = "us",
-            ['W'] = "usw", ['R'] = "ussc", ['Z'] = "za",
-        };
+        /// <summary>Region for each final digit (0-9).</summary>
+        private static readonly string[] RegionByDigit = { "in", "asia", "eu", "us", "usw", "jp", "kr", "au", "sa", "uae" };
 
         private static readonly System.Random Random = new System.Random();
 
-        /// <summary>A fresh random session name (5 characters).</summary>
+        /// <summary>A fresh random session name (5 digits).</summary>
         public static string NewSessionName()
         {
             var sb = new StringBuilder(SessionLength);
             lock (Random)
             {
-                for (int i = 0; i < SessionLength; i++) sb.Append(Alphabet[Random.Next(Alphabet.Length)]);
+                for (int i = 0; i < SessionLength; i++) sb.Append((char)('0' + Random.Next(10)));
             }
             return sb.ToString();
         }
 
-        /// <summary>Display code "SESSN-R" for a session name and a Photon region token (e.g. "eu").</summary>
+        /// <summary>True if <paramref name="region"/> has a code digit.</summary>
+        public static bool Encodable(string region) => DigitOf(region) >= 0;
+
+        /// <summary>Nearest region that has a code digit, for hosts whose best region has none.</summary>
+        public static string NearestEncodable(string region)
+        {
+            switch ((region ?? string.Empty).ToLowerInvariant())
+            {
+                case "hk": return "asia";
+                case "tr": return "eu";
+                case "za": return "eu";
+                case "cae": return "us";
+                case "ussc": return "us";
+                default: return Encodable(region) ? region : "in";
+            }
+        }
+
+        /// <summary>6-digit display code for a session name and a Photon region token (e.g. "in").</summary>
         public static string ToDisplay(string sessionName, string region)
         {
-            foreach (KeyValuePair<char, string> pair in RegionByChar)
+            int digit = DigitOf(region);
+            return digit >= 0 ? sessionName + (char)('0' + digit) : sessionName;
+        }
+
+        private static int DigitOf(string region)
+        {
+            for (int i = 0; i < RegionByDigit.Length; i++)
             {
-                if (string.Equals(pair.Value, region, System.StringComparison.OrdinalIgnoreCase))
-                {
-                    return $"{sessionName}-{pair.Key}";
-                }
+                if (string.Equals(RegionByDigit[i], region, System.StringComparison.OrdinalIgnoreCase)) return i;
             }
-            return sessionName; // unknown region: joiner falls back to its best region
+            return -1;
         }
 
         /// <summary>
-        /// Parses user input ("k7qpm-e", "K7QPME", " k7qpm ") into a session name and optional region.
+        /// Parses user input ("482915", "482 915", "482-915") into a session name and region.
         /// Returns false with a user-facing message when the format is wrong.
         /// </summary>
         public static bool TryParse(string input, out string sessionName, out string region, out string error)
@@ -59,37 +73,26 @@ namespace WarehouseDuel.Multiplayer
             error = null;
 
             var clean = new StringBuilder();
-            foreach (char c in (input ?? string.Empty).ToUpperInvariant())
+            foreach (char c in input ?? string.Empty)
             {
                 if (c == '-' || char.IsWhiteSpace(c)) continue;
+                if (c < '0' || c > '9')
+                {
+                    error = "Room codes are 6 digits, e.g. 482915.";
+                    return false;
+                }
                 clean.Append(c);
             }
 
             string code = clean.ToString();
-            if (code.Length != SessionLength && code.Length != SessionLength + 1)
+            if (code.Length != CodeLength)
             {
-                error = "Room codes have 5 characters plus a region letter, e.g. K7QPM-E.";
+                error = "Room codes are 6 digits, e.g. 482915.";
                 return false;
             }
 
-            foreach (char c in code)
-            {
-                if (Alphabet.IndexOf(c) < 0)
-                {
-                    error = $"'{c}' can't appear in a room code. Check the code and try again.";
-                    return false;
-                }
-            }
-
             sessionName = code.Substring(0, SessionLength);
-            if (code.Length == SessionLength + 1)
-            {
-                if (!RegionByChar.TryGetValue(code[SessionLength], out region))
-                {
-                    error = "The last letter of the code (the region) is not valid.";
-                    return false;
-                }
-            }
+            region = RegionByDigit[code[SessionLength] - '0'];
             return true;
         }
     }

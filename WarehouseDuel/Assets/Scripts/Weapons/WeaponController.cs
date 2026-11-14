@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using Fusion;
 using UnityEngine;
-using WarehouseDuel.Core;
-using WarehouseDuel.Multiplayer;
-using WarehouseDuel.Player;
+using WarehouseWar.Core;
+using WarehouseWar.Multiplayer;
+using WarehouseWar.Player;
 
-namespace WarehouseDuel.Weapons
+namespace WarehouseWar.Weapons
 {
     /// <summary>What a replicated <see cref="ImpactData"/> represents.</summary>
     public enum ImpactKind : byte
@@ -75,6 +75,9 @@ namespace WarehouseDuel.Weapons
         [Networked] public byte CurrentWeapon { get; private set; }
         /// <summary>Catalog index of the primary weapon picked in the lobby (loadout slot 0).</summary>
         [Networked] public byte PrimaryWeapon { get; private set; }
+        /// <summary>Catalog indices of the second and third equipped weapons (loadout slots 1 and 2).</summary>
+        [Networked] public byte SecondWeapon { get; private set; }
+        [Networked] public byte ThirdWeapon { get; private set; }
         [Networked, Capacity(SlotCount)] public NetworkArray<short> Magazine => default;
         [Networked, Capacity(SlotCount)] public NetworkArray<short> Reserve => default;
         [Networked] public TickTimer FireCooldown { get; private set; }
@@ -130,6 +133,7 @@ namespace WarehouseDuel.Weapons
         private readonly Dictionary<PlayerCharacter, (float damage, bool head)> pendingDamage = new Dictionary<PlayerCharacter, (float, bool)>(2);
         private readonly Dictionary<PlayerCharacter, float> splashDistances = new Dictionary<PlayerCharacter, float>(2);
         private readonly List<LagCompensatedHit> overlapHits = new List<LagCompensatedHit>(16);
+        private readonly List<LagCompensatedHit> botRayHits = new List<LagCompensatedHit>(8);
 
         private void Awake()
         {
@@ -198,8 +202,7 @@ namespace WarehouseDuel.Weapons
 
         public bool InLoadout(int index) => index >= 0 && LoadoutSlotOf(index) >= 0;
 
-        private int LoadoutCandidate(int k) =>
-            k == 0 ? PrimaryWeapon : k == 1 ? WeaponCatalog.SidearmIndex : WeaponCatalog.MeleeIndex;
+        private int LoadoutCandidate(int k) => k == 0 ? PrimaryWeapon : k == 1 ? SecondWeapon : ThirdWeapon;
 
         private int NextInLoadout()
         {
@@ -209,12 +212,21 @@ namespace WarehouseDuel.Weapons
             return LoadoutWeapon(slot < 0 ? 0 : (slot + 1) % count);
         }
 
-        /// <summary>Host: the weapon this player picked in the lobby (falls back to the rifle).</summary>
-        private int ChosenPrimary()
+        /// <summary>Host: the three weapons this player equipped (falls back to rifle, pistol, knife).</summary>
+        private void ChosenLoadout(out int first, out int second, out int third)
         {
-            int preferred = WeaponCatalog.Rifle;
-            if (RoomState.Instance != null && RoomState.Instance.TryGetSlot(Object.InputAuthority, out PlayerSlot slot)) preferred = slot.Weapon;
-            return catalog.IsValidIndex(preferred) ? preferred : WeaponCatalog.Rifle;
+            first = WeaponCatalog.Rifle;
+            second = WeaponCatalog.SidearmIndex;
+            third = WeaponCatalog.MeleeIndex;
+            if (RoomState.Instance != null && RoomState.Instance.TryGetSlot(character.Owner, out PlayerSlot slot))
+            {
+                first = slot.Weapon;
+                second = slot.Weapon2;
+                third = slot.Weapon3;
+            }
+            if (!catalog.IsValidIndex(first)) first = WeaponCatalog.Rifle;
+            if (!catalog.IsValidIndex(second)) second = WeaponCatalog.SidearmIndex;
+            if (!catalog.IsValidIndex(third)) third = WeaponCatalog.MeleeIndex;
         }
 
         /// <summary>
@@ -224,7 +236,10 @@ namespace WarehouseDuel.Weapons
         public void ResetLoadout()
         {
             if (!HasStateAuthority) return;
-            PrimaryWeapon = (byte)ChosenPrimary();
+            ChosenLoadout(out int first, out int second, out int third);
+            PrimaryWeapon = (byte)first;
+            SecondWeapon = (byte)second;
+            ThirdWeapon = (byte)third;
             for (int i = 0; i < SlotCount; i++)
             {
                 WeaponDefinition def = catalog.GetOrNull(i);
@@ -248,7 +263,7 @@ namespace WarehouseDuel.Weapons
 
         public override void FixedUpdateNetwork()
         {
-            if (!GetInput(out NetworkInputData input)) return;
+            if (!character.ReadInput(out NetworkInputData input)) return;
 
             NetworkButtons pressed = input.Buttons.GetPressed(PreviousButtons);
             PreviousButtons = input.Buttons;
@@ -357,9 +372,7 @@ namespace WarehouseDuel.Weapons
         /// <summary>Host only: lag-compensated ray against hitboxes and level geometry.</summary>
         private void ResolveAuthoritativeHit(WeaponDefinition weapon, Vector3 origin, Vector3 direction)
         {
-            bool hasHit = Runner.LagCompensation.Raycast(origin, direction, weapon.range, Object.InputAuthority,
-                out LagCompensatedHit hit, hitMask, RayOptions);
-            if (!hasHit) return;
+            if (!HitRaycast(origin, direction, weapon.range, out LagCompensatedHit hit)) return;
 
             bool hitPlayer = false;
             PlayerCharacter target = TargetOf(hit);
@@ -389,8 +402,7 @@ namespace WarehouseDuel.Weapons
             Vector3 surfacePoint = default, surfaceNormal = default;
             for (int i = 0; i < MeleeFan.Length; i++)
             {
-                if (!Runner.LagCompensation.Raycast(origin, MeleeDirection(aim, i), weapon.range, Object.InputAuthority,
-                        out LagCompensatedHit hit, hitMask, RayOptions)) continue;
+                if (!HitRaycast(origin, MeleeDirection(aim, i), weapon.range, out LagCompensatedHit hit)) continue;
 
                 PlayerCharacter target = TargetOf(hit);
                 if (target == null)
@@ -438,7 +450,7 @@ namespace WarehouseDuel.Weapons
         {
             Vector3 point, normal;
             bool direct = false;
-            if (Runner.LagCompensation.Raycast(origin, direction, weapon.range, Object.InputAuthority, out LagCompensatedHit hit, hitMask, RayOptions))
+            if (HitRaycast(origin, direction, weapon.range, out LagCompensatedHit hit))
             {
                 point = hit.Point;
                 normal = hit.Normal;
@@ -468,8 +480,9 @@ namespace WarehouseDuel.Weapons
             if (weapon.explosionRadius <= 0f || weapon.explosionDamage <= 0f) return;
 
             splashDistances.Clear();
-            Runner.LagCompensation.OverlapSphere(point, weapon.explosionRadius, Object.InputAuthority, overlapHits, hitMask,
-                HitOptions.SubtickAccuracy | HitOptions.IgnoreInputAuthority);
+            // Bots have no input authority, so they cannot use IgnoreInputAuthority (TargetOf skips the shooter anyway).
+            HitOptions splashOptions = character.IsBot ? HitOptions.SubtickAccuracy : HitOptions.SubtickAccuracy | HitOptions.IgnoreInputAuthority;
+            Runner.LagCompensation.OverlapSphere(point, weapon.explosionRadius, Object.InputAuthority, overlapHits, hitMask, splashOptions);
             for (int i = 0; i < overlapHits.Count; i++)
             {
                 LagCompensatedHit hit = overlapHits[i];
@@ -501,7 +514,7 @@ namespace WarehouseDuel.Weapons
             if (selfDistance >= weapon.explosionRadius) return;
             if (Physics.Linecast(blastOrigin, body, environmentMask, QueryTriggerInteraction.Ignore)) return;
             float selfDamage = Mathf.Min(weapon.SplashDamage(selfDistance) * weapon.selfDamageMultiplier, character.Health - 1f);
-            if (selfDamage >= 1f) character.ApplyDamage(selfDamage, Object.InputAuthority, false);
+            if (selfDamage >= 1f) character.ApplyDamage(selfDamage, character.Owner, false);
         }
 
         /// <summary>Host only: one damage application per target per shot (shotgun pellets are summed first).</summary>
@@ -509,12 +522,41 @@ namespace WarehouseDuel.Weapons
         {
             foreach (KeyValuePair<PlayerCharacter, (float damage, bool head)> entry in pendingDamage)
             {
-                bool killed = entry.Key.ApplyDamage(entry.Value.damage, Object.InputAuthority, entry.Value.head);
+                bool killed = entry.Key.ApplyDamage(entry.Value.damage, character.Owner, entry.Value.head);
                 HitConfirmCount++;
                 LastHitWasHead = entry.Value.head;
                 LastHitKilled = killed;
             }
             pendingDamage.Clear();
+        }
+
+        /// <summary>
+        /// Host: lag-compensated ray against hitboxes and level geometry, ignoring the shooter's own hitboxes.
+        /// Players use IgnoreInputAuthority; practice bots (no input authority) take the closest hit that is not themselves.
+        /// </summary>
+        private bool HitRaycast(Vector3 origin, Vector3 direction, float range, out LagCompensatedHit hit)
+        {
+            if (!character.IsBot)
+            {
+                return Runner.LagCompensation.Raycast(origin, direction, range, Object.InputAuthority, out hit, hitMask, RayOptions);
+            }
+
+            hit = default;
+            bool found = false;
+            float best = float.MaxValue;
+            Runner.LagCompensation.RaycastAll(origin, direction, range, Object.InputAuthority, botRayHits, hitMask, true,
+                HitOptions.IncludePhysX | HitOptions.SubtickAccuracy);
+            for (int i = 0; i < botRayHits.Count; i++)
+            {
+                LagCompensatedHit candidate = botRayHits[i];
+                if (candidate.Hitbox != null && candidate.Hitbox.Root != null && candidate.Hitbox.Root.gameObject == gameObject) continue;
+                if (candidate.Distance >= best) continue;
+                best = candidate.Distance;
+                hit = candidate;
+                found = true;
+            }
+            botRayHits.Clear();
+            return found;
         }
 
         private void RecordImpact(Vector3 point, Vector3 normal, bool hitPlayer, ImpactKind kind, Vector3 origin)

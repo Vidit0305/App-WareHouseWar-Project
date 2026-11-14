@@ -44,7 +44,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5eebaa415a96d63478999e2c052345de, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WarehouseDuel.Core.PooledEffect
+  m_EditorClassIdentifier: Assembly-CSharp::WarehouseWar.Core.PooledEffect
   lifetime: 1.2
 --- !u!1 &7966397134592982668
 GameObject:

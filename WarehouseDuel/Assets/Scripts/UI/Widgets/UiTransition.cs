@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WarehouseDuel.UI.Widgets
+namespace WarehouseWar.UI.Widgets
 {
     /// <summary>Slides and fades a panel in when it becomes active (ease-out-back, unscaled time).</summary>
     [RequireComponent(typeof(RectTransform))]

@@ -4,14 +4,14 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using WarehouseDuel.Core;
-using WarehouseDuel.Profile;
-using WarehouseDuel.UI;
-using WarehouseDuel.UI.Widgets;
-using WarehouseDuel.Weapons;
-using static WarehouseDuel.EditorTools.UI.UiFactory;
+using WarehouseWar.Core;
+using WarehouseWar.Profile;
+using WarehouseWar.UI;
+using WarehouseWar.UI.Widgets;
+using WarehouseWar.Weapons;
+using static WarehouseWar.EditorTools.UI.UiFactory;
 
-namespace WarehouseDuel.EditorTools.UI
+namespace WarehouseWar.EditorTools.UI
 {
     /// <summary>Generates the MainMenu and Lobby scenes (3D diorama background + fully wired UI).</summary>
     internal static class MenuScenesBuilder
@@ -19,11 +19,11 @@ namespace WarehouseDuel.EditorTools.UI
         public static void BuildMainMenu(SetupReport report, WeaponCatalog catalog)
         {
             // Reload: lighting bakes refresh assets, which can leave a previously loaded catalog object stale.
-            catalog = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseDuel.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
+            catalog = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseWar.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             SharedUiBuilder.SoldierAnimatorHandle showcase = SharedUiBuilder.Diorama(catalog, 0, SharedUiBuilder.MenuStaging);
             BakeBackdrop(scene, GameConstants.Scenes.MainMenu, report);
-            catalog = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseDuel.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
+            catalog = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseWar.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
             ProfileCatalog profiles = AssetDatabase.LoadAssetAtPath<ProfileCatalog>(ProfileArtBuilder.CatalogPath);
             Wire(showcase.Animator, "catalog", catalog);
             SharedUiBuilder.SessionBootstrap();
@@ -45,9 +45,9 @@ namespace WarehouseDuel.EditorTools.UI
             Wire(drag.gameObject.AddComponent<DragRotate>(), "target", showcase.Turntable);
 
             // ---- top centre: logo
-            TextMeshProUGUI logo = CreateText("Logo", home, "WAREHOUSE <color=#FFB020>DUEL</color>", 60f, TextPrimary, TextAlignmentOptions.Center, display: true);
+            TextMeshProUGUI logo = CreateText("Logo", home, "WAREHOUSE <color=#FFB020>WAR</color>", 60f, TextPrimary, TextAlignmentOptions.Center, display: true);
             Place(logo.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -26f), new Vector2(760f, 78f), new Vector2(0.5f, 1f));
-            TextMeshProUGUI tagline = CreateText("Tagline", home, "1V1 ONLINE ARENA SHOOTER", 20f, TextMuted, TextAlignmentOptions.Center, display: true);
+            TextMeshProUGUI tagline = CreateText("Tagline", home, "UP TO 8 PLAYERS · ONLINE ARENA SHOOTER", 20f, TextMuted, TextAlignmentOptions.Center, display: true);
             tagline.characterSpacing = 12f;
             Place(tagline.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -100f), new Vector2(760f, 30f), new Vector2(0.5f, 1f));
             AddTransition(logo.rectTransform, new Vector2(0f, 80f), 0f);
@@ -107,12 +107,14 @@ namespace WarehouseDuel.EditorTools.UI
             Button settings = LabelledIcon(topRight, "Settings", "SETTINGS", UiArt.Icon("Settings"), new Vector2(1f, 1f), new Vector2(0f, 0f));
 
             // ---- left: feature cards
-            Button armoryCard = FeatureCard(home, "Armory Card", "ARMORY", "Choose your weapon", catalog.Get(0) != null ? catalog.Get(0).icon : null, true, -200f);
-            CharacterCatalog characters = AssetDatabase.LoadAssetAtPath<CharacterCatalog>(WarehouseDuel.EditorTools.Gameplay.CharacterBuilder.CatalogPath);
-            Button characterCard = FeatureCard(home, "Wardrobe Card", "WARDROBE", "Change your costume", UiArt.Icon("Profile"), false, -390f,
-                new Color(0.5f, 0.24f, 0.82f, 1f));
-            Button shopCard = FeatureCard(home, "Shop Card", "SHOP", "Costumes, avatars & banners", UiArt.Icon("Star"), false, -580f,
-                new Color(0.16f, 0.58f, 0.34f, 1f));
+            CharacterCatalog characters = AssetDatabase.LoadAssetAtPath<CharacterCatalog>(WarehouseWar.EditorTools.Gameplay.CharacterBuilder.CatalogPath);
+            Sprite costumeArt = characters != null && characters.Count > 3 ? characters.Get(3).portrait : UiArt.Icon("Profile");
+            Button armoryCard = SideCard(home, "Armory Card", "ARMORY", "Equip three weapons", "8 WEAPONS", profiles.Banner(5),
+                catalog.Get(4) != null ? catalog.Get(4).icon : null, false, -200f, new Color(0.95f, 0.62f, 0.08f, 1f));
+            Button characterCard = SideCard(home, "Wardrobe Card", "WARDROBE", "Change your costume", "COSTUMES", profiles.Banner(2),
+                costumeArt, true, -416f, new Color(0.62f, 0.3f, 1f, 1f));
+            Button shopCard = SideCard(home, "Shop Card", "SHOP", "Spend your stars", "NEW ITEMS", profiles.Banner(3),
+                UiArt.Icon("Star"), false, -632f, new Color(0.25f, 0.85f, 0.45f, 1f));
             Button leaderboard = CreateButton("Leaderboard", home, "LEADERBOARD", ButtonStyle.Secondary, new Vector2(420f, 110f), out TextMeshProUGUI leaderboardLabel, 32f);
             RectTransform leaderboardRect = Place((RectTransform)leaderboard.transform, new Vector2(0f, 0f), new Vector2(30f, 30f), new Vector2(420f, 110f), new Vector2(0f, 0f));
             leaderboard.GetComponent<Image>().color = new Color(0.12f, 0.14f, 0.19f, 0.95f);
@@ -123,8 +125,8 @@ namespace WarehouseDuel.EditorTools.UI
             AddTransition(leaderboardRect, new Vector2(-220f, 0f), 0.2f);
 
             // ---- right: game modes
-            Button online = ModeCard(home, "Online Mode", "ONLINE DUEL", "Create a room or join a friend", "1V1 ONLINE", profiles.Banner(7), catalog.Get(0) != null ? catalog.Get(0).icon : null, -200f, Accent);
-            Button practice = ModeCard(home, "Practice Mode", "PRACTICE", "Offline training in the warehouse", "OFFLINE", profiles.Banner(0), catalog.Get(3) != null ? catalog.Get(3).icon : null, -420f, Success);
+            Button online = ModeCard(home, "Online Mode", "ONLINE WAR", "Create a room or join friends", "8 PLAYERS", profiles.Banner(7), catalog.Get(0) != null ? catalog.Get(0).icon : null, -200f, Accent);
+            Button practice = ModeCard(home, "Practice Mode", "PRACTICE", "Fight 5 bots on any map", "VS BOTS", profiles.Banner(0), catalog.Get(3) != null ? catalog.Get(3).icon : null, -420f, Success);
 
             // ---- bottom right: PLAY
             Button play = CreateButton("Play", home, "PLAY", ButtonStyle.Primary, new Vector2(440f, 150f), out TextMeshProUGUI playLabel, 72f);
@@ -194,10 +196,11 @@ namespace WarehouseDuel.EditorTools.UI
             Image joinHeader = CreateImage("Header", joinCard, new Color(0f, 0f, 0f, 0.3f), UiArt.Rounded);
             MenuScreensBuilder.At(joinHeader.rectTransform, 0f, 0f, 820f, 110f);
             MenuScreensBuilder.Label(joinHeader.transform, "Title", "JOIN ROOM", 50f, Accent, 0f, -18f, 820f, 76f, TextAlignmentOptions.Center, display: true);
-            DialogHint(joinCard, "Room code (e.g. K7QPM-E)", -136f);
+            DialogHint(joinCard, "Enter the 6-digit room code (e.g. 482915)", -136f);
             TMP_InputField codeInput = CreateInputField("Code Input", joinCard, "ROOM CODE", new Vector2(660f, 120f), 60f);
             Place((RectTransform)codeInput.transform, new Vector2(0.5f, 1f), new Vector2(0f, -190f), new Vector2(660f, 120f), new Vector2(0.5f, 1f));
-            codeInput.characterValidation = TMP_InputField.CharacterValidation.None;
+            codeInput.contentType = TMP_InputField.ContentType.IntegerNumber;
+            codeInput.characterLimit = 6;
             codeInput.textComponent.characterSpacing = 18f;
             codeInput.textComponent.alignment = TextAlignmentOptions.Center;
             ((TextMeshProUGUI)codeInput.placeholder).alignment = TextAlignmentOptions.Center;
@@ -299,6 +302,42 @@ namespace WarehouseDuel.EditorTools.UI
             return card;
         }
 
+        /// <summary>
+        /// Left-hand feature card in the same style as the game-mode cards: banner art washed with the card's colour,
+        /// a coloured edge, title, subtitle, a tag chip and a large icon (weapon silhouette, costume portrait or star).
+        /// </summary>
+        private static Button SideCard(RectTransform parent, string name, string title, string subtitle, string tag, Sprite art, Sprite icon,
+                                       bool fullColourIcon, float y, Color colour)
+        {
+            Button card = CreateButton(name, parent, "", ButtonStyle.Ghost, new Vector2(460f, 196f));
+            RectTransform rect = Place((RectTransform)card.transform, new Vector2(0f, 1f), new Vector2(30f, y), new Vector2(460f, 196f), new Vector2(0f, 1f));
+            card.GetComponent<Image>().color = new Color(0.08f, 0.09f, 0.13f, 1f);
+            card.gameObject.AddComponent<Mask>().showMaskGraphic = true;
+            Image artImage = CreateImage("Art", card.transform, Color.white, art);
+            artImage.type = Image.Type.Simple;
+            Stretch(artImage.rectTransform);
+            Image wash = CreateImage("Wash", card.transform, new Color(colour.r * 0.45f, colour.g * 0.45f, colour.b * 0.45f, 0.72f));
+            Stretch(wash.rectTransform);
+            Image shade = CreateImage("Shade", card.transform, new Color(0f, 0f, 0f, 0.55f), UiArt.BottomFade);
+            Stretch(shade.rectTransform);
+            Image edge = CreateImage("Edge", card.transform, colour);
+            Place(edge.rectTransform, new Vector2(0f, 0f), Vector2.zero, new Vector2(10f, 0f), new Vector2(0f, 0f));
+            edge.rectTransform.anchorMax = new Vector2(0f, 1f);
+            edge.rectTransform.sizeDelta = new Vector2(10f, 0f);
+            Image glyph = CreateImage("Icon", card.transform, fullColourIcon ? Color.white : new Color(1f, 1f, 1f, 0.92f), icon);
+            glyph.preserveAspect = true;
+            if (fullColourIcon) Place(glyph.rectTransform, new Vector2(1f, 0f), new Vector2(-6f, 0f), new Vector2(190f, 190f), new Vector2(1f, 0f));
+            else Place(glyph.rectTransform, new Vector2(1f, 0.5f), new Vector2(-18f, -10f), new Vector2(200f, 120f), new Vector2(1f, 0.5f));
+            MenuScreensBuilder.Label(card.transform, "Title", title, 42f, TextPrimary, 30f, -22f, 400f, 56f, display: true);
+            MenuScreensBuilder.Label(card.transform, "Subtitle", subtitle, 21f, new Color(1f, 1f, 1f, 0.85f), 32f, -80f, 240f, 60f);
+            Image tagBack = CreateImage("Tag", card.transform, colour, UiArt.RoundedSmall);
+            MenuScreensBuilder.At(tagBack.rectTransform, 30f, -146f, 150f, 34f);
+            TextMeshProUGUI tagText = CreateText("Text", tagBack.transform, tag, 17f, new Color(0.06f, 0.06f, 0.06f), TextAlignmentOptions.Center, display: true);
+            Stretch(tagText.rectTransform);
+            AddTransition(rect, new Vector2(-240f, 0f), y < -300f ? 0.15f : 0.1f);
+            return card;
+        }
+
         /// <summary>Game-mode card on the right: banner art, title, subtitle, a tag and a weapon silhouette.</summary>
         private static Button ModeCard(RectTransform parent, string name, string title, string subtitle, string tag, Sprite art, Sprite icon, float y, Color tagColor)
         {
@@ -346,7 +385,7 @@ namespace WarehouseDuel.EditorTools.UI
             SharedUiBuilder.SoldierAnimatorHandle showcase = SharedUiBuilder.Diorama(catalog, 0, SharedUiBuilder.LobbyStaging);
             BakeBackdrop(scene, GameConstants.Scenes.Lobby, report);
             // Reload: the lighting bake refreshes assets and can leave earlier asset references stale.
-            catalog = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseDuel.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
+            catalog = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseWar.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
             Wire(showcase.Animator, "catalog", catalog);
             ProfileCatalog profiles = AssetDatabase.LoadAssetAtPath<ProfileCatalog>(ProfileArtBuilder.CatalogPath);
             SharedUiBuilder.SessionBootstrap();
@@ -398,7 +437,7 @@ namespace WarehouseDuel.EditorTools.UI
             Place(squadHeader.rectTransform, new Vector2(0f, 1f), Vector2.zero, new Vector2(300f, 36f), new Vector2(0f, 1f));
             TextMeshProUGUI playerCount = CreateText("Count", left, "0/8", 26f, Accent, TextAlignmentOptions.Right, display: true);
             Place(playerCount.rectTransform, new Vector2(1f, 1f), Vector2.zero, new Vector2(160f, 36f), new Vector2(1f, 1f));
-            var cards = new LobbyController.PlayerCard[WarehouseDuel.Multiplayer.RoomState.Capacity];
+            var cards = new LobbyController.PlayerCard[WarehouseWar.Multiplayer.RoomState.Capacity];
             Color[] slotColors =
             {
                 new Color(0.2f, 0.55f, 1f), new Color(1f, 0.35f, 0.25f), new Color(0.3f, 0.85f, 0.4f), new Color(1f, 0.75f, 0.15f),
@@ -444,7 +483,7 @@ namespace WarehouseDuel.EditorTools.UI
                 cards[i] = new LobbyController.PlayerCard { nameText = name, statusText = state, weaponText = weapon, readyBadge = badge, readyText = readyText, avatar = avatar, portrait = portrait, banner = cardBanner, levelText = levelText };
             }
 
-            // ---- right: loadout (weapon details + weapon tiles, 4 per row)
+            // ---- right: loadout (the three weapons equipped in the Armory)
             RectTransform right = CreateRect("Loadout", safe);
             Place(right, new Vector2(1f, 1f), new Vector2(-40f, -190f), new Vector2(540f, 720f), new Vector2(1f, 1f));
             AddTransition(right, new Vector2(260f, 0f), 0.15f);
@@ -452,51 +491,43 @@ namespace WarehouseDuel.EditorTools.UI
             loadoutHeader.characterSpacing = 10f;
             Place(loadoutHeader.rectTransform, new Vector2(0f, 1f), Vector2.zero, new Vector2(400f, 36f), new Vector2(0f, 1f));
 
-            Image details = CreatePanel("Weapon Details", right, new Color(0.04f, 0.05f, 0.08f, 0.82f));
-            Place(details.rectTransform, new Vector2(0f, 1f), new Vector2(0f, -50f), new Vector2(540f, 300f), new Vector2(0f, 1f));
-            TextMeshProUGUI weaponName = CreateText("Name", details.transform, "", 42f, Accent, TextAlignmentOptions.Left, display: true);
-            Place(weaponName.rectTransform, new Vector2(0f, 1f), new Vector2(28f, -18f), new Vector2(490f, 56f), new Vector2(0f, 1f));
-            TextMeshProUGUI weaponDescription = CreateText("Description", details.transform, "", 21f, TextMuted, TextAlignmentOptions.TopLeft);
-            Place(weaponDescription.rectTransform, new Vector2(0f, 1f), new Vector2(28f, -76f), new Vector2(490f, 56f), new Vector2(0f, 1f));
-            string[] statNames = { "DAMAGE", "FIRE RATE", "RANGE", "MAGAZINE" };
-            var bars = new RectTransform[4];
-            for (int i = 0; i < 4; i++)
+            var loadoutCards = new LobbyController.LoadoutCard[3];
+            const float cardH = 156f, cardGap = 14f;
+            for (int i = 0; i < loadoutCards.Length; i++)
             {
-                float y = -146f - i * 36f;
-                TextMeshProUGUI statLabel = CreateText(statNames[i], details.transform, statNames[i], 19f, TextMuted, TextAlignmentOptions.Left, display: true);
-                Place(statLabel.rectTransform, new Vector2(0f, 1f), new Vector2(28f, y), new Vector2(160f, 28f), new Vector2(0f, 1f));
-                Image track = CreateImage("Track", details.transform, new Color(1f, 1f, 1f, 0.12f), UiArt.RoundedSmall);
-                Place(track.rectTransform, new Vector2(0f, 1f), new Vector2(200f, y - 6f), new Vector2(310f, 16f), new Vector2(0f, 1f));
-                Image fill = CreateImage("Fill", track.transform, Accent, UiArt.RoundedSmall);
-                fill.rectTransform.anchorMin = Vector2.zero;
-                fill.rectTransform.anchorMax = new Vector2(0.5f, 1f);
-                fill.rectTransform.offsetMin = fill.rectTransform.offsetMax = Vector2.zero;
-                bars[i] = fill.rectTransform;
-            }
-
-            int weaponCount = catalog != null ? catalog.Count : 4;
-            var weaponButtons = new Button[weaponCount];
-            var frames = new Image[weaponCount];
-            const float tileW = 128f, tileH = 150f, tileGap = 9f;
-            for (int i = 0; i < weaponCount; i++)
-            {
-                int column = i % 4, row = i / 4;
-                Button tile = CreateButton($"Weapon {i + 1}", right, "", ButtonStyle.Ghost, new Vector2(tileW, tileH), 15f);
-                Place((RectTransform)tile.transform, new Vector2(0f, 1f), new Vector2(column * (tileW + tileGap), -366f - row * (tileH + tileGap)), new Vector2(tileW, tileH), new Vector2(0f, 1f));
-                Image frame = CreateImage("Frame", tile.transform, new Color(1f, 1f, 1f, 0.1f), UiArt.Rounded);
+                WeaponDefinition def = catalog != null ? catalog.Get(new[] { 0, 3, 6 }[i]) : null;
+                Button card = CreateButton($"Loadout {i + 1}", right, "", ButtonStyle.Ghost, new Vector2(540f, cardH), 15f);
+                Place((RectTransform)card.transform, new Vector2(0f, 1f), new Vector2(0f, -50f - i * (cardH + cardGap)), new Vector2(540f, cardH), new Vector2(0f, 1f));
+                TextMeshProUGUI unusedLabel = card.GetComponentInChildren<TextMeshProUGUI>();
+                if (unusedLabel != null) unusedLabel.gameObject.SetActive(false);
+                Image back = CreateImage("Back", card.transform, new Color(0.04f, 0.05f, 0.08f, 0.88f), UiArt.Rounded);
+                Stretch(back.rectTransform);
+                back.transform.SetAsFirstSibling();
+                Image frame = CreateImage("Frame", card.transform, new Color(1f, 1f, 1f, 0.12f), UiArt.Rounded);
                 Stretch(frame.rectTransform);
-                frame.transform.SetAsFirstSibling();
-                Image icon = CreateImage("Icon", tile.transform, TextPrimary);
+                frame.transform.SetSiblingIndex(1);
+                Image inner = CreateImage("Inner", card.transform, new Color(0.06f, 0.07f, 0.1f, 0.96f), UiArt.Rounded);
+                Stretch(inner.rectTransform, 4f, 4f, 4f, 4f);
+                inner.transform.SetSiblingIndex(2);
+                Image badge = CreateImage("Slot Badge", card.transform, Accent, UiArt.RoundedSmall);
+                Place(badge.rectTransform, new Vector2(0f, 1f), new Vector2(14f, -14f), new Vector2(40f, 40f), new Vector2(0f, 1f));
+                TextMeshProUGUI badgeText = CreateText("Number", badge.transform, (i + 1).ToString(), 24f, new Color(0.08f, 0.07f, 0.04f), TextAlignmentOptions.Center, display: true);
+                Stretch(badgeText.rectTransform);
+                Image icon = CreateImage("Icon", card.transform, TextPrimary, def != null ? def.icon : null);
                 icon.preserveAspect = true;
-                Place(icon.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -18f), new Vector2(112f, 70f), new Vector2(0.5f, 1f));
-                TextMeshProUGUI label = tile.GetComponentInChildren<TextMeshProUGUI>();
-                Place(label.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(120f, 40f), new Vector2(0.5f, 0f));
-                label.enableAutoSizing = true;
-                label.fontSizeMin = 11f;
-                label.fontSizeMax = 15f;
-                weaponButtons[i] = tile;
-                frames[i] = frame;
+                Place(icon.rectTransform, new Vector2(0f, 0.5f), new Vector2(62f, 0f), new Vector2(220f, 120f), new Vector2(0f, 0.5f));
+                TextMeshProUGUI name = CreateText("Name", card.transform, def != null ? def.displayName.ToUpperInvariant() : "", 34f, Accent, TextAlignmentOptions.Left, display: true);
+                Place(name.rectTransform, new Vector2(0f, 1f), new Vector2(296f, -30f), new Vector2(232f, 46f), new Vector2(0f, 1f));
+                name.enableAutoSizing = true;
+                name.fontSizeMin = 20f;
+                name.fontSizeMax = 34f;
+                name.textWrappingMode = TextWrappingModes.NoWrap;
+                TextMeshProUGUI info = CreateText("Info", card.transform, "", 18f, TextMuted, TextAlignmentOptions.TopLeft, display: true);
+                Place(info.rectTransform, new Vector2(0f, 1f), new Vector2(296f, -82f), new Vector2(232f, 60f), new Vector2(0f, 1f));
+                loadoutCards[i] = new LobbyController.LoadoutCard { button = card, frame = frame, icon = icon, nameText = name, infoText = info };
             }
+            TextMeshProUGUI loadoutHint = CreateText("Hint", right, "Change your three weapons in the Armory.", 19f, TextMuted, TextAlignmentOptions.Left);
+            Place(loadoutHint.rectTransform, new Vector2(0f, 1f), new Vector2(4f, -50f - 3f * (cardH + cardGap)), new Vector2(536f, 32f), new Vector2(0f, 1f));
 
             // ---- centre: name plate under the character
             Image plate = CreatePanel("Name Plate", safe, new Color(0.04f, 0.05f, 0.08f, 0.8f));
@@ -527,11 +558,21 @@ namespace WarehouseDuel.EditorTools.UI
             Wire(controller, "pingText", ping);
             Wire(controller, "mapText", mapLabel);
             Wire(controller, "playerCountText", playerCount);
-            WireArray(controller, "weaponButtons", weaponButtons);
-            WireArray(controller, "weaponButtonFrames", frames);
-            Wire(controller, "weaponNameText", weaponName);
-            Wire(controller, "weaponDescriptionText", weaponDescription);
-            WireArray(controller, "statBars", bars);
+            {
+                var so = new SerializedObject(controller);
+                SerializedProperty array = so.FindProperty("loadoutCards");
+                array.arraySize = loadoutCards.Length;
+                for (int i = 0; i < loadoutCards.Length; i++)
+                {
+                    SerializedProperty element = array.GetArrayElementAtIndex(i);
+                    element.FindPropertyRelative("button").objectReferenceValue = loadoutCards[i].button;
+                    element.FindPropertyRelative("frame").objectReferenceValue = loadoutCards[i].frame;
+                    element.FindPropertyRelative("icon").objectReferenceValue = loadoutCards[i].icon;
+                    element.FindPropertyRelative("nameText").objectReferenceValue = loadoutCards[i].nameText;
+                    element.FindPropertyRelative("infoText").objectReferenceValue = loadoutCards[i].infoText;
+                }
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
             Wire(controller, "readyButton", ready);
             Wire(controller, "readyButtonText", readyLabel);
             Wire(controller, "startButton", start);

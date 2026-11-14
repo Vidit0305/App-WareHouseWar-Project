@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WarehouseDuel.Profile
+namespace WarehouseWar.Profile
 {
     /// <summary>
     /// Preset avatars and banners (generated at build time by the editor tooling). Lives in Resources so every

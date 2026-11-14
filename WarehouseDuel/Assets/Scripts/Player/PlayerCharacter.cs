@@ -1,11 +1,11 @@
 using System;
 using Fusion;
 using UnityEngine;
-using WarehouseDuel.Environment;
-using WarehouseDuel.Match;
-using WarehouseDuel.Multiplayer;
+using WarehouseWar.Environment;
+using WarehouseWar.Match;
+using WarehouseWar.Multiplayer;
 
-namespace WarehouseDuel.Player
+namespace WarehouseWar.Player
 {
     /// <summary>
     /// Networked first-person character: movement, look, health, death, respawn and spawn protection.
@@ -40,6 +40,8 @@ namespace WarehouseDuel.Player
         /// <summary>Host sets these on respawn; the owner's device points its camera at <see cref="LookResetYaw"/>.</summary>
         [Networked] private int LookResetCount { get; set; }
         [Networked] private float LookResetYaw { get; set; }
+        /// <summary>Practice bots only: the fake room PlayerRef this character plays as (None for real players).</summary>
+        [Networked] public PlayerRef BotOwner { get; private set; }
 
         public static PlayerCharacter Local { get; private set; }
 
@@ -53,7 +55,12 @@ namespace WarehouseDuel.Player
         /// <summary>This player's weapons (loadout, ammo, current weapon).</summary>
         public Weapons.WeaponController WeaponController => weapons;
         public MatchRules Rules => rules;
-        public PlayerRef Owner => Object.InputAuthority;
+        /// <summary>The room slot owner: the input authority for real players, the bot's fake PlayerRef for bots.</summary>
+        public PlayerRef Owner => IsBot ? BotOwner : Object.InputAuthority;
+        /// <summary>True for practice bots (driven by <see cref="Bots.BotBrain"/> on the host, no input authority).</summary>
+        public bool IsBot => Object != null && Object.IsValid && BotOwner != PlayerRef.None;
+        /// <summary>Every spawned character on this device (players and bots).</summary>
+        public static readonly System.Collections.Generic.List<PlayerCharacter> All = new System.Collections.Generic.List<PlayerCharacter>(8);
         public bool IsLocal => Object != null && Object.HasInputAuthority;
         public bool IsProtected => ProtectionTimer.IsRunning && !ProtectionTimer.Expired(Runner);
         public Vector3 EyePosition => transform.position + Vector3.up * EyeHeight;
@@ -64,6 +71,7 @@ namespace WarehouseDuel.Player
 
         private int renderedDeaths, renderedSpawns, renderedDamage, renderedLookResets;
         private Weapons.WeaponController weapons;
+        private Bots.BotBrain brain;
 
         private void Awake()
         {
@@ -71,8 +79,37 @@ namespace WarehouseDuel.Player
             weapons = GetComponent<Weapons.WeaponController>();
         }
 
+        /// <summary>Host, from Runner.Spawn's onBeforeSpawned callback: marks this character as a practice bot.</summary>
+        public void InitBot(PlayerRef botRef)
+        {
+            BotOwner = botRef;
+        }
+
+        /// <summary>
+        /// This tick's input: the bot brain's decision for bots (host only), otherwise Fusion's player input.
+        /// Every behaviour on the character (movement, weapons) reads input through here.
+        /// </summary>
+        public bool ReadInput(out NetworkInputData input)
+        {
+            if (IsBot)
+            {
+                if (HasStateAuthority && brain != null) return brain.TryGetInput(out input);
+                input = default;
+                return false;
+            }
+            return GetInput(out input);
+        }
+
         public override void Spawned()
         {
+            All.RemoveAll(c => c == null);
+            if (!All.Contains(this)) All.Add(this);
+            if (IsBot && HasStateAuthority)
+            {
+                brain = GetComponent<Bots.BotBrain>();
+                if (brain == null) brain = gameObject.AddComponent<Bots.BotBrain>();
+            }
+
             if (HasStateAuthority)
             {
                 Health = rules.maxHealth;
@@ -101,13 +138,19 @@ namespace WarehouseDuel.Player
         public override void Despawned(NetworkRunner runner, bool hasState)
         {
             if (Local == this) Local = null;
+            All.Remove(this);
+            if (brain != null)
+            {
+                Destroy(brain);
+                brain = null;
+            }
         }
 
         public override void FixedUpdateNetwork()
         {
             if (HasStateAuthority) UpdateLifecycle();
 
-            if (!GetInput(out NetworkInputData input))
+            if (!ReadInput(out NetworkInputData input))
             {
                 // No input this tick (proxy or dropped packet): keep gravity running, nothing else.
                 if (HasStateAuthority || HasInputAuthority) Motor.Move(Vector3.zero);

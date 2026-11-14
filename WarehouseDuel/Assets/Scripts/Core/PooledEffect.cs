@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WarehouseDuel.Core
+namespace WarehouseWar.Core
 {
     /// <summary>Effect instance managed by <see cref="EffectPool"/>; plays all child particle systems.</summary>
     public sealed class PooledEffect : MonoBehaviour

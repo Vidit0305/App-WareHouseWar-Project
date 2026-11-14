@@ -1,7 +1,7 @@
 using UnityEngine;
-using WarehouseDuel.Core;
+using WarehouseWar.Core;
 
-namespace WarehouseDuel.UI.Controls
+namespace WarehouseWar.UI.Controls
 {
     /// <summary>
     /// Root of the on-screen controls. Exposes the individual controls to the input collector and

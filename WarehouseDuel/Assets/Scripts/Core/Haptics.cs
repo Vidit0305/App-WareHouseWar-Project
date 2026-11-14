@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace WarehouseDuel.Core
+namespace WarehouseWar.Core
 {
     /// <summary>
     /// Short vibration pulses for button presses and in-match feedback (Android). Uses

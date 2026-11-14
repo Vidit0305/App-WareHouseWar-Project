@@ -4,7 +4,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-namespace WarehouseDuel.EditorTools.Map
+namespace WarehouseWar.EditorTools.Map
 {
     /// <summary>
     /// Procedural, tileable surface textures for the environment (concrete slabs, corrugated metal, container

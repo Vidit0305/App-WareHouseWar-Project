@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WarehouseDuel.Weapons
+namespace WarehouseWar.Weapons
 {
     /// <summary>Marks a Fusion Hitbox as head/body/legs and gives its damage multiplier.</summary>
     public sealed class HitboxRegion : MonoBehaviour

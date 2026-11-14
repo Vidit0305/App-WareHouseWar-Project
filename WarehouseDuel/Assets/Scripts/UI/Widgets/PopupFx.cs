@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace WarehouseDuel.UI.Widgets
+namespace WarehouseWar.UI.Widgets
 {
     /// <summary>
     /// Open/close animation for dialogs and full screens. Opening: the backdrop fades in and the card pops

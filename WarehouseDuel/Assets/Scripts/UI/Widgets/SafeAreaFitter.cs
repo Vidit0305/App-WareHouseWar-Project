@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WarehouseDuel.UI.Widgets
+namespace WarehouseWar.UI.Widgets
 {
     /// <summary>
     /// Shrinks this RectTransform to the device safe area so HUD and buttons never sit under a notch,

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WarehouseDuel.Environment
+namespace WarehouseWar.Environment
 {
     /// <summary>
     /// A player spawn location. Every map has <see cref="MaxSlots"/> of them, one per room slot: slot 0 belongs to

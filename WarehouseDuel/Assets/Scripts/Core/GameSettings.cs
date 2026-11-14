@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace WarehouseDuel.Core
+namespace WarehouseWar.Core
 {
     public enum ControlLayout
     {
@@ -132,11 +132,56 @@ namespace WarehouseDuel.Core
             }
         }
 
-        /// <summary>Preferred weapon slot (0-3) pre-selected in the lobby.</summary>
+        /// <summary>Weapons the player takes into a match (equipped in the Armory).</summary>
+        public const int LoadoutSize = 3;
+        private const int WeaponCount = 8;
+        private static readonly int[] DefaultLoadout = { 0, 3, 6 }; // rifle, pistol, knife
+
+        /// <summary>The three equipped weapons (catalog indices), always valid and distinct.</summary>
+        public static int[] Loadout
+        {
+            get
+            {
+                var result = new int[LoadoutSize];
+                for (int slot = 0; slot < LoadoutSize; slot++)
+                {
+                    int fallback = slot == 0 ? PlayerPrefs.GetInt(Prefix + "weapon", DefaultLoadout[0]) : DefaultLoadout[slot];
+                    int weapon = PlayerPrefs.GetInt(Prefix + "loadout" + slot, fallback);
+                    if (weapon < 0 || weapon >= WeaponCount || System.Array.IndexOf(result, weapon, 0, slot) >= 0) weapon = -1;
+                    result[slot] = weapon;
+                }
+                // Fill any invalid or duplicate slot with the first unused default (then any unused weapon).
+                for (int slot = 0; slot < LoadoutSize; slot++)
+                {
+                    if (result[slot] >= 0) continue;
+                    for (int w = 0; w < WeaponCount + LoadoutSize && result[slot] < 0; w++)
+                    {
+                        int candidate = w < LoadoutSize ? DefaultLoadout[w] : w - LoadoutSize;
+                        if (System.Array.IndexOf(result, candidate) < 0) result[slot] = candidate;
+                    }
+                }
+                return result;
+            }
+        }
+
+        /// <summary>Puts <paramref name="weapon"/> in loadout <paramref name="slot"/>; if it was in another slot, the two swap.</summary>
+        public static void SetLoadoutWeapon(int slot, int weapon)
+        {
+            if (slot < 0 || slot >= LoadoutSize || weapon < 0 || weapon >= WeaponCount) return;
+            int[] current = Loadout;
+            int other = System.Array.IndexOf(current, weapon);
+            if (other >= 0 && other != slot) current[other] = current[slot];
+            current[slot] = weapon;
+            for (int i = 0; i < LoadoutSize; i++) PlayerPrefs.SetInt(Prefix + "loadout" + i, current[i]);
+            PlayerPrefs.SetInt(Prefix + "weapon", current[0]);
+            PlayerPrefs.Save();
+        }
+
+        /// <summary>First equipped weapon (shown on the menu soldier).</summary>
         public static int PreferredWeapon
         {
-            get => PlayerPrefs.GetInt(Prefix + "weapon", 0);
-            set => SetInt("weapon", Mathf.Clamp(value, 0, 7));
+            get => Loadout[0];
+            set => SetLoadoutWeapon(0, value);
         }
 
         /// <summary>Lifetime stats shown on the profile screen (local only).</summary>

@@ -2,14 +2,14 @@ using TMPro;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
-using WarehouseDuel.Player;
-using WarehouseDuel.Profile;
-using WarehouseDuel.UI;
-using WarehouseDuel.UI.Widgets;
-using WarehouseDuel.Weapons;
-using static WarehouseDuel.EditorTools.UI.UiFactory;
+using WarehouseWar.Player;
+using WarehouseWar.Profile;
+using WarehouseWar.UI;
+using WarehouseWar.UI.Widgets;
+using WarehouseWar.Weapons;
+using static WarehouseWar.EditorTools.UI.UiFactory;
 
-namespace WarehouseDuel.EditorTools.UI
+namespace WarehouseWar.EditorTools.UI
 {
     /// <summary>
     /// Builds the main-menu screens: Profile (avatar / banner / title editor + career stats), Leaderboard
@@ -389,7 +389,7 @@ namespace WarehouseDuel.EditorTools.UI
             RectTransform content = Frame("Leaderboard Screen", safe, "LEADERBOARD", false, out GameObject root, out Button back);
             Tabs(content, new[] { "STANDINGS", "RECORDS" }, 0f, 0f, 300f, 80f, 16f, false,
                 out Button[] tabButtons, out Image[] tabBackgrounds, out TMP_Text[] tabLabels);
-            Label(content, "Hint", "Your duels on this device", 22f, TextMuted, 660f, -24f, 900f, 36f);
+            Label(content, "Hint", "Your matches on this device", 22f, TextMuted, 660f, -24f, 900f, 36f);
 
             // ---- standings
             RectTransform standings = At(CreateRect("Standings Page", content), 0f, -110f, 1840f, 790f);
@@ -410,7 +410,7 @@ namespace WarehouseDuel.EditorTools.UI
             RectTransform standingsEmpty = At(CreateRect("Standings Empty", standings), 0f, -160f, 1840f, 400f);
             Image trophy = CreateImage("Trophy", standingsEmpty, new Color(1f, 1f, 1f, 0.18f), UiArt.Icon("Trophy"));
             Place(trophy.rectTransform, new Vector2(0.5f, 1f), Vector2.zero, new Vector2(170f, 170f), new Vector2(0.5f, 1f));
-            TextMeshProUGUI emptyTitle = CreateText("Title", standingsEmpty, "NO DUELS YET", 44f, TextPrimary, TextAlignmentOptions.Center, display: true);
+            TextMeshProUGUI emptyTitle = CreateText("Title", standingsEmpty, "NO MATCHES YET", 44f, TextPrimary, TextAlignmentOptions.Center, display: true);
             Place(emptyTitle.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -190f), new Vector2(1200f, 60f), new Vector2(0.5f, 1f));
             TextMeshProUGUI emptyText = CreateText("Text", standingsEmpty, "Play an online match — you and every opponent you face are ranked here by wins.", 26f, TextMuted, TextAlignmentOptions.Center);
             Place(emptyText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -258f), new Vector2(1200f, 80f), new Vector2(0.5f, 1f));
@@ -608,21 +608,28 @@ namespace WarehouseDuel.EditorTools.UI
             TextMeshProUGUI status = Label(content, "Status", "", 22f, TextMuted, 0f, -96f, 1500f, 34f);
 
             var pages = new GameObject[3];
-            ShopScreen.Item MakeItem(RectTransform grid, string name, Sprite art, string title, Vector2 cell, float artHeight)
+            // Card: picture at its true aspect ratio (never stretched), name, then a buy button / OWNED tag.
+            ShopScreen.Item MakeItem(RectTransform grid, string name, Sprite art, string title, Vector2 cell, Vector2 artSize)
             {
-                Image card = CreateImage(name, grid, new Color(1f, 1f, 1f, 0.06f), UiArt.Rounded);
+                Image card = CreateImage(name, grid, new Color(0.05f, 0.06f, 0.09f, 0.92f), UiArt.Rounded);
+                Image rim = CreateImage("Rim", card.transform, new Color(1f, 1f, 1f, 0.08f), UiArt.Rounded);
+                Stretch(rim.rectTransform);
                 Image picture = Masked(card.transform, "Art", UiArt.Rounded, art, out RectTransform mask);
-                At(mask, 10f, -10f, cell.x - 20f, artHeight);
-                picture.preserveAspect = false;
-                Label(card.transform, "Name", title, 22f, TextPrimary, 10f, -18f - artHeight, cell.x - 20f, 30f, TextAlignmentOptions.Center, display: true);
+                At(mask, (cell.x - artSize.x) * 0.5f, -14f, artSize.x, artSize.y);
+                picture.preserveAspect = true;
+                TextMeshProUGUI titleText = Label(card.transform, "Name", title, 24f, TextPrimary, 12f, -26f - artSize.y, cell.x - 24f, 34f, TextAlignmentOptions.Center, display: true);
+                titleText.enableAutoSizing = true;
+                titleText.fontSizeMin = 16f;
+                titleText.fontSizeMax = 24f;
+                titleText.textWrappingMode = TextWrappingModes.NoWrap;
 
                 Image owned = CreateImage("Owned", card.transform, Success, UiArt.RoundedSmall);
-                Place(owned.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 12f), new Vector2(cell.x - 40f, 48f), new Vector2(0.5f, 0f));
+                Place(owned.rectTransform, new Vector2(0.5f, 0f), new Vector2(0f, 16f), new Vector2(cell.x - 44f, 52f), new Vector2(0.5f, 0f));
                 TextMeshProUGUI ownedText = CreateText("Text", owned.transform, "OWNED", 22f, new Color(0.05f, 0.1f, 0.06f), TextAlignmentOptions.Center, display: true);
                 Stretch(ownedText.rectTransform);
 
-                Button buy = CreateButton("Buy", card.transform, "0", ButtonStyle.Primary, new Vector2(cell.x - 40f, 56f), out TextMeshProUGUI price, 26f);
-                Place((RectTransform)buy.transform, new Vector2(0.5f, 0f), new Vector2(0f, 10f), new Vector2(cell.x - 40f, 56f), new Vector2(0.5f, 0f));
+                Button buy = CreateButton("Buy", card.transform, "0", ButtonStyle.Primary, new Vector2(cell.x - 44f, 60f), out TextMeshProUGUI price, 28f);
+                Place((RectTransform)buy.transform, new Vector2(0.5f, 0f), new Vector2(0f, 14f), new Vector2(cell.x - 44f, 60f), new Vector2(0.5f, 0f));
                 Stretch(price.rectTransform, 56f, 12f, 4f, 4f);
                 Image coin = CreateImage("Star", buy.transform, AccentDark, UiArt.Icon("Star"));
                 Place(coin.rectTransform, new Vector2(0f, 0.5f), new Vector2(18f, 0f), new Vector2(32f, 32f), new Vector2(0f, 0.5f));
@@ -632,31 +639,31 @@ namespace WarehouseDuel.EditorTools.UI
             // Costumes.
             RectTransform costumePage = At(CreateRect("Costumes Page", content), 0f, -140f, 1840f, 770f);
             pages[0] = costumePage.gameObject;
-            var costumeCell = new Vector2(330f, 360f);
-            RectTransform costumeGrid = ScrollGrid(costumePage, "Costume List", costumeCell, new Vector2(20f, 20f), 5);
+            var costumeCell = new Vector2(330f, 440f);
+            RectTransform costumeGrid = ScrollGrid(costumePage, "Costume List", costumeCell, new Vector2(30f, 30f), 5);
             int characterCount = characters != null ? characters.Count : 0;
             var costumes = new ShopScreen.Item[characterCount];
             for (int i = 0; i < characterCount; i++)
             {
                 CharacterCatalog.Entry entry = characters.Get(i);
-                costumes[i] = MakeItem(costumeGrid, $"Costume {i + 1}", entry.portrait, entry.name.ToUpperInvariant(), costumeCell, 220f);
+                costumes[i] = MakeItem(costumeGrid, $"Costume {i + 1}", entry.portrait, entry.name.ToUpperInvariant(), costumeCell, new Vector2(290f, 290f));
             }
 
             // Avatars.
             RectTransform avatarPage = At(CreateRect("Avatars Page", content), 0f, -140f, 1840f, 770f);
             pages[1] = avatarPage.gameObject;
-            var avatarCell = new Vector2(250f, 300f);
-            RectTransform avatarGrid = ScrollGrid(avatarPage, "Avatar List", avatarCell, new Vector2(18f, 18f), 7);
+            var avatarCell = new Vector2(270f, 380f);
+            RectTransform avatarGrid = ScrollGrid(avatarPage, "Avatar List", avatarCell, new Vector2(28f, 28f), 6);
             var avatars = new ShopScreen.Item[profiles.AvatarCount];
-            for (int i = 0; i < avatars.Length; i++) avatars[i] = MakeItem(avatarGrid, $"Avatar {i + 1}", profiles.Avatar(i), $"AVATAR {i + 1}", avatarCell, 170f);
+            for (int i = 0; i < avatars.Length; i++) avatars[i] = MakeItem(avatarGrid, $"Avatar {i + 1}", profiles.Avatar(i), $"AVATAR {i + 1}", avatarCell, new Vector2(230f, 230f));
 
             // Banners.
             RectTransform bannerPage = At(CreateRect("Banners Page", content), 0f, -140f, 1840f, 770f);
             pages[2] = bannerPage.gameObject;
-            var bannerCell = new Vector2(440f, 250f);
-            RectTransform bannerGrid = ScrollGrid(bannerPage, "Banner List", bannerCell, new Vector2(18f, 18f), 4);
+            var bannerCell = new Vector2(580f, 290f);
+            RectTransform bannerGrid = ScrollGrid(bannerPage, "Banner List", bannerCell, new Vector2(30f, 30f), 3);
             var banners = new ShopScreen.Item[profiles.BannerCount];
-            for (int i = 0; i < banners.Length; i++) banners[i] = MakeItem(bannerGrid, $"Banner {i + 1}", profiles.Banner(i), profiles.BannerName(i).ToUpperInvariant(), bannerCell, 110f);
+            for (int i = 0; i < banners.Length; i++) banners[i] = MakeItem(bannerGrid, $"Banner {i + 1}", profiles.Banner(i), profiles.BannerName(i).ToUpperInvariant(), bannerCell, new Vector2(540f, 135f));
 
             avatarPage.gameObject.SetActive(false);
             bannerPage.gameObject.SetActive(false);
@@ -711,6 +718,7 @@ namespace WarehouseDuel.EditorTools.UI
             var icons = new Image[weaponCount];
             var names = new TMP_Text[weaponCount];
             var equipped = new GameObject[weaponCount];
+            var equippedTexts = new TMP_Text[weaponCount];
             for (int i = 0; i < weaponCount; i++)
             {
                 WeaponDefinition def = catalog != null ? catalog.Get(i) : null;
@@ -728,10 +736,11 @@ namespace WarehouseDuel.EditorTools.UI
                 ((TextMeshProUGUI)names[i]).textWrappingMode = TextWrappingModes.NoWrap;
                 Image tag = CreateImage("Equipped", tile.transform, Success, UiArt.RoundedSmall);
                 At(tag.rectTransform, 132f, -10f, 140f, 30f);
-                TextMeshProUGUI tagText = CreateText("Text", tag.transform, "EQUIPPED", 18f, new Color(0.05f, 0.1f, 0.06f), TextAlignmentOptions.Center, display: true);
+                TextMeshProUGUI tagText = CreateText("Text", tag.transform, "SLOT 1", 18f, new Color(0.05f, 0.1f, 0.06f), TextAlignmentOptions.Center, display: true);
                 Stretch(tagText.rectTransform);
                 tag.gameObject.SetActive(i == 0);
                 equipped[i] = tag.gameObject;
+                equippedTexts[i] = tagText;
                 tiles[i] = tile;
             }
 
@@ -739,19 +748,47 @@ namespace WarehouseDuel.EditorTools.UI
             Image details = CreateImage("Details", content, CardDark, UiArt.Rounded);
             Place(details.rectTransform, new Vector2(1f, 1f), Vector2.zero, new Vector2(580f, 900f), new Vector2(1f, 1f));
             WeaponDefinition first = catalog != null ? catalog.Get(0) : null;
-            TextMeshProUGUI weaponName = Label(details.transform, "Name", first != null ? first.displayName.ToUpperInvariant() : "", 52f, Accent, 36f, -30f, 510f, 70f, display: true);
-            TextMeshProUGUI description = Label(details.transform, "Description", first != null ? first.description : "", 23f, TextMuted, 36f, -108f, 510f, 120f);
+
+            // Loadout: the three weapons carried into every match. Tap a slot, then a weapon, then EQUIP.
+            Label(details.transform, "Loadout Header", "YOUR LOADOUT", 22f, TextMuted, 36f, -22f, 510f, 32f, display: true).characterSpacing = 6f;
+            var slotButtons = new Button[3];
+            var slotFrames = new Image[3];
+            var slotIcons = new Image[3];
+            var slotNames = new TMP_Text[3];
+            for (int s = 0; s < 3; s++)
+            {
+                WeaponDefinition slotDef = catalog != null ? catalog.Get(new[] { 0, 3, 6 }[s]) : null;
+                Button slot = CreateButton($"Slot {s + 1}", details.transform, "", ButtonStyle.Secondary, new Vector2(160f, 150f));
+                At((RectTransform)slot.transform, 36f + s * 172f, -60f, 160f, 150f);
+                slotFrames[s] = slot.GetComponent<Image>();
+                slotFrames[s].color = s == 0 ? Accent : new Color(1f, 1f, 1f, 0.1f);
+                TextMeshProUGUI number = Label(slot.transform, "Number", (s + 1).ToString(), 22f, TextMuted, 10f, -6f, 40f, 30f, display: true);
+                number.alpha = 0.8f;
+                slotIcons[s] = CreateImage("Icon", slot.transform, s == 0 ? AccentDark : Color.white, slotDef != null ? slotDef.icon : null);
+                slotIcons[s].preserveAspect = true;
+                At(slotIcons[s].rectTransform, 12f, -34f, 136f, 66f);
+                TextMeshProUGUI slotName = Label(slot.transform, "Name", slotDef != null ? slotDef.displayName.ToUpperInvariant() : "", 18f, s == 0 ? AccentDark : TextPrimary, 6f, -106f, 148f, 34f, TextAlignmentOptions.Center, display: true);
+                slotName.enableAutoSizing = true;
+                slotName.fontSizeMin = 12f;
+                slotName.fontSizeMax = 18f;
+                slotName.textWrappingMode = TextWrappingModes.NoWrap;
+                slotNames[s] = slotName;
+                slotButtons[s] = slot;
+            }
+
+            TextMeshProUGUI weaponName = Label(details.transform, "Name", first != null ? first.displayName.ToUpperInvariant() : "", 46f, Accent, 36f, -228f, 510f, 60f, display: true);
+            TextMeshProUGUI description = Label(details.transform, "Description", first != null ? first.description : "", 21f, TextMuted, 36f, -290f, 510f, 84f);
             description.alignment = TextAlignmentOptions.TopLeft;
             string[] stats = { "DAMAGE", "FIRE RATE", "RANGE", "MAGAZINE" };
             var bars = new RectTransform[4];
             var values = new TMP_Text[4];
             for (int i = 0; i < 4; i++)
             {
-                float y = -260f - i * 104f;
+                float y = -390f - i * 70f;
                 Label(details.transform, stats[i], stats[i], 22f, TextPrimary, 36f, y, 300f, 34f, display: true);
                 values[i] = Label(details.transform, stats[i] + " Value", "", 24f, Accent, 300f, y, 244f, 34f, TextAlignmentOptions.Right, display: true);
                 Image track = CreateImage("Track", details.transform, new Color(1f, 1f, 1f, 0.12f), UiArt.RoundedSmall);
-                At(track.rectTransform, 36f, y - 46f, 508f, 20f);
+                At(track.rectTransform, 36f, y - 40f, 508f, 18f);
                 Image fill = CreateImage("Fill", track.transform, Accent, UiArt.RoundedSmall);
                 fill.rectTransform.anchorMin = Vector2.zero;
                 fill.rectTransform.anchorMax = new Vector2(0.5f, 1f);
@@ -760,7 +797,7 @@ namespace WarehouseDuel.EditorTools.UI
             }
             Button equip = CreateButton("Equip", details.transform, "EQUIPPED", ButtonStyle.Primary, new Vector2(508f, 120f), out TextMeshProUGUI equipLabel, 44f);
             Place((RectTransform)equip.transform, new Vector2(0.5f, 0f), new Vector2(0f, 36f), new Vector2(508f, 120f), new Vector2(0.5f, 0f));
-            Label(details.transform, "Hint", "Your equipped weapon is pre-selected in every room.", 20f, TextMuted, 36f, -690f, 510f, 60f);
+            Label(details.transform, "Hint", "Tap a slot, pick a weapon, then EQUIP. You carry all three in every match.", 19f, TextMuted, 36f, -680f, 510f, 56f);
 
             ArmoryScreen screen = root.AddComponent<ArmoryScreen>();
             Wire(screen, "backButton", back);
@@ -771,6 +808,11 @@ namespace WarehouseDuel.EditorTools.UI
             WireArray(screen, "tileIcons", icons);
             WireArray(screen, "tileNames", names);
             WireArray(screen, "equippedTags", equipped);
+            WireArray(screen, "equippedTagTexts", equippedTexts);
+            WireArray(screen, "slotButtons", slotButtons);
+            WireArray(screen, "slotFrames", slotFrames);
+            WireArray(screen, "slotIcons", slotIcons);
+            WireArray(screen, "slotNames", slotNames);
             Wire(screen, "weaponName", weaponName);
             Wire(screen, "weaponDescription", description);
             WireArray(screen, "statBars", bars);

@@ -1,13 +1,13 @@
 using UnityEditor;
 using UnityEditor.SceneManagement;
-using WarehouseDuel.EditorTools.Map;
+using WarehouseWar.EditorTools.Map;
 
-namespace WarehouseDuel.EditorTools
+namespace WarehouseWar.EditorTools
 {
-    /// <summary>Menu entry points: Tools > Warehouse Duel.</summary>
+    /// <summary>Menu entry points: Tools > Warehouse War.</summary>
     public static class ProjectSetupMenu
     {
-        private const string MenuRoot = "Tools/Warehouse Duel/";
+        private const string MenuRoot = "Tools/Warehouse War/";
 
         [MenuItem(MenuRoot + "Phase 1 - Run Project Setup", priority = 1)]
         public static void RunPhase1Setup()
@@ -28,7 +28,7 @@ namespace WarehouseDuel.EditorTools
             SceneBuilder.OpenStartScene();
 
             EditorUtility.DisplayDialog("Phase 1 setup finished",
-                report.Summary + "\n\nDetails are in the Console. Next: Tools > Warehouse Duel > Validate Project.", "OK");
+                report.Summary + "\n\nDetails are in the Console. Next: Tools > Warehouse War > Validate Project.", "OK");
         }
 
         [MenuItem(MenuRoot + "Phase 1 - Rebuild Scaffold Scenes (overwrites)", priority = 2)]

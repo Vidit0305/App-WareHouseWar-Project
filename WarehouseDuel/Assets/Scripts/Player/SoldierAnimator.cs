@@ -1,7 +1,7 @@
 using UnityEngine;
-using WarehouseDuel.Weapons;
+using WarehouseWar.Weapons;
 
-namespace WarehouseDuel.Player
+namespace WarehouseWar.Player
 {
     /// <summary>
     /// Procedural "showroom" animation for the soldier in the main menu and lobby:
@@ -127,6 +127,7 @@ namespace WarehouseDuel.Player
             if (def == null || def.worldModelPrefab == null) return;
             if (weaponModel != null) Destroy(weaponModel);
             weaponModel = Instantiate(def.worldModelPrefab, weaponSocket, false);
+            weaponModel.transform.localScale = Vector3.one * WeaponDefinition.HeldScale;
             shownWeapon = index;
         }
 

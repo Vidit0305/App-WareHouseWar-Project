@@ -5,11 +5,11 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
-using WarehouseDuel.Core;
-using WarehouseDuel.Environment;
-using Id = WarehouseDuel.EditorTools.Map.EnvironmentPalette.Id;
+using WarehouseWar.Core;
+using WarehouseWar.Environment;
+using Id = WarehouseWar.EditorTools.Map.EnvironmentPalette.Id;
 
-namespace WarehouseDuel.EditorTools.Map
+namespace WarehouseWar.EditorTools.Map
 {
     /// <summary>
     /// Generates the three outdoor maps (Desert, Forest, Snow) into Assets/Scenes/{DesertMap,ForestMap,SnowMap}.unity.
@@ -430,7 +430,7 @@ namespace WarehouseDuel.EditorTools.Map
 
         // ------------------------------------------------------------------ entry points
 
-        [MenuItem("Tools/Warehouse Duel/Phase 2 - Build Outdoor Maps", priority = 32)]
+        [MenuItem("Tools/Warehouse War/Phase 2 - Build Outdoor Maps", priority = 32)]
         public static void BuildFromMenu()
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
@@ -440,7 +440,7 @@ namespace WarehouseDuel.EditorTools.Map
             EditorUtility.DisplayDialog("Outdoor maps", report.Summary + "\n\nDetails are in the Console.", "OK");
         }
 
-        [MenuItem("Tools/Warehouse Duel/Phase 2 - Validate All Maps", priority = 33)]
+        [MenuItem("Tools/Warehouse War/Phase 2 - Validate All Maps", priority = 33)]
         public static void ValidateFromMenu()
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;

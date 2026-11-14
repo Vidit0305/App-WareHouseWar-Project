@@ -1,10 +1,10 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
-using WarehouseDuel.Core;
-using WarehouseDuel.UI.Controls;
-using WarehouseDuel.Weapons;
+using WarehouseWar.Core;
+using WarehouseWar.UI.Controls;
+using WarehouseWar.Weapons;
 
-namespace WarehouseDuel.Player
+namespace WarehouseWar.Player
 {
     /// <summary>Everything the local player asked for since the previous network tick.</summary>
     public struct InputSnapshot

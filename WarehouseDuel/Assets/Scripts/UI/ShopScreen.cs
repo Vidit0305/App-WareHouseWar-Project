@@ -1,9 +1,9 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using WarehouseDuel.Profile;
+using WarehouseWar.Profile;
 
-namespace WarehouseDuel.UI
+namespace WarehouseWar.UI
 {
     /// <summary>
     /// Shop: spend Stars on costumes (characters), avatars and banners. Stars are earned in online matches
@@ -33,7 +33,7 @@ namespace WarehouseDuel.UI
         [SerializeField] private Item[] avatars = new Item[0];
         [SerializeField] private Item[] banners = new Item[0];
 
-        private const string EarnHint = "Earn stars in online matches: +5 per match, +2 per elimination, +15 for a win.";
+        private const string EarnHint = "Earn stars in online matches: +1 for every kill, +5 for finishing 1st.";
 
         protected override void Awake()
         {
@@ -72,7 +72,7 @@ namespace WarehouseDuel.UI
             if (Shop.Buy(category, index))
             {
                 if (statusText != null) statusText.text = "<color=#50D773>Unlocked!</color> Equip it in the Wardrobe or your Profile.";
-                WarehouseDuel.Core.Haptics.Medium();
+                WarehouseWar.Core.Haptics.Medium();
             }
             else if (statusText != null && !Shop.IsOwned(category, index))
             {

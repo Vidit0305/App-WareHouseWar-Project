@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace WarehouseDuel.UI.Widgets
+namespace WarehouseWar.UI.Widgets
 {
     /// <summary>Drag horizontally on this (transparent) UI area to spin a 3D object, e.g. the lobby character.</summary>
     public sealed class DragRotate : MonoBehaviour, IDragHandler

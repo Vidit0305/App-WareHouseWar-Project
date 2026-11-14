@@ -5,16 +5,16 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using WarehouseDuel.Core;
-using WarehouseDuel.EditorTools.Audio;
-using WarehouseDuel.EditorTools.Effects;
-using WarehouseDuel.EditorTools.Gameplay;
-using WarehouseDuel.EditorTools.Map;
-using WarehouseDuel.EditorTools.UI;
-using WarehouseDuel.EditorTools.Weapons;
-using WarehouseDuel.Weapons;
+using WarehouseWar.Core;
+using WarehouseWar.EditorTools.Audio;
+using WarehouseWar.EditorTools.Effects;
+using WarehouseWar.EditorTools.Gameplay;
+using WarehouseWar.EditorTools.Map;
+using WarehouseWar.EditorTools.UI;
+using WarehouseWar.EditorTools.Weapons;
+using WarehouseWar.Weapons;
 
-namespace WarehouseDuel.EditorTools
+namespace WarehouseWar.EditorTools
 {
     /// <summary>
     /// One-click (or command-line) generation of the whole game from code, in dependency order:
@@ -22,22 +22,22 @@ namespace WarehouseDuel.EditorTools
     /// Every step is idempotent: re-running updates assets in place and keeps their GUIDs.
     ///
     /// Command line (no Editor window):
-    ///   Unity.exe -batchmode -quit -projectPath WarehouseDuel -executeMethod WarehouseDuel.EditorTools.GameBuilder.BuildAllBatch -logFile build.log
-    ///   Unity.exe -batchmode -quit -projectPath WarehouseDuel -executeMethod WarehouseDuel.EditorTools.GameBuilder.BuildAndroidBatch -logFile android.log
+    ///   Unity.exe -batchmode -quit -projectPath WarehouseWar -executeMethod WarehouseWar.EditorTools.GameBuilder.BuildAllBatch -logFile build.log
+    ///   Unity.exe -batchmode -quit -projectPath WarehouseWar -executeMethod WarehouseWar.EditorTools.GameBuilder.BuildAndroidBatch -logFile android.log
     /// </summary>
     public static class GameBuilder
     {
-        public const string AndroidOutput = "Builds/Android/WarehouseDuel.apk";
+        public const string AndroidOutput = "Builds/Android/WarehouseWar.apk";
 
-        [MenuItem("Tools/Warehouse Duel/Build Everything (all phases)", priority = 0)]
+        [MenuItem("Tools/Warehouse War/Build Everything (all phases)", priority = 0)]
         public static void BuildEverythingMenu()
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
             SetupReport report = BuildEverything();
-            EditorUtility.DisplayDialog("Warehouse Duel", $"Build finished: {report.Summary}\n\nDetails are in the Console.", "OK");
+            EditorUtility.DisplayDialog("Warehouse War", $"Build finished: {report.Summary}\n\nDetails are in the Console.", "OK");
         }
 
-        [MenuItem("Tools/Warehouse Duel/Build Android APK", priority = 50)]
+        [MenuItem("Tools/Warehouse War/Build Android APK", priority = 50)]
         public static void BuildAndroidMenu()
         {
             if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
@@ -120,8 +120,8 @@ namespace WarehouseDuel.EditorTools
             message = ok
                 ? $"APK built: {Path.GetFullPath(AndroidOutput)} ({summary.totalSize / (1024f * 1024f):0.0} MB, {summary.totalTime.TotalMinutes:0.0} min)"
                 : $"Android build {summary.result}: {summary.totalErrors} error(s). See the Console.";
-            if (ok) Debug.Log("[Warehouse Duel] " + message);
-            else Debug.LogError("[Warehouse Duel] " + message);
+            if (ok) Debug.Log("[Warehouse War] " + message);
+            else Debug.LogError("[Warehouse War] " + message);
             return ok;
         }
 
@@ -154,7 +154,7 @@ namespace WarehouseDuel.EditorTools
         /// </summary>
         public static void BuildWindowsTestBatch()
         {
-            const string output = "Builds/WindowsTest/WarehouseDuel.exe";
+            const string output = "Builds/WindowsTest/WarehouseWar.exe";
             Directory.CreateDirectory(Path.GetDirectoryName(output));
             string[] scenes = EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
             BuildReport result = BuildPipeline.BuildPlayer(new BuildPlayerOptions
@@ -165,7 +165,7 @@ namespace WarehouseDuel.EditorTools
                 targetGroup = BuildTargetGroup.Standalone,
                 options = BuildOptions.Development,
             });
-            Debug.Log($"[Warehouse Duel] Windows test build: {result.summary.result}, {result.summary.totalErrors} error(s) -> {Path.GetFullPath(output)}");
+            Debug.Log($"[Warehouse War] Windows test build: {result.summary.result}, {result.summary.totalErrors} error(s) -> {Path.GetFullPath(output)}");
             EditorApplication.Exit(result.summary.result == BuildResult.Succeeded ? 0 : 1);
         }
     }

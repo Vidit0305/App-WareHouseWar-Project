@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace WarehouseDuel.UI.Controls
+namespace WarehouseWar.UI.Controls
 {
     /// <summary>
     /// On-screen action button with multi-touch support.

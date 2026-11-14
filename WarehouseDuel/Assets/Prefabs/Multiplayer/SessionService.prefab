@@ -43,7 +43,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dddf5774a1238e649acdadb536859623, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WarehouseDuel.Multiplayer.SessionService
+  m_EditorClassIdentifier: Assembly-CSharp::WarehouseWar.Multiplayer.SessionService
   roomStatePrefab: {fileID: 3441010115498353468, guid: b33e5b27e0dca7848a0ca125b35a104c, type: 3}
   matchManagerPrefab: {fileID: 3130936941718312587, guid: fcfe03949e05d544db1a9538de24cb91, type: 3}
   playerPrefab: {fileID: 2102791720465828640, guid: 8d6b90b2326e89444ab598a135554400, type: 3}

@@ -2,9 +2,9 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using WarehouseDuel.Core;
+using WarehouseWar.Core;
 
-namespace WarehouseDuel.UI
+namespace WarehouseWar.UI
 {
     /// <summary>
     /// Splash screen flow: fade in → load the main menu in the background while a progress bar
@@ -62,7 +62,7 @@ namespace WarehouseDuel.UI
                 // Unity returns null (and logs) when the scene is not in Build Settings.
                 failed = true;
                 if (statusLabel != null) statusLabel.text = $"SCENE '{nextSceneName}' MISSING FROM BUILD SETTINGS";
-                Debug.LogError($"[Splash] Cannot load '{nextSceneName}'. Run Tools > Warehouse Duel > Phase 1 - Run Project Setup.");
+                Debug.LogError($"[Splash] Cannot load '{nextSceneName}'. Run Tools > Warehouse War > Phase 1 - Run Project Setup.");
                 yield break;
             }
 

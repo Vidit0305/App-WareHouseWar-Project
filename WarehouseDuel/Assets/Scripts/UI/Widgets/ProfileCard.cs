@@ -1,10 +1,10 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using WarehouseDuel.Core;
-using WarehouseDuel.Profile;
+using WarehouseWar.Core;
+using WarehouseWar.Profile;
 
-namespace WarehouseDuel.UI.Widgets
+namespace WarehouseWar.UI.Widgets
 {
     /// <summary>
     /// Shows the local player's identity (avatar, banner, name, title, level, XP bar) and keeps it up to date.

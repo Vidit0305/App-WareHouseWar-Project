@@ -3,15 +3,15 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
-using WarehouseDuel.EditorTools.Gameplay;
-using WarehouseDuel.EditorTools.Map;
-using WarehouseDuel.Multiplayer;
-using WarehouseDuel.UI;
-using WarehouseDuel.UI.Widgets;
-using WarehouseDuel.Weapons;
-using static WarehouseDuel.EditorTools.UI.UiFactory;
+using WarehouseWar.EditorTools.Gameplay;
+using WarehouseWar.EditorTools.Map;
+using WarehouseWar.Multiplayer;
+using WarehouseWar.UI;
+using WarehouseWar.UI.Widgets;
+using WarehouseWar.Weapons;
+using static WarehouseWar.EditorTools.UI.UiFactory;
 
-namespace WarehouseDuel.EditorTools.UI
+namespace WarehouseWar.EditorTools.UI
 {
     /// <summary>Pieces shared by several scenes: the menu diorama, the settings panel and the session bootstrap.</summary>
     internal static class SharedUiBuilder
@@ -28,19 +28,19 @@ namespace WarehouseDuel.EditorTools.UI
 
         public static readonly Staging LobbyStaging = new Staging
         {
-            Character = new Vector3(0f, 0f, 0f), CharacterYaw = 148f,
+            Character = new Vector3(0f, 0f, 0f), CharacterYaw = 128f, // 3/4 view so the held gun is seen side-on
             Camera = new Vector3(0f, 1.45f, -6.2f), LookAt = new Vector3(0f, 1.05f, 0f), FieldOfView = 34f,
         };
 
         public static readonly Staging MenuStaging = new Staging
         {
-            Character = new Vector3(0f, 0f, 0f), CharacterYaw = 158f,
+            Character = new Vector3(0f, 0f, 0f), CharacterYaw = 132f, // 3/4 view so the held gun is seen side-on
             Camera = new Vector3(0f, 1.4f, -6.6f), LookAt = new Vector3(0f, 1.0f, 0f), FieldOfView = 33f,
         };
 
         public struct SoldierAnimatorHandle
         {
-            public WarehouseDuel.Player.SoldierAnimator Animator;
+            public WarehouseWar.Player.SoldierAnimator Animator;
             public Transform Turntable;
         }
 
@@ -92,7 +92,7 @@ namespace WarehouseDuel.EditorTools.UI
             SoldierModelBuilder.Rig soldier = SoldierModelBuilder.Build(turntable.transform, "Soldier");
             Material blue = TeamMaterial();
             foreach (Renderer r in soldier.TeamColored) r.sharedMaterial = blue;
-            var animator = soldier.Root.gameObject.AddComponent<WarehouseDuel.Player.SoldierAnimator>();
+            var animator = soldier.Root.gameObject.AddComponent<WarehouseWar.Player.SoldierAnimator>();
             Wire(animator, "hips", soldier.Hips);
             Wire(animator, "spine", soldier.Spine);
             Wire(animator, "head", soldier.Head);
@@ -226,7 +226,7 @@ namespace WarehouseDuel.EditorTools.UI
         public static void SessionBootstrap()
         {
             var go = new GameObject("Session Bootstrap");
-            var bootstrap = go.AddComponent<WarehouseDuel.Multiplayer.SessionBootstrap>();
+            var bootstrap = go.AddComponent<WarehouseWar.Multiplayer.SessionBootstrap>();
             Wire(bootstrap, "sessionServicePrefab", GameplayPrefabBuilder.SessionServicePrefab);
         }
 
@@ -374,10 +374,10 @@ namespace WarehouseDuel.EditorTools.UI
 
             RectTransform about = Page(4);
             Image aboutCard = MenuScreensBuilder.Panel(about, "About Card", 0f, 0f, 1200f, 420f, new Color(1f, 1f, 1f, 0.06f));
-            MenuScreensBuilder.Label(aboutCard.transform, "Game", "WAREHOUSE <color=#FFB020>DUEL</color>", 64f, TextPrimary, 40f, -36f, 1100f, 84f, display: true);
+            MenuScreensBuilder.Label(aboutCard.transform, "Game", "WAREHOUSE <color=#FFB020>WAR</color>", 64f, TextPrimary, 40f, -36f, 1100f, 84f, display: true);
             TextMeshProUGUI version = MenuScreensBuilder.Label(aboutCard.transform, "Version", "Version", 28f, Accent, 44f, -128f, 1100f, 40f, display: true);
             MenuScreensBuilder.Label(aboutCard.transform, "Text",
-                "1v1 online arena shooter. Create a room, share the code with a friend and duel in the warehouse.\n\nBuilt with Unity and Photon Fusion.",
+                "Online arena shooter for up to 8 players. Create a room, share the 6-digit code with your friends and fight it out on four maps - or practise against bots.\n\nBuilt with Unity and Photon Fusion.",
                 26f, TextMuted, 44f, -190f, 1100f, 200f).alignment = TextAlignmentOptions.TopLeft;
 
             Button reset = CreateButton("Reset", card, "RESET TO DEFAULTS", ButtonStyle.Ghost, new Vector2(400f, 96f), 28f);

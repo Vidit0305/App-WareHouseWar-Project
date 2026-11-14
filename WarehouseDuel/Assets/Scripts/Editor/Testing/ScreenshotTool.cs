@@ -2,15 +2,15 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using WarehouseDuel.Core;
-using WarehouseDuel.Weapons;
+using WarehouseWar.Core;
+using WarehouseWar.Weapons;
 
-namespace WarehouseDuel.EditorTools.Testing
+namespace WarehouseWar.EditorTools.Testing
 {
     /// <summary>
     /// Renders review screenshots of the generated content (warehouse viewpoints, weapon line-up) to PNG files,
     /// so the look can be checked without opening the Editor UI. Needs a graphics device (don't pass -nographics).
-    ///   Unity.exe -batchmode -projectPath WarehouseDuel -executeMethod WarehouseDuel.EditorTools.Testing.ScreenshotTool.CaptureBatch -screenshotDir <dir>
+    ///   Unity.exe -batchmode -projectPath WarehouseWar -executeMethod WarehouseWar.EditorTools.Testing.ScreenshotTool.CaptureBatch -screenshotDir <dir>
     /// </summary>
     public static class ScreenshotTool
     {
@@ -22,6 +22,7 @@ namespace WarehouseDuel.EditorTools.Testing
             int i = System.Array.IndexOf(args, "-screenshotDir");
             string dir = i >= 0 && i + 1 < args.Length ? args[i + 1] : Path.GetFullPath("../.tools/screens");
             Directory.CreateDirectory(dir);
+            bool uiOnly = System.Array.IndexOf(args, "-uiOnly") >= 0; // quick check of the menus only
 
             EditorSceneManager.OpenScene(GameConstants.Scenes.PathOf(GameConstants.Scenes.WarehouseMap));
             var views = new (string name, Vector3 position, Vector3 lookAt, float fov)[]
@@ -41,6 +42,7 @@ namespace WarehouseDuel.EditorTools.Testing
 
             foreach (var view in views)
             {
+                if (uiOnly) break;
                 bool topDown = view.name == "map_topdown";
                 GameObject roof = topDown ? GameObject.Find("Roof") : null;
                 if (roof != null) roof.SetActive(false);
@@ -48,9 +50,12 @@ namespace WarehouseDuel.EditorTools.Testing
                 if (roof != null) roof.SetActive(true);
             }
 
-            CaptureOutdoorMaps(dir);
-            CaptureWeapons(Path.Combine(dir, "weapons.png"));
-            CaptureFirstPerson(dir);
+            if (!uiOnly)
+            {
+                CaptureOutdoorMaps(dir);
+                CaptureWeapons(Path.Combine(dir, "weapons.png"));
+                CaptureFirstPerson(dir);
+            }
 
             // UI screens (canvases are switched to camera space so they appear in the render).
             string[] runtimeHidden = { "Online", "Join", "Busy", "Settings Panel", "Profile Panel", "Message Panel", "Death Panel",
@@ -114,10 +119,10 @@ namespace WarehouseDuel.EditorTools.Testing
             }
 
             // Showcase characters only get their weapon at runtime; equip it for the picture.
-            foreach (var animator in Object.FindObjectsByType<WarehouseDuel.Player.SoldierAnimator>(FindObjectsSortMode.None))
+            foreach (var animator in Object.FindObjectsByType<WarehouseWar.Player.SoldierAnimator>(FindObjectsSortMode.None))
             {
                 int weapon = new SerializedObject(animator).FindProperty("startWeapon").intValue;
-                typeof(WarehouseDuel.Player.SoldierAnimator).GetMethod("ShowWeapon", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                typeof(WarehouseWar.Player.SoldierAnimator).GetMethod("ShowWeapon", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
                     ?.Invoke(animator, new object[] { weapon });
             }
 
@@ -153,7 +158,7 @@ namespace WarehouseDuel.EditorTools.Testing
             cam.farClipPlane = 300f;
             cam.clearFlags = RenderSettings.skybox != null ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.1f, 0.12f, 0.16f);
-            WarehouseDuel.EditorTools.Map.AtmosphereKit.EnableCameraEffects(cam);
+            WarehouseWar.EditorTools.Map.AtmosphereKit.EnableCameraEffects(cam);
             Render(cam, path);
             Object.DestroyImmediate(go);
         }
@@ -163,7 +168,7 @@ namespace WarehouseDuel.EditorTools.Testing
         {
             var catalog = AssetDatabase.LoadAssetAtPath<WeaponCatalog>("Assets/ScriptableObjects/Weapons/WeaponCatalog.asset");
             var player = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Players/Player.prefab");
-            var rig = player != null ? player.GetComponentInChildren<WarehouseDuel.Player.PlayerCameraRig>(true) : null;
+            var rig = player != null ? player.GetComponentInChildren<WarehouseWar.Player.PlayerCameraRig>(true) : null;
             if (catalog == null || rig == null) return;
             var so = new SerializedObject(rig);
             float scale = so.FindProperty("viewModelScale").floatValue;
@@ -177,7 +182,7 @@ namespace WarehouseDuel.EditorTools.Testing
             cam.fieldOfView = 72f;
             cam.nearClipPlane = 0.03f;
             cam.farClipPlane = 300f;
-            WarehouseDuel.EditorTools.Map.AtmosphereKit.EnableCameraEffects(cam);
+            WarehouseWar.EditorTools.Map.AtmosphereKit.EnableCameraEffects(cam);
             var socket = new GameObject("Socket").transform;
             socket.SetParent(go.transform, false);
             socket.localPosition = hip;
@@ -190,7 +195,7 @@ namespace WarehouseDuel.EditorTools.Testing
                 model.transform.localScale = Vector3.one * scale;
                 model.transform.localPosition = def.viewModelOffset;
                 model.transform.localRotation = Quaternion.Euler(def.viewModelEuler);
-                WarehouseDuel.Player.PlayerCameraRig.AttachHands(model.transform, hands);
+                WarehouseWar.Player.PlayerCameraRig.AttachHands(model.transform, hands);
                 Render(cam, Path.Combine(dir, $"fp_{i}_{def.name}.png"));
                 Object.DestroyImmediate(model);
             }

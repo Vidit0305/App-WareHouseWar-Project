@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using UnityEditor;
-using WarehouseDuel.Core;
+using WarehouseWar.Core;
 
-namespace WarehouseDuel.EditorTools
+namespace WarehouseWar.EditorTools
 {
     /// <summary>
     /// Puts the game's scenes into the build list in the fixed order defined by

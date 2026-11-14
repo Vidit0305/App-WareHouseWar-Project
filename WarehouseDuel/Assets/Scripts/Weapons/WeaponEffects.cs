@@ -1,7 +1,7 @@
 using UnityEngine;
-using WarehouseDuel.Core;
+using WarehouseWar.Core;
 
-namespace WarehouseDuel.Weapons
+namespace WarehouseWar.Weapons
 {
     /// <summary>
     /// Pooled visual effects for the melee and explosive weapons (bullets keep using PlayerVisuals.OnImpact).

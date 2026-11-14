@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace WarehouseDuel.UI
+namespace WarehouseWar.UI
 {
     /// <summary>One table row (template cloned by <see cref="LeaderboardScreen"/>): text cells, an avatar and a background.</summary>
     public sealed class LeaderboardRow : MonoBehaviour

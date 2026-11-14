@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WarehouseDuel.Core
+namespace WarehouseWar.Core
 {
     /// <summary>
     /// Applies process-wide runtime settings once, before the first scene loads.

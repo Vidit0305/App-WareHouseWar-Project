@@ -2,14 +2,14 @@ using Fusion;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using WarehouseDuel.Audio;
-using WarehouseDuel.Core;
-using WarehouseDuel.Match;
-using WarehouseDuel.Multiplayer;
-using WarehouseDuel.Player;
-using WarehouseDuel.Weapons;
+using WarehouseWar.Audio;
+using WarehouseWar.Core;
+using WarehouseWar.Match;
+using WarehouseWar.Multiplayer;
+using WarehouseWar.Player;
+using WarehouseWar.Weapons;
 
-namespace WarehouseDuel.UI
+namespace WarehouseWar.UI
 {
     /// <summary>
     /// In-match HUD. Reads only replicated state (local character, its weapon, RoomState, MatchManager),
@@ -292,7 +292,7 @@ namespace WarehouseDuel.UI
             string message = string.Empty;
             if (match != null && match.Phase == MatchPhase.WaitingForPlayers)
             {
-                message = SessionService.Instance != null && SessionService.Instance.IsPractice ? "Get ready…" : "Waiting for opponent to load…";
+                message = SessionService.Instance != null && SessionService.Instance.IsPractice ? "Get ready…" : "Waiting for players to load…";
             }
             else if (me.IsAlive && me.IsProtected && match != null && match.Phase == MatchPhase.Playing)
             {

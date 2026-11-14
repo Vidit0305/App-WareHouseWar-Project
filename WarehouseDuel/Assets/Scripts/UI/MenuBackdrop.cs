@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WarehouseDuel.UI
+namespace WarehouseWar.UI
 {
     /// <summary>
     /// Animates the 3D warehouse diorama behind the menus: a slowly drifting camera and a rotating

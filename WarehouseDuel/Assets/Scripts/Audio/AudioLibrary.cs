@@ -1,12 +1,12 @@
 using UnityEngine;
 
-namespace WarehouseDuel.Audio
+namespace WarehouseWar.Audio
 {
     /// <summary>
     /// Shared non-weapon sounds (weapon sounds live on each WeaponDefinition).
     /// Stored at Assets/Resources/AudioLibrary.asset so the AudioManager can load it from any scene.
     /// </summary>
-    [CreateAssetMenu(menuName = "Warehouse Duel/Audio Library", fileName = "AudioLibrary")]
+    [CreateAssetMenu(menuName = "Warehouse War/Audio Library", fileName = "AudioLibrary")]
     public sealed class AudioLibrary : ScriptableObject
     {
         public const string ResourcePath = "AudioLibrary";

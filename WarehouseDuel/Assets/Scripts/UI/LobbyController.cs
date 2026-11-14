@@ -2,13 +2,13 @@ using Fusion;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using WarehouseDuel.Audio;
-using WarehouseDuel.Core;
-using WarehouseDuel.Multiplayer;
-using WarehouseDuel.Profile;
-using WarehouseDuel.Weapons;
+using WarehouseWar.Audio;
+using WarehouseWar.Core;
+using WarehouseWar.Multiplayer;
+using WarehouseWar.Profile;
+using WarehouseWar.Weapons;
 
-namespace WarehouseDuel.UI
+namespace WarehouseWar.UI
 {
     /// <summary>
     /// Room lobby, shown to both players: room code (+ copy), both player cards (name, connection,
@@ -45,12 +45,19 @@ namespace WarehouseDuel.UI
         [Header("Players")]
         [SerializeField] private PlayerCard[] cards = new PlayerCard[2];
 
-        [Header("Weapon selection")]
-        [SerializeField] private Button[] weaponButtons = new Button[4];
-        [SerializeField] private Image[] weaponButtonFrames = new Image[4];
-        [SerializeField] private TMP_Text weaponNameText;
-        [SerializeField] private TMP_Text weaponDescriptionText;
-        [SerializeField] private RectTransform[] statBars = new RectTransform[4]; // damage, fire rate, range, magazine
+        /// <summary>One of the three equipped weapons (set in the Armory), shown on the right.</summary>
+        [System.Serializable]
+        public struct LoadoutCard
+        {
+            public Button button;
+            public Image frame;
+            public Image icon;
+            public TMP_Text nameText;
+            public TMP_Text infoText;
+        }
+
+        [Header("Loadout (equipped in the Armory)")]
+        [SerializeField] private LoadoutCard[] loadoutCards = new LoadoutCard[3];
 
         [Header("Actions")]
         [SerializeField] private Button readyButton;
@@ -60,7 +67,7 @@ namespace WarehouseDuel.UI
         [SerializeField] private Button leaveButton;
 
         [Header("Showcase character")]
-        [SerializeField] private WarehouseDuel.Player.SoldierAnimator character;
+        [SerializeField] private WarehouseWar.Player.SoldierAnimator character;
         [SerializeField] private TMP_Text characterName;
 
         private static readonly Color Selected = new Color(1f, 0.69f, 0.13f, 0.6f);
@@ -74,7 +81,8 @@ namespace WarehouseDuel.UI
         };
 
         private SessionService session;
-        private int selectedWeapon;
+        private int[] loadout;
+        private int shownCard;
         private bool profileSent;
         private float copyFeedbackUntil;
 
@@ -88,17 +96,22 @@ namespace WarehouseDuel.UI
                 return;
             }
 
-            selectedWeapon = GameSettings.PreferredWeapon;
-            if (character != null && character.TryGetComponent(out WarehouseDuel.Player.SoldierLook look)) look.Apply(PlayerProfile.CharacterIndex);
-            for (int i = 0; i < weaponButtons.Length; i++)
+            loadout = GameSettings.Loadout;
+            if (character != null && character.TryGetComponent(out WarehouseWar.Player.SoldierLook look)) look.Apply(PlayerProfile.CharacterIndex);
+            for (int i = 0; i < loadoutCards.Length && i < loadout.Length; i++)
             {
-                int index = i;
-                weaponButtons[i].onClick.AddListener(() => SelectWeapon(index));
-                WeaponDefinition def = catalog.Get(i);
-                TMP_Text label = weaponButtons[i].GetComponentInChildren<TMP_Text>();
-                if (label != null && def != null) label.text = def.displayName.ToUpperInvariant();
-                Image icon = weaponButtons[i].transform.Find("Icon")?.GetComponent<Image>();
-                if (icon != null && def != null && def.icon != null) icon.sprite = def.icon;
+                int card = i;
+                LoadoutCard c = loadoutCards[i];
+                WeaponDefinition def = catalog.Get(loadout[i]);
+                if (c.button != null) c.button.onClick.AddListener(() => ShowCard(card));
+                if (def == null) continue;
+                if (c.nameText != null) c.nameText.text = def.displayName.ToUpperInvariant();
+                if (c.icon != null)
+                {
+                    c.icon.sprite = def.icon;
+                    c.icon.enabled = def.icon != null;
+                }
+                if (c.infoText != null) c.infoText.text = Describe(def);
             }
 
             copyCodeButton.onClick.AddListener(CopyCode);
@@ -107,7 +120,7 @@ namespace WarehouseDuel.UI
             leaveButton.onClick.AddListener(() => session.LeaveSession());
 
             RoomState.Changed += Refresh;
-            ShowWeapon(selectedWeapon);
+            ShowCard(0);
             Refresh();
 
             AudioManager.Instance.StopAmbience();
@@ -122,8 +135,9 @@ namespace WarehouseDuel.UI
             if (!profileSent && RoomState.Instance != null && RoomState.Instance.Object != null && RoomState.Instance.SlotOf(LocalPlayer) >= 0)
             {
                 profileSent = true;
-                RoomState.Instance.RequestProfile(GameSettings.PlayerName, (byte)selectedWeapon,
-                    (byte)PlayerProfile.AvatarIndex, (byte)PlayerProfile.BannerIndex, (byte)PlayerProfile.TitleIndex, (byte)PlayerProfile.Level, (byte)PlayerProfile.CharacterIndex);
+                RoomState.Instance.RequestProfile(GameSettings.PlayerName, (byte)loadout[0],
+                    (byte)PlayerProfile.AvatarIndex, (byte)PlayerProfile.BannerIndex, (byte)PlayerProfile.TitleIndex, (byte)PlayerProfile.Level, (byte)PlayerProfile.CharacterIndex,
+                    (byte)loadout[1], (byte)loadout[2]);
             }
 
             if (pingText != null && session != null)
@@ -223,41 +237,27 @@ namespace WarehouseDuel.UI
             card.readyText.text = slot.Ready ? "READY" : "NOT READY";
         }
 
-        private void SelectWeapon(int index)
+        /// <summary>Highlights loadout card <paramref name="card"/> and puts that weapon in the soldier's hands.</summary>
+        private void ShowCard(int card)
         {
-            selectedWeapon = index;
-            GameSettings.PreferredWeapon = index;
-            ShowWeapon(index);
-            if (RoomState.Instance != null && RoomState.Instance.Object != null) RoomState.Instance.RequestWeapon((byte)index);
-        }
-
-        private void ShowWeapon(int index)
-        {
-            for (int i = 0; i < weaponButtonFrames.Length; i++)
+            if (loadout == null || card < 0 || card >= loadout.Length) return;
+            shownCard = card;
+            for (int i = 0; i < loadoutCards.Length; i++)
             {
-                if (weaponButtonFrames[i] != null) weaponButtonFrames[i].color = i == index ? Selected : Unselected;
+                LoadoutCard c = loadoutCards[i];
+                bool active = i == shownCard;
+                if (c.frame != null) c.frame.color = active ? Selected : Unselected;
             }
-
-            if (character != null) character.SetWeapon(index);
-
-            WeaponDefinition def = catalog.Get(index);
-            if (def == null) return;
-            weaponNameText.text = def.displayName.ToUpperInvariant();
-            weaponDescriptionText.text = def.description;
-
-            // Normalised stats for the bars (damage per shot, fire rate, effective range, magazine).
-            SetBar(0, def.DisplayDamage / 100f);
-            SetBar(1, def.roundsPerMinute / 900f);
-            SetBar(2, def.DisplayRange / 60f);
-            SetBar(3, def.usesAmmo ? def.magazineSize / 32f : 1f);
+            if (character != null) character.SetWeapon(loadout[card]);
         }
 
-        private void SetBar(int index, float value)
+        /// <summary>Short stat line for a loadout card, e.g. "DMG 20 · 600 RPM · 30 RDS".</summary>
+        private static string Describe(WeaponDefinition def)
         {
-            if (index >= statBars.Length || statBars[index] == null) return;
-            Vector2 max = statBars[index].anchorMax;
-            max.x = Mathf.Clamp(value, 0.05f, 1f);
-            statBars[index].anchorMax = max;
+            string damage = def.pellets > 1 ? $"{def.damage:0}×{def.pellets}" : $"{def.DisplayDamage:0}";
+            string rate = def.IsMelee ? "MELEE" : $"{def.roundsPerMinute:0} RPM";
+            string ammo = def.usesAmmo ? $"{def.magazineSize} RDS" : "∞";
+            return $"DMG {damage}  ·  {rate}  ·  {ammo}";
         }
 
         private void ToggleReady()

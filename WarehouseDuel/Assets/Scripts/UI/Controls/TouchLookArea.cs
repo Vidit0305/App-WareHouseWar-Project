@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace WarehouseDuel.UI.Controls
+namespace WarehouseWar.UI.Controls
 {
     /// <summary>
     /// Transparent drag zone for camera look. Accumulates finger movement (screen pixels) between reads.

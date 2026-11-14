@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace WarehouseDuel.UI.Widgets
+namespace WarehouseWar.UI.Widgets
 {
     /// <summary>
     /// "◀ value ▶" selector — a touch-friendly replacement for dropdowns (quality level, frame-rate cap, layout).

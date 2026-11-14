@@ -3,9 +3,9 @@ using System.IO;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEngine;
-using WarehouseDuel.Core;
+using WarehouseWar.Core;
 
-namespace WarehouseDuel.EditorTools
+namespace WarehouseWar.EditorTools
 {
     /// <summary>
     /// Applies editor + player settings for an Android landscape multiplayer game.
@@ -15,7 +15,7 @@ namespace WarehouseDuel.EditorTools
     internal static class PlayerSettingsConfigurator
     {
         // PLACEHOLDER identity — change before publishing. The bundle id must be unique on Google Play / App Store.
-        public const string DefaultCompanyName = "WarehouseDuelStudio";
+        public const string DefaultCompanyName = "WarehouseWarStudio";
         public const string DefaultBundleIdentifier = "com.warehouseduelstudio.warehouseduel";
 
         public const int MinimumAndroidApiLevel = 26; // Android 8.0
@@ -59,7 +59,7 @@ namespace WarehouseDuel.EditorTools
 
             string projectFolderName = new DirectoryInfo(Application.dataPath).Parent?.Name ?? string.Empty;
             if (PlayerSettings.productName == projectFolderName || PlayerSettings.productName == "My project"
-                || PlayerSettings.productName.Contains("template"))
+                || PlayerSettings.productName.Contains("template") || PlayerSettings.productName.Contains("Duel"))
             {
                 PlayerSettings.productName = GameConstants.GameTitle;
                 report.Pass($"Product Name set to '{GameConstants.GameTitle}'.");

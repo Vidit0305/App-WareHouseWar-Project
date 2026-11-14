@@ -1,10 +1,10 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using WarehouseDuel.Player;
-using WarehouseDuel.Profile;
+using WarehouseWar.Player;
+using WarehouseWar.Profile;
 
-namespace WarehouseDuel.UI
+namespace WarehouseWar.UI
 {
     /// <summary>
     /// Wardrobe: a card per costume (character) on the left, details on the right; the menu soldier in the middle

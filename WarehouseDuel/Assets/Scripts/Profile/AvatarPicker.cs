@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using UnityEngine;
 
-namespace WarehouseDuel.Profile
+namespace WarehouseWar.Profile
 {
     /// <summary>
     /// Lets the player choose a profile photo from the device.

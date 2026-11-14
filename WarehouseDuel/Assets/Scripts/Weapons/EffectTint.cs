@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WarehouseDuel.Weapons
+namespace WarehouseWar.Weapons
 {
     /// <summary>
     /// Recolours a pooled particle effect (the muzzle flash) per weapon without allocating:

@@ -1,10 +1,10 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
-using WarehouseDuel.EditorTools.Audio;
-using WarehouseDuel.Weapons;
+using WarehouseWar.EditorTools.Audio;
+using WarehouseWar.Weapons;
 
-namespace WarehouseDuel.EditorTools.Weapons
+namespace WarehouseWar.EditorTools.Weapons
 {
     /// <summary>
     /// Builds the eight low-poly weapon models (prefabs), their WeaponDefinition assets with balanced stats,

@@ -64,7 +64,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c33ca5f106ab93444b75426b95739481, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::WarehouseDuel.Multiplayer.RoomState
+  m_EditorClassIdentifier: Assembly-CSharp::WarehouseWar.Multiplayer.RoomState
   _Revision: 0
   _MapChoice: 0
   _QuickPlay:

@@ -4,10 +4,10 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using WarehouseDuel.UI.Widgets;
+using WarehouseWar.UI.Widgets;
 using Object = UnityEngine.Object;
 
-namespace WarehouseDuel.EditorTools.UI
+namespace WarehouseWar.EditorTools.UI
 {
     /// <summary>
     /// Builds uGUI widgets in the game's visual style (dark glass panels, amber accent, Russo One headings).

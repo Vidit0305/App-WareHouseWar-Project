@@ -1,10 +1,10 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using WarehouseDuel.Core;
-using WarehouseDuel.UI.Widgets;
+using WarehouseWar.Core;
+using WarehouseWar.UI.Widgets;
 
-namespace WarehouseDuel.UI
+namespace WarehouseWar.UI
 {
     /// <summary>
     /// Settings screen (main menu and in-match pause): music/SFX volume, camera and aim sensitivity,

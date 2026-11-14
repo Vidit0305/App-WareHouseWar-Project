@@ -2,9 +2,9 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
-using WarehouseDuel.Core;
+using WarehouseWar.Core;
 
-namespace WarehouseDuel.EditorTools.Effects
+namespace WarehouseWar.EditorTools.Effects
 {
     /// <summary>
     /// Generates the effect textures, materials and pooled particle prefabs:
@@ -40,11 +40,11 @@ namespace WarehouseDuel.EditorTools.Effects
             Texture2D hole = BulletHoleTexture("T_BulletHole", 64);
             Texture2D scorch = ScorchTexture("T_Scorch", 128);
 
-            Material additiveGlow = MaterialFor("M_FX_Glow", "WarehouseDuel/Additive Unlit", glow, Color.white);
-            Material additiveStar = MaterialFor("M_FX_FlashStar", "WarehouseDuel/Additive Unlit", star, Color.white);
-            Material smokeMaterial = MaterialFor("M_FX_Smoke", "WarehouseDuel/Alpha Unlit", smoke, Color.white);
-            Material holeMaterial = MaterialFor("M_FX_BulletHole", "WarehouseDuel/Alpha Unlit", hole, Color.white);
-            Material scorchMaterial = MaterialFor("M_FX_Scorch", "WarehouseDuel/Alpha Unlit", scorch, Color.white);
+            Material additiveGlow = MaterialFor("M_FX_Glow", "WarehouseWar/Additive Unlit", glow, Color.white);
+            Material additiveStar = MaterialFor("M_FX_FlashStar", "WarehouseWar/Additive Unlit", star, Color.white);
+            Material smokeMaterial = MaterialFor("M_FX_Smoke", "WarehouseWar/Alpha Unlit", smoke, Color.white);
+            Material holeMaterial = MaterialFor("M_FX_BulletHole", "WarehouseWar/Alpha Unlit", hole, Color.white);
+            Material scorchMaterial = MaterialFor("M_FX_Scorch", "WarehouseWar/Alpha Unlit", scorch, Color.white);
 
             Save("FX_MuzzleFlash", BuildMuzzleFlash(additiveStar, additiveGlow), 0.12f);
             Save("FX_ImpactEnvironment", BuildImpact(additiveGlow, smokeMaterial, new Color(1f, 0.75f, 0.35f), new Color(0.55f, 0.52f, 0.48f, 0.6f)), 0.8f);
@@ -119,7 +119,7 @@ namespace WarehouseDuel.EditorTools.Effects
             shape.angle = 12f;
             shape.radius = 0.01f;
             Stretch(sparks, 0.08f);
-            root.AddComponent<WarehouseDuel.Weapons.EffectTint>();
+            root.AddComponent<WarehouseWar.Weapons.EffectTint>();
             return root;
         }
 
@@ -327,7 +327,7 @@ namespace WarehouseDuel.EditorTools.Effects
         }
 
         /// <summary>
-        /// Smoke trail for the instant rocket. Nothing is emitted on spawn: <see cref="WarehouseDuel.Weapons.RocketTrail"/>
+        /// Smoke trail for the instant rocket. Nothing is emitted on spawn: <see cref="WarehouseWar.Weapons.RocketTrail"/>
         /// places puffs along the muzzle-to-impact line (EmitParams carry position, size and lifetime).
         /// </summary>
         private static GameObject BuildRocketTrail(Material smoke, Material glow)
@@ -358,7 +358,7 @@ namespace WarehouseDuel.EditorTools.Effects
             shape.enabled = false;
             FadeAndGrow(streak, 0.4f);
 
-            root.AddComponent<WarehouseDuel.Weapons.RocketTrail>().Configure(puffs, streak);
+            root.AddComponent<WarehouseWar.Weapons.RocketTrail>().Configure(puffs, streak);
             return root;
         }
 

@@ -6,15 +6,15 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
-using WarehouseDuel.Core;
-using WarehouseDuel.Multiplayer;
-using WarehouseDuel.UI;
-using WarehouseDuel.UI.Controls;
-using WarehouseDuel.UI.Widgets;
-using WarehouseDuel.Weapons;
-using static WarehouseDuel.EditorTools.UI.UiFactory;
+using WarehouseWar.Core;
+using WarehouseWar.Multiplayer;
+using WarehouseWar.UI;
+using WarehouseWar.UI.Controls;
+using WarehouseWar.UI.Widgets;
+using WarehouseWar.Weapons;
+using static WarehouseWar.EditorTools.UI.UiFactory;
 
-namespace WarehouseDuel.EditorTools.UI
+namespace WarehouseWar.EditorTools.UI
 {
     /// <summary>
     /// Adds the in-match UI to every map scene: HUD, touch controls, pause menu and results screen.
@@ -40,7 +40,7 @@ namespace WarehouseDuel.EditorTools.UI
         }
 
         private static WeaponCatalog LoadCatalog() =>
-            AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseDuel.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
+            AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseWar.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
 
         private static void BuildInto(SetupReport report, string mapName)
         {
@@ -107,7 +107,7 @@ namespace WarehouseDuel.EditorTools.UI
             Place(healthPanel.rectTransform, new Vector2(0f, 1f), new Vector2(28f, -22f), new Vector2(500f, 96f), new Vector2(0f, 1f));
             Image avatarRing = CreateImage("Avatar Ring", healthPanel.transform, new Color(0.25f, 0.6f, 1f), UiArt.Circle);
             Place(avatarRing.rectTransform, new Vector2(0f, 0.5f), new Vector2(8f, 0f), new Vector2(84f, 84f), new Vector2(0f, 0.5f));
-            var profiles = AssetDatabase.LoadAssetAtPath<WarehouseDuel.Profile.ProfileCatalog>(ProfileArtBuilder.CatalogPath);
+            var profiles = AssetDatabase.LoadAssetAtPath<WarehouseWar.Profile.ProfileCatalog>(ProfileArtBuilder.CatalogPath);
             Image avatar = MenuScreensBuilder.Masked(avatarRing.transform, "Avatar", UiArt.Circle, profiles != null ? profiles.Avatar(0) : UiArt.Avatar, out RectTransform avatarMask);
             Stretch(avatarMask, 5f, 5f, 5f, 5f);
             Wire(avatarRing.gameObject.AddComponent<ProfileCard>(), "avatar", avatar); // shows the player's chosen avatar

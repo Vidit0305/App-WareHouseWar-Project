@@ -2,10 +2,10 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
-using WarehouseDuel.Core;
-using Id = WarehouseDuel.EditorTools.Map.EnvironmentPalette.Id;
+using WarehouseWar.Core;
+using Id = WarehouseWar.EditorTools.Map.EnvironmentPalette.Id;
 
-namespace WarehouseDuel.EditorTools.Map
+namespace WarehouseWar.EditorTools.Map
 {
     internal enum Piece
     {

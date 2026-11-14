@@ -1,12 +1,12 @@
 using UnityEngine;
 
-namespace WarehouseDuel.Match
+namespace WarehouseWar.Match
 {
     /// <summary>
     /// Match tuning shared by host and client. Lives in Assets/ScriptableObjects/GameSettings/MatchRules.asset.
     /// Only the host's values matter for outcomes; clients use them for display.
     /// </summary>
-    [CreateAssetMenu(menuName = "Warehouse Duel/Match Rules", fileName = "MatchRules")]
+    [CreateAssetMenu(menuName = "Warehouse War/Match Rules", fileName = "MatchRules")]
     public sealed class MatchRules : ScriptableObject
     {
         [Header("Timing")]

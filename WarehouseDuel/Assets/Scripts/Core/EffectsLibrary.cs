@@ -1,9 +1,9 @@
 using UnityEngine;
 
-namespace WarehouseDuel.Core
+namespace WarehouseWar.Core
 {
     /// <summary>Pooled effect prefabs, stored at Assets/Resources/EffectsLibrary.asset.</summary>
-    [CreateAssetMenu(menuName = "Warehouse Duel/Effects Library", fileName = "EffectsLibrary")]
+    [CreateAssetMenu(menuName = "Warehouse War/Effects Library", fileName = "EffectsLibrary")]
     public sealed class EffectsLibrary : ScriptableObject
     {
         public const string ResourcePath = "EffectsLibrary";

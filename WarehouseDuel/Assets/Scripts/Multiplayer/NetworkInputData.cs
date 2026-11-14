@@ -1,7 +1,7 @@
 using Fusion;
 using UnityEngine;
 
-namespace WarehouseDuel.Multiplayer
+namespace WarehouseWar.Multiplayer
 {
     public enum InputButton
     {

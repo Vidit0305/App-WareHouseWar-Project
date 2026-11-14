@@ -2,17 +2,17 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using WarehouseDuel.EditorTools.UI;
-using WarehouseDuel.UI.Controls;
+using WarehouseWar.EditorTools.UI;
+using WarehouseWar.UI.Controls;
 
-namespace WarehouseDuel.EditorTools.Testing
+namespace WarehouseWar.EditorTools.Testing
 {
     /// <summary>
     /// Automated check of the touch controls, built with the real HUD builder:
     ///  - no two buttons (or a button and the joystick) overlap,
     ///  - the joystick appears under the thumb, reports the drag direction, honours the dead zone and resets,
     ///  - the same holds in the mirrored (left-handed) layout.
-    ///   Unity.exe -batchmode -nographics -projectPath WarehouseDuel -executeMethod WarehouseDuel.EditorTools.Testing.ControlsSelfTest.RunBatch
+    ///   Unity.exe -batchmode -nographics -projectPath WarehouseWar -executeMethod WarehouseWar.EditorTools.Testing.ControlsSelfTest.RunBatch
     /// </summary>
     public static class ControlsSelfTest
     {

@@ -1,4 +1,4 @@
-namespace WarehouseDuel.Core
+namespace WarehouseWar.Core
 {
     /// <summary>
     /// Project-wide structural identifiers (scene names, layers, PlayerPrefs keys).
@@ -8,7 +8,7 @@ namespace WarehouseDuel.Core
     public static class GameConstants
     {
         /// <summary>Display name used for the product name and title screens. Change it here to rebrand.</summary>
-        public const string GameTitle = "Warehouse Duel";
+        public const string GameTitle = "Warehouse War";
 
         public static class Scenes
         {

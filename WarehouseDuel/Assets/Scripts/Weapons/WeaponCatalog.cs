@@ -1,13 +1,13 @@
 using UnityEngine;
 
-namespace WarehouseDuel.Weapons
+namespace WarehouseWar.Weapons
 {
     /// <summary>
     /// Ordered list of the weapons available in a match. The index in this list is what goes over the
     /// network (one byte), so host and client builds must share the same catalog order.
     /// Order: 0 Rifle, 1 SMG, 2 Shotgun, 3 Pistol, 4 Sniper, 5 Machine Gun, 6 Knife, 7 RPG.
     /// </summary>
-    [CreateAssetMenu(menuName = "Warehouse Duel/Weapon Catalog", fileName = "WeaponCatalog")]
+    [CreateAssetMenu(menuName = "Warehouse War/Weapon Catalog", fileName = "WeaponCatalog")]
     public sealed class WeaponCatalog : ScriptableObject
     {
         public const int MaxWeapons = 8;

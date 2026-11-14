@@ -1,7 +1,7 @@
 using UnityEditor;
-using WarehouseDuel.Core;
+using WarehouseWar.Core;
 
-namespace WarehouseDuel.EditorTools
+namespace WarehouseWar.EditorTools
 {
     /// <summary>Writes the project's named layers into ProjectSettings/TagManager.asset.</summary>
     internal static class LayerConfigurator

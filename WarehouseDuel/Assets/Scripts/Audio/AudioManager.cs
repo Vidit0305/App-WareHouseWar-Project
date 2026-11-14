@@ -1,7 +1,7 @@
 using UnityEngine;
-using WarehouseDuel.Core;
+using WarehouseWar.Core;
 
-namespace WarehouseDuel.Audio
+namespace WarehouseWar.Audio
 {
     /// <summary>
     /// Process-wide audio service: one music source, one ambience source and a fixed pool of
@@ -42,7 +42,7 @@ namespace WarehouseDuel.Audio
         {
             instance = this;
             Library = Resources.Load<AudioLibrary>(AudioLibrary.ResourcePath);
-            if (Library == null) Debug.LogWarning("[Audio] AudioLibrary not found in Resources. Run Tools > Warehouse Duel > Generate Audio.");
+            if (Library == null) Debug.LogWarning("[Audio] AudioLibrary not found in Resources. Run Tools > Warehouse War > Generate Audio.");
 
             music = CreateSource("Music", loop: true);
             ambience = CreateSource("Ambience", loop: true);

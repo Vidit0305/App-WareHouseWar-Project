@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace WarehouseDuel.Core
+namespace WarehouseWar.Core
 {
     /// <summary>
     /// Pools short-lived effect prefabs (muzzle flashes, impacts, decals) so a match never calls

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 
-namespace WarehouseDuel.EditorTools
+namespace WarehouseWar.EditorTools
 {
     /// <summary>Creates the agreed project folder layout (idempotent — existing folders are left alone).</summary>
     internal static class FolderStructure

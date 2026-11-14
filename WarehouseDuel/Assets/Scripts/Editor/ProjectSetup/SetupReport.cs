@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-namespace WarehouseDuel.EditorTools
+namespace WarehouseWar.EditorTools
 {
     /// <summary>
     /// Collects results from setup/validation steps and prints one readable summary to the Console.
@@ -38,7 +38,7 @@ namespace WarehouseDuel.EditorTools
         public void PrintToConsole(string title)
         {
             var sb = new StringBuilder();
-            sb.AppendLine($"[Warehouse Duel] {title}: {Summary}");
+            sb.AppendLine($"[Warehouse War] {title}: {Summary}");
             foreach (var (severity, message) in entries)
             {
                 sb.Append("  ").Append(Tag(severity)).Append(' ').AppendLine(message);

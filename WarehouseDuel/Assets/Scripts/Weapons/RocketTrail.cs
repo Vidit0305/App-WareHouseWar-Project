@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WarehouseDuel.Weapons
+namespace WarehouseWar.Weapons
 {
     /// <summary>
     /// Pooled smoke trail for the (instant) rocket: emits smoke puffs and a short hot streak along the

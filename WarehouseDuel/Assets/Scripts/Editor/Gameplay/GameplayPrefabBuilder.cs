@@ -3,14 +3,14 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
-using WarehouseDuel.Core;
-using WarehouseDuel.EditorTools.UI;
-using WarehouseDuel.Match;
-using WarehouseDuel.Multiplayer;
-using WarehouseDuel.Player;
-using WarehouseDuel.Weapons;
+using WarehouseWar.Core;
+using WarehouseWar.EditorTools.UI;
+using WarehouseWar.Match;
+using WarehouseWar.Multiplayer;
+using WarehouseWar.Player;
+using WarehouseWar.Weapons;
 
-namespace WarehouseDuel.EditorTools.Gameplay
+namespace WarehouseWar.EditorTools.Gameplay
 {
     /// <summary>
     /// Generates the networked prefabs: Player (character + hitboxes + body + camera rig), RoomState,
@@ -139,7 +139,7 @@ namespace WarehouseDuel.EditorTools.Gameplay
             cam.farClipPlane = 120f;
             cam.fieldOfView = 72f;
             cameraObject.AddComponent<AudioListener>();
-            WarehouseDuel.EditorTools.Map.AtmosphereKit.EnableCameraEffects(cam); // post-processing + FXAA (switchable in Settings)
+            WarehouseWar.EditorTools.Map.AtmosphereKit.EnableCameraEffects(cam); // post-processing + FXAA (switchable in Settings)
             Transform viewSocket = Child(cameraObject.transform, "ViewModelSocket", new Vector3(0.13f, -0.13f, 0.2f));
             UiFactory.Wire(rig, "playerCamera", cam);
             UiFactory.Wire(rig, "viewModelSocket", viewSocket);
@@ -206,7 +206,7 @@ namespace WarehouseDuel.EditorTools.Gameplay
             var material = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (material == null)
             {
-                material = new Material(Shader.Find("WarehouseDuel/Additive Unlit"));
+                material = new Material(Shader.Find("WarehouseWar/Additive Unlit"));
                 AssetDatabase.CreateAsset(material, path);
             }
             material.SetColor("_BaseColor", new Color(0.25f, 0.6f, 1f, 0.22f));

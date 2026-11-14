@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace WarehouseDuel.UI.Widgets
+namespace WarehouseWar.UI.Widgets
 {
     /// <summary>Pill-shaped on/off switch: slides the knob and tints the track to follow its Toggle.</summary>
     [RequireComponent(typeof(Toggle))]

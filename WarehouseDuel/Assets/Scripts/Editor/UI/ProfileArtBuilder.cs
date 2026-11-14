@@ -4,11 +4,11 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
-using WarehouseDuel.EditorTools.Gameplay;
-using WarehouseDuel.Profile;
-using WarehouseDuel.Weapons;
+using WarehouseWar.EditorTools.Gameplay;
+using WarehouseWar.Profile;
+using WarehouseWar.Weapons;
 
-namespace WarehouseDuel.EditorTools.UI
+namespace WarehouseWar.EditorTools.UI
 {
     /// <summary>
     /// Generates the profile art and stores it in Resources/ProfileCatalog:
@@ -68,6 +68,14 @@ namespace WarehouseDuel.EditorTools.UI
             new AvatarStyle { gear = Gear.Boonie, team = Tan, camo = Desert, skin = SkinMedium, accent = Tan, mask = true, backdrop = Backdrop.DesertStorm, weapon = 0, yaw = 10f },
             new AvatarStyle { gear = Gear.GasMask, team = Black, camo = Woodland, skin = SkinDark, accent = new Color(1f, 0.55f, 0.2f), backdrop = Backdrop.SteelStorm, weapon = 1, yaw = -13f },
             new AvatarStyle { gear = Gear.Helmet, team = Black, camo = Night, skin = SkinDark, accent = new Color(1f, 0.3f, 0.2f), facePaint = true, backdrop = Backdrop.Inferno, weapon = 0, yaw = 11f },
+            new AvatarStyle { gear = Gear.Boonie, team = Olive, camo = Woodland, skin = SkinLight, accent = Green, facePaint = true, backdrop = Backdrop.SteelStorm, weapon = 4, yaw = -12f },
+            new AvatarStyle { gear = Gear.Helmet, team = Tan, camo = Desert, skin = SkinDark, accent = new Color(1f, 0.6f, 0.2f), mask = true, backdrop = Backdrop.DesertStorm, weapon = 5, yaw = 13f },
+            new AvatarStyle { gear = Gear.Balaclava, team = Black, camo = Night, skin = SkinMedium, accent = new Color(0.6f, 0.3f, 1f), backdrop = Backdrop.NightOps, weapon = 6, yaw = -14f },
+            new AvatarStyle { gear = Gear.Headset, team = Red, camo = Urban, skin = SkinLight, accent = Red, backdrop = Backdrop.Inferno, weapon = 7, yaw = 12f },
+            new AvatarStyle { gear = Gear.Beret, team = Green, camo = Woodland, skin = SkinDark, accent = Green, backdrop = Backdrop.SunsetFire, weapon = 4, yaw = 10f },
+            new AvatarStyle { gear = Gear.NightVision, team = Blue, camo = Snow, skin = SkinLight, accent = Blue, mask = true, backdrop = Backdrop.Arctic, weapon = 5, yaw = -11f },
+            new AvatarStyle { gear = Gear.GasMask, team = Orange, camo = Desert, skin = SkinMedium, accent = Orange, backdrop = Backdrop.SteelStorm, weapon = 7, yaw = 14f },
+            new AvatarStyle { gear = Gear.Bandana, team = Maroon, camo = Urban, skin = SkinDark, accent = new Color(1f, 0.75f, 0.2f), facePaint = true, backdrop = Backdrop.NightOps, weapon = 2, yaw = -13f },
         };
 
         public static void Build(SetupReport report)
@@ -78,7 +86,7 @@ namespace WarehouseDuel.EditorTools.UI
             ClearFolder(AvatarFolder);
             ClearFolder(BannerFolder);
 
-            WeaponCatalog weapons = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseDuel.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
+            WeaponCatalog weapons = AssetDatabase.LoadAssetAtPath<WeaponCatalog>(WarehouseWar.EditorTools.Weapons.WeaponAssetBuilder.CatalogPath);
 
             var avatars = new List<Sprite>();
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);

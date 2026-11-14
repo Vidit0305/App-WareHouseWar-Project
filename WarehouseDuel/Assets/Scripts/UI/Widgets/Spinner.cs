@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WarehouseDuel.UI.Widgets
+namespace WarehouseWar.UI.Widgets
 {
     /// <summary>Loading spinner: an outer arc and a counter-rotating inner arc around a pulsing core.</summary>
     public sealed class Spinner : MonoBehaviour

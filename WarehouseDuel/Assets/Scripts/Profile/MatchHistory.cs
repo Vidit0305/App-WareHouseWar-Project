@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
-namespace WarehouseDuel.Profile
+namespace WarehouseWar.Profile
 {
     /// <summary>
     /// Online matches played on this device (JSON in persistentDataPath, newest last, capped).

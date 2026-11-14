@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace WarehouseDuel.EditorTools.Gameplay
+namespace WarehouseWar.EditorTools.Gameplay
 {
     /// <summary>
     /// Builds the blocky "voxel" soldier (green camo helmet, blue goggles, black face mask, camo uniform,
@@ -21,7 +21,7 @@ namespace WarehouseDuel.EditorTools.Gameplay
             public Transform Root, Hips, LegL, LegR, Spine, Head, ArmsRig, ShoulderL, ShoulderR, WeaponSocket;
             /// <summary>Standard helmet (with goggles and team band) and lower face mask; characters can hide them.</summary>
             public Transform Helmet, FaceMask;
-            public WarehouseDuel.Player.SoldierLook Look;
+            public WarehouseWar.Player.SoldierLook Look;
             public readonly List<Renderer> TeamColored = new List<Renderer>();
         }
 
@@ -78,7 +78,7 @@ namespace WarehouseDuel.EditorTools.Gameplay
         }
 
         /// <summary>
-        /// Adds <see cref="WarehouseDuel.Player.SoldierLook"/>: records which renderers use which base material slot,
+        /// Adds <see cref="WarehouseWar.Player.SoldierLook"/>: records which renderers use which base material slot,
         /// then builds every character's accessories (inactive) so any soldier can be dressed as any character.
         /// </summary>
         private static void AddLook(Rig rig)
@@ -87,7 +87,7 @@ namespace WarehouseDuel.EditorTools.Gameplay
             var slots = new List<int>();
             foreach (Renderer r in rig.Root.GetComponentsInChildren<Renderer>(true))
             {
-                int slot = System.Array.IndexOf(WarehouseDuel.Profile.CharacterCatalog.BaseMaterialNames, r.sharedMaterial != null ? r.sharedMaterial.name : "");
+                int slot = System.Array.IndexOf(WarehouseWar.Profile.CharacterCatalog.BaseMaterialNames, r.sharedMaterial != null ? r.sharedMaterial.name : "");
                 if (slot < 0) continue;
                 slotRenderers.Add(r);
                 slots.Add(slot);
@@ -95,14 +95,14 @@ namespace WarehouseDuel.EditorTools.Gameplay
 
             var accessories = new List<Object>();
             var owners = new List<int>();
-            foreach ((GameObject piece, int character) in WarehouseDuel.EditorTools.Gameplay.CharacterBuilder.BuildAccessories(rig))
+            foreach ((GameObject piece, int character) in WarehouseWar.EditorTools.Gameplay.CharacterBuilder.BuildAccessories(rig))
             {
                 piece.SetActive(false);
                 accessories.Add(piece);
                 owners.Add(character);
             }
 
-            rig.Look = rig.Root.gameObject.AddComponent<WarehouseDuel.Player.SoldierLook>();
+            rig.Look = rig.Root.gameObject.AddComponent<WarehouseWar.Player.SoldierLook>();
             var so = new SerializedObject(rig.Look);
             SetArray(so.FindProperty("slotRenderers"), slotRenderers);
             SerializedProperty slotProperty = so.FindProperty("rendererSlots");

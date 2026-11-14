@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace WarehouseDuel.Environment
+namespace WarehouseWar.Environment
 {
     /// <summary>
     /// Describes the playable volume of the map. The authoritative player code uses it as a safety net:

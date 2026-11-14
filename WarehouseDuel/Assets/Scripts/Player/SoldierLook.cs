@@ -1,8 +1,8 @@
 using System;
 using UnityEngine;
-using WarehouseDuel.Profile;
+using WarehouseWar.Profile;
 
-namespace WarehouseDuel.Player
+namespace WarehouseWar.Player
 {
     /// <summary>
     /// Dresses a soldier model as one of the characters in <see cref="CharacterCatalog"/>: swaps the uniform,

@@ -1,9 +1,9 @@
 using System.IO;
 using UnityEditor;
 using UnityEngine;
-using WarehouseDuel.Weapons;
+using WarehouseWar.Weapons;
 
-namespace WarehouseDuel.EditorTools.UI
+namespace WarehouseWar.EditorTools.UI
 {
     /// <summary>
     /// Procedural profile banners (640×160): camo and colour themes plus battlefield scenes — crossed rifles,
@@ -18,6 +18,7 @@ namespace WarehouseDuel.EditorTools.UI
         {
             "Steel", "Hazard", "Woodland", "Desert", "Sunset", "Arctic", "Inferno", "Neon",
             "Crossfire", "Ammo Belt", "Airstrike", "Sniper", "Tank Column", "Dog Tags", "Barbed Wire", "Skull Squad",
+            "Ocean", "Jungle", "Crimson", "Midnight", "Gold Rush", "Toxic", "Thunder", "Royal",
         };
 
         private static Texture2D rifle;
@@ -90,6 +91,44 @@ namespace WarehouseDuel.EditorTools.UI
                 case 12: return TankColumn(p, u, v);
                 case 13: return DogTags(p, u, v);
                 case 14: return BarbedWire(p, u, v);
+                case 16: return Camo(x, y, 13, Hex(0x1E3F66), Hex(0x2D5E8C), Hex(0x4C83B4), Hex(0x14294A));
+                case 17: return Camo(x, y, 17, Hex(0x1F4A1C), Hex(0x2F6B26), Hex(0x4E8A34), Hex(0x18301A));
+                case 18: return Camo(x, y, 19, Hex(0x6A1014), Hex(0x8F1A1E), Hex(0xB7342E), Hex(0x3A080C));
+                case 19: // Midnight: starry night sky
+                {
+                    Color c = Sky(v, Hex(0x05060F), Hex(0x111A3A), Hex(0x24305E));
+                    float star = Hash(x * 7 + 3, y * 13 + 1) > 0.996f ? 1f : 0f;
+                    float moon = Mathf.Clamp01(1f - (new Vector2((u - 0.82f) * 4f, v - 0.62f).magnitude - 0.2f) * 30f);
+                    return c + new Color(star, star, star * 0.9f, 0f) * 0.8f + new Color(0.95f, 0.93f, 0.8f, 0f) * moon;
+                }
+                case 20: // Gold Rush: brushed gold with a sheen
+                {
+                    Color c = Color.Lerp(Hex(0x7A5512), Hex(0xD9A62E), u * 0.6f + v * 0.4f);
+                    c *= 0.9f + 0.1f * Hash(0, y);
+                    float sheen = Mathf.Exp(-Mathf.Pow((u - v * 0.4f - 0.5f) * 6f, 2f));
+                    return Color.Lerp(c, Hex(0xFFF0B0), sheen * 0.55f);
+                }
+                case 21: // Toxic: green and black hazard stripes
+                {
+                    bool green = Mathf.Repeat((x - y) / 40f, 1f) < 0.5f;
+                    return (green ? Hex(0x7CE01E) : Hex(0x101410)) * (0.85f + 0.15f * Noise(x * 0.05f, y * 0.05f));
+                }
+                case 22: // Thunder: storm clouds with a lightning bolt
+                {
+                    float n = Noise(x * 0.012f, y * 0.03f) * 0.7f + Noise(x * 0.04f, y * 0.08f) * 0.3f;
+                    Color c = Color.Lerp(Hex(0x1A1E2A), Hex(0x4A5266), n * (0.6f + v * 0.6f));
+                    float boltX = 0.62f + Mathf.Sin(v * 21f) * 0.03f + (v < 0.5f ? (0.5f - v) * 0.08f : 0f);
+                    float bolt = Mathf.Clamp01(1f - Mathf.Abs(u - boltX) * Width / 3f);
+                    float glow = Mathf.Exp(-Mathf.Abs(u - boltX) * 18f) * 0.35f;
+                    return c + new Color(0.75f, 0.85f, 1f, 0f) * (bolt + glow);
+                }
+                case 23: // Royal: deep purple with gold trim
+                {
+                    Color c = Color.Lerp(Hex(0x2A0E4A), Hex(0x5B1F8C), u * 0.5f + v * 0.5f);
+                    float trim = (y < 8 || y > Height - 9) ? 1f : 0f;
+                    float diamond = Mathf.Repeat((x + y) / 64f, 1f) < 0.04f || Mathf.Repeat((x - y) / 64f, 1f) < 0.04f ? 0.18f : 0f;
+                    return Color.Lerp(c + new Color(diamond, diamond * 0.8f, diamond * 0.3f, 0f), Hex(0xE8B640), trim);
+                }
                 default: return SkullSquad(p, u, v);
             }
         }
