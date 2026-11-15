@@ -109,7 +109,7 @@ namespace WarehouseWar.UI
 
         private void OnDisable() => PlayerProfile.Changed -= Refresh;
 
-        private const string DefaultHint = "Your photo stays on this phone. Opponents see your last chosen preset avatar.";
+        private const string DefaultHint = "";
 
         private void SelectTab(int index)
         {

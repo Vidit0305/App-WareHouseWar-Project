@@ -36,6 +36,17 @@ namespace WarehouseWar.Profile
             new TitleInfo { name = "Untouchable", requirement = "Win a match without dying", unlocked = () => MatchHistory.HasFlawlessWin },
             new TitleInfo { name = "On Fire", requirement = "Win 3 matches in a row", unlocked = () => MatchHistory.BestWinStreak >= 3 },
             new TitleInfo { name = "Warehouse Boss", requirement = "Win 25 online matches", unlocked = () => GameSettings.MatchesWon >= 25 },
+            // Appended only: indices are saved in PlayerPrefs and sent over the network (max 32 titles).
+            new TitleInfo { name = "Recruit", requirement = "Play your first online match", unlocked = () => GameSettings.MatchesPlayed >= 1 },
+            new TitleInfo { name = "First Blood", requirement = "Get your first elimination", unlocked = () => GameSettings.TotalKills >= 1 },
+            new TitleInfo { name = "Headhunter", requirement = "Get 10 eliminations in one match", unlocked = () => MatchHistory.BestKills >= 10 },
+            new TitleInfo { name = "Commander", requirement = "Reach level 10", unlocked = () => Level >= 10 },
+            new TitleInfo { name = "Iron Wall", requirement = "Keep a 2.0 K/D over 20 online matches", unlocked = () => GameSettings.MatchesPlayed >= 20 && GameSettings.TotalKills >= 2 * Mathf.Max(1, GameSettings.TotalDeaths) },
+            new TitleInfo { name = "Unstoppable", requirement = "Win 5 matches in a row", unlocked = () => MatchHistory.BestWinStreak >= 5 },
+            new TitleInfo { name = "War Hero", requirement = "Get 250 eliminations", unlocked = () => GameSettings.TotalKills >= 250 },
+            new TitleInfo { name = "Warlord", requirement = "Win 50 online matches", unlocked = () => GameSettings.MatchesWon >= 50 },
+            new TitleInfo { name = "Field Marshal", requirement = "Play 100 online matches", unlocked = () => GameSettings.MatchesPlayed >= 100 },
+            new TitleInfo { name = "Legend", requirement = "Reach level 50", unlocked = () => Level >= 50 },
         };
 
         // ------------------------------------------------------------------ identity

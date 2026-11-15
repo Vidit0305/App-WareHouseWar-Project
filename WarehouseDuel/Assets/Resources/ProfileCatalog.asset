@@ -37,6 +37,14 @@ MonoBehaviour:
   - {fileID: 21300000, guid: c43fdb3d98087f34e9531e4f84ee8602, type: 3}
   - {fileID: 21300000, guid: 5916e8eb30268924d9731c6dae658c64, type: 3}
   - {fileID: 21300000, guid: 734df1a9139798640b81f9227b14cb77, type: 3}
+  - {fileID: 21300000, guid: 53aa394ec55e48043bf6f45712380ccf, type: 3}
+  - {fileID: 21300000, guid: 322c75175f441734dbd7cae8e0f5634f, type: 3}
+  - {fileID: 21300000, guid: d2593b07df556e348a0bf1cc0f0ffd11, type: 3}
+  - {fileID: 21300000, guid: b29ba8b8d2f089a4284e031f879261c3, type: 3}
+  - {fileID: 21300000, guid: ab2b6832159fe784fbedfc9105fede7b, type: 3}
+  - {fileID: 21300000, guid: 6928c19692f028b478a65b2c552d4139, type: 3}
+  - {fileID: 21300000, guid: 21d3442e91a80574abf50beb1423690a, type: 3}
+  - {fileID: 21300000, guid: aacf33c518bb1204cab5521562253ab5, type: 3}
   banners:
   - {fileID: 21300000, guid: 7bd6e0f3bca02ca499b12c4d733b8dca, type: 3}
   - {fileID: 21300000, guid: dc09cda047b045044b22fcb304b70c38, type: 3}
@@ -62,6 +70,14 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 5afdf347390de2f4ba3138933a35d4c7, type: 3}
   - {fileID: 21300000, guid: dc9f58c8cf0beb1459b09722935bea6b, type: 3}
   - {fileID: 21300000, guid: e2bc776c04da2804aa083e49d3bc52b8, type: 3}
+  - {fileID: 21300000, guid: 3b4659d4803a3fe4d90d2f93e575646d, type: 3}
+  - {fileID: 21300000, guid: 442d2a65a08a2e3499b9c0a3fd193e2f, type: 3}
+  - {fileID: 21300000, guid: 5070b8efa135991439c34b1fd219b42c, type: 3}
+  - {fileID: 21300000, guid: 300d8d522c99aaf478c7d18eb0e1642d, type: 3}
+  - {fileID: 21300000, guid: 059853e900f990341938d75e91e4334c, type: 3}
+  - {fileID: 21300000, guid: 68460015cc16d6146aa62a6d22ed7310, type: 3}
+  - {fileID: 21300000, guid: c6feb3459afd67f4d90ccf6141b12261, type: 3}
+  - {fileID: 21300000, guid: e3270583c2453994d962067a0a49f879, type: 3}
   bannerNames:
   - Steel
   - Hazard
@@ -87,3 +103,11 @@ MonoBehaviour:
   - Toxic
   - Thunder
   - Royal
+  - Night Ops
+  - Sunset Strike
+  - Carbon
+  - Blue Steel
+  - Victory
+  - Radar
+  - Aurora
+  - Recon Map

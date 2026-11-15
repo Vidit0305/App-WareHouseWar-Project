@@ -76,6 +76,14 @@ namespace WarehouseWar.EditorTools.UI
             new AvatarStyle { gear = Gear.NightVision, team = Blue, camo = Snow, skin = SkinLight, accent = Blue, mask = true, backdrop = Backdrop.Arctic, weapon = 5, yaw = -11f },
             new AvatarStyle { gear = Gear.GasMask, team = Orange, camo = Desert, skin = SkinMedium, accent = Orange, backdrop = Backdrop.SteelStorm, weapon = 7, yaw = 14f },
             new AvatarStyle { gear = Gear.Bandana, team = Maroon, camo = Urban, skin = SkinDark, accent = new Color(1f, 0.75f, 0.2f), facePaint = true, backdrop = Backdrop.NightOps, weapon = 2, yaw = -13f },
+            new AvatarStyle { gear = Gear.Helmet, team = Green, camo = Snow, skin = SkinDark, accent = new Color(0.3f, 0.9f, 1f), mask = true, backdrop = Backdrop.Arctic, weapon = 4, yaw = -12f },
+            new AvatarStyle { gear = Gear.Beret, team = Blue, camo = Woodland, skin = SkinMedium, accent = new Color(0.3f, 0.55f, 0.95f), backdrop = Backdrop.SteelStorm, weapon = 0, yaw = 13f },
+            new AvatarStyle { gear = Gear.NightVision, team = Black, camo = Night, skin = SkinLight, accent = Red, facePaint = true, backdrop = Backdrop.Inferno, weapon = 2, yaw = -10f },
+            new AvatarStyle { gear = Gear.GasMask, team = Green, camo = Woodland, skin = SkinDark, accent = Green, backdrop = Backdrop.NightOps, weapon = 3, yaw = 11f },
+            new AvatarStyle { gear = Gear.Boonie, team = Orange, camo = Desert, skin = SkinLight, accent = Orange, facePaint = true, backdrop = Backdrop.SunsetFire, weapon = 5, yaw = -14f },
+            new AvatarStyle { gear = Gear.Headset, team = Blue, camo = Navy, skin = SkinDark, accent = new Color(0.3f, 0.85f, 1f), mask = true, backdrop = Backdrop.NightOps, weapon = 6, yaw = 12f },
+            new AvatarStyle { gear = Gear.Bandana, team = Olive, camo = Woodland, skin = SkinMedium, accent = Green, facePaint = true, backdrop = Backdrop.SteelStorm, weapon = 7, yaw = -11f },
+            new AvatarStyle { gear = Gear.Balaclava, team = Red, camo = Desert, skin = SkinMedium, accent = Tan, backdrop = Backdrop.DesertStorm, weapon = 1, yaw = 14f },
         };
 
         public static void Build(SetupReport report)

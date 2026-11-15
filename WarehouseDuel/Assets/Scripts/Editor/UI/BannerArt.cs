@@ -7,7 +7,8 @@ namespace WarehouseWar.EditorTools.UI
 {
     /// <summary>
     /// Procedural profile banners (640×160): camo and colour themes plus battlefield scenes — crossed rifles,
-    /// ammo belt, airstrike, sniper scope, tank column, dog tags, barbed wire, skull squad. Weapon shapes come
+    /// ammo belt, airstrike, sniper scope, tank column, dog tags, barbed wire, skull squad, night-vision view,
+    /// helicopter sunset, carbon fibre, rank chevrons, victory star, radar, aurora, recon map. Weapon shapes come
     /// from the generated weapon silhouettes so they match the game's guns.
     /// </summary>
     internal static class BannerArt
@@ -19,6 +20,7 @@ namespace WarehouseWar.EditorTools.UI
             "Steel", "Hazard", "Woodland", "Desert", "Sunset", "Arctic", "Inferno", "Neon",
             "Crossfire", "Ammo Belt", "Airstrike", "Sniper", "Tank Column", "Dog Tags", "Barbed Wire", "Skull Squad",
             "Ocean", "Jungle", "Crimson", "Midnight", "Gold Rush", "Toxic", "Thunder", "Royal",
+            "Night Ops", "Sunset Strike", "Carbon", "Blue Steel", "Victory", "Radar", "Aurora", "Recon Map",
         };
 
         private static Texture2D rifle;
@@ -129,6 +131,14 @@ namespace WarehouseWar.EditorTools.UI
                     float diamond = Mathf.Repeat((x + y) / 64f, 1f) < 0.04f || Mathf.Repeat((x - y) / 64f, 1f) < 0.04f ? 0.18f : 0f;
                     return Color.Lerp(c + new Color(diamond, diamond * 0.8f, diamond * 0.3f, 0f), Hex(0xE8B640), trim);
                 }
+                case 24: return NightOps(p, u, v);
+                case 25: return SunsetStrike(p, u, v);
+                case 26: return Carbon(p, u, v);
+                case 27: return BlueSteel(p, u, v);
+                case 28: return Victory(p, u, v);
+                case 29: return Radar(p, u, v);
+                case 30: return Aurora(p, u, v);
+                case 31: return ReconMap(p, u, v);
                 default: return SkullSquad(p, u, v);
             }
         }
@@ -276,6 +286,108 @@ namespace WarehouseWar.EditorTools.UI
             if (b.magnitude < 12f && (Mathf.Abs(b.x - b.y) < 1.6f || Mathf.Abs(b.x + b.y) < 1.6f)) return Hex(0x0A0706);
             float post = Mathf.Repeat(p.x - 80f, 210f);
             if (post < 7f && p.y < Height * 0.7f) return Hex(0x0E0907);
+            return c;
+        }
+
+        // ---- smooth banners (24–31): gradients and clean shapes, no blocky noise
+
+        private static Color NightOps(Vector2 p, float u, float v)
+        {
+            // Night-vision view: green phosphor gradient, scanlines, a soft crosshair and a vignette.
+            float d = new Vector2((u - 0.5f) * 4f, v - 0.5f).magnitude;
+            Color c = Color.Lerp(Hex(0x0F3A12), Hex(0x041006), Mathf.SmoothStep(0.1f, 1.1f, d));
+            c *= 0.9f + 0.1f * Mathf.Sin(p.y * 1.6f);
+            float cross = Mathf.Max(Mathf.Exp(-Mathf.Pow((u - 0.5f) * 640f / 2f, 2f)) * (Mathf.Abs(v - 0.5f) > 0.12f ? 1f : 0f),
+                                    Mathf.Exp(-Mathf.Pow((v - 0.5f) * 160f / 2f, 2f)) * (Mathf.Abs(u - 0.5f) > 0.03f ? 1f : 0f));
+            return Color.Lerp(c, Hex(0x8CFF7A), cross * 0.6f * (1f - Mathf.Clamp01(d - 0.6f)));
+        }
+
+        private static Color SunsetStrike(Vector2 p, float u, float v)
+        {
+            // Burning dusk sky with a helicopter-style silhouette ridge.
+            Color c = Sky(v, Hex(0x3A0E0A), Hex(0xE2541E), Hex(0xFFC15A));
+            float sun = Mathf.Exp(-new Vector2((u - 0.28f) * 4f, v - 0.45f).sqrMagnitude * 18f);
+            c = Color.Lerp(c, Hex(0xFFF1B8), sun * 0.8f);
+            float ridge = 0.22f + 0.07f * Mathf.Sin(u * 9f) + 0.04f * Mathf.Sin(u * 23f + 1f);
+            return v < ridge ? Color.Lerp(Hex(0x120604), Hex(0x2A0E08), v / ridge * 0.5f) : c;
+        }
+
+        private static Color Carbon(Vector2 p, float u, float v)
+        {
+            // Carbon-fibre weave with a diagonal light sheen.
+            bool cell = ((int)(p.x / 8f) + (int)(p.y / 8f)) % 2 == 0;
+            float local = cell ? Mathf.Repeat(p.x, 8f) / 8f : Mathf.Repeat(p.y, 8f) / 8f;
+            Color c = Color.Lerp(Hex(0x141518), Hex(0x2C2F35), Mathf.Sin(local * Mathf.PI));
+            float sheen = Mathf.Exp(-Mathf.Pow((u - v * 0.4f - 0.5f) * 5f, 2f));
+            return Color.Lerp(c, Hex(0x6A7380), sheen * 0.35f);
+        }
+
+        private static Color BlueSteel(Vector2 p, float u, float v)
+        {
+            // Brushed blue metal with chamfered stripes and rivets.
+            Color c = Color.Lerp(Hex(0x14243C), Hex(0x2E5A8C), u * 0.6f + v * 0.4f);
+            c *= 0.95f + 0.05f * Hash((int)p.x / 3, (int)p.y);
+            float stripe = Mathf.Repeat((p.x - p.y * 0.6f) / 160f, 1f);
+            if (stripe < 0.06f) c = Color.Lerp(c, Hex(0x9CC6F2), 0.45f);
+            Vector2 r = new Vector2(Mathf.Repeat(p.x, 80f) - 40f, Mathf.Abs(p.y - 80f) - 64f);
+            if (r.magnitude < 4f) c = Color.Lerp(Hex(0xC9DCEF), Hex(0x5B7392), Mathf.Clamp01(r.y / 4f + 0.5f));
+            return c;
+        }
+
+        private static Color Victory(Vector2 p, float u, float v)
+        {
+            // Olive field with a large gold star and light rays.
+            Color c = Color.Lerp(Hex(0x1E2814), Hex(0x3E4F26), v);
+            Vector2 q = new Vector2((u - 0.82f) * 4f, v - 0.5f);
+            float angle = Mathf.Atan2(q.x, q.y);
+            float rays = Mathf.Pow(Mathf.Abs(Mathf.Sin(angle * 8f)), 6f) * Mathf.Exp(-q.magnitude * 1.4f);
+            c = Color.Lerp(c, Hex(0xE8C45A), rays * 0.35f);
+            float sector = Mathf.Abs(Mathf.Repeat(angle, Mathf.PI * 2f / 5f) - Mathf.PI / 5f) / (Mathf.PI / 5f);
+            float star = q.magnitude - Mathf.Lerp(0.14f, 0.34f, sector * sector);
+            return star < 0f ? Color.Lerp(Hex(0xFFE58A), Hex(0xC8901E), Mathf.Clamp01(-q.y * 2f + 0.5f)) : c;
+        }
+
+        private static Color Radar(Vector2 p, float u, float v)
+        {
+            // Radar screen: dark teal, rings and a fading sweep, with a few blips.
+            Vector2 q = new Vector2(p.x - 520f, p.y - 80f);
+            float r = q.magnitude;
+            Color c = Color.Lerp(Hex(0x06201E), Hex(0x020A0A), Mathf.Clamp01(r / 520f));
+            float rings = Mathf.Exp(-Mathf.Pow(Mathf.Repeat(r, 48f) - 24f, 2f) / 2f) * (r < 240f ? 1f : 0.35f);
+            c = Color.Lerp(c, Hex(0x2EE6B0), rings * 0.4f);
+            float angle = Mathf.Repeat(Mathf.Atan2(q.y, q.x) / (Mathf.PI * 2f) + 0.12f, 1f);
+            c = Color.Lerp(c, Hex(0x3BFFC4), Mathf.Pow(angle, 6f) * 0.5f * Mathf.Clamp01(1f - r / 300f));
+            foreach (Vector2 blip in new[] { new Vector2(430f, 120f), new Vector2(580f, 40f), new Vector2(470f, 50f) })
+            {
+                c = Color.Lerp(c, Hex(0xB8FFE6), Mathf.Exp(-(p - blip).sqrMagnitude / 18f));
+            }
+            return c;
+        }
+
+        private static Color Aurora(Vector2 p, float u, float v)
+        {
+            // Polar night with soft green and violet aurora bands over a snowy ridge.
+            Color c = Sky(v, Hex(0x081428), Hex(0x0E1E3E), Hex(0x050A18));
+            float band1 = Mathf.Exp(-Mathf.Pow((v - 0.62f - 0.12f * Mathf.Sin(u * 7f)) * 7f, 2f));
+            float band2 = Mathf.Exp(-Mathf.Pow((v - 0.78f - 0.08f * Mathf.Sin(u * 5f + 2f)) * 9f, 2f));
+            c = Color.Lerp(c, Hex(0x3CFFA0), band1 * 0.55f);
+            c = Color.Lerp(c, Hex(0xA05CFF), band2 * 0.45f);
+            if (Hash((int)p.x, (int)p.y) > 0.997f) c = Color.Lerp(c, Color.white, 0.7f);
+            float ridge = 0.18f + 0.06f * Mathf.Sin(u * 11f + 0.5f) + 0.03f * Mathf.Sin(u * 31f);
+            return v < ridge ? Color.Lerp(Hex(0x9FB2C8), Hex(0xE6EEF6), v / ridge) : c;
+        }
+
+        private static Color ReconMap(Vector2 p, float u, float v)
+        {
+            // Topographic recon map: tan paper, contour lines, grid and a red objective marker.
+            float h = Noise(p.x * 0.012f, p.y * 0.03f) * 0.7f + Noise(p.x * 0.03f + 5f, p.y * 0.07f) * 0.3f;
+            Color c = Color.Lerp(Hex(0xC9B488), Hex(0xE3D4AE), h);
+            float contour = Mathf.Abs(Mathf.Repeat(h * 9f, 1f) - 0.5f);
+            if (contour > 0.45f) c = Color.Lerp(c, Hex(0x7A5E34), 0.55f);
+            if (Mathf.Repeat(p.x, 64f) < 1.2f || Mathf.Repeat(p.y, 64f) < 1.2f) c = Color.Lerp(c, Hex(0x5A4A2E), 0.25f);
+            Vector2 mark = p - new Vector2(500f, 92f);
+            float ring = Mathf.Abs(mark.magnitude - 16f);
+            if (ring < 3f || (mark.magnitude < 26f && (Mathf.Abs(mark.x) < 2f || Mathf.Abs(mark.y) < 2f) && mark.magnitude > 10f)) c = Hex(0xC8281E);
             return c;
         }
 

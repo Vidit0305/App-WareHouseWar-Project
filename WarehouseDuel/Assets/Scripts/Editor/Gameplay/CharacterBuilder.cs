@@ -8,7 +8,7 @@ using WarehouseWar.Profile;
 namespace WarehouseWar.EditorTools.Gameplay
 {
     /// <summary>
-    /// The ten playable characters. Each one has its own uniform pattern (camo texture), vest/skin/boots colours,
+    /// The playable characters (24). Each one has its own uniform pattern (camo texture), vest/skin/boots colours,
     /// and gear built from boxes (hats, masks, armour, scarves...). <see cref="BuildAccessories"/> adds every
     /// character's gear to a soldier model (inactive); <see cref="Build"/> writes the materials, renders a portrait
     /// per character and stores everything in Resources/CharacterCatalog.
@@ -101,6 +101,38 @@ namespace WarehouseWar.EditorTools.Gameplay
                 pattern = Pattern.Solid, palette = new Color32[] { new Color32(214, 168, 52, 255), new Color32(190, 146, 40, 255), new Color32(236, 196, 80, 255), new Color32(170, 128, 34, 255) },
                 vest = new Color32(40, 34, 24, 255), skin = SkinMedium, boots = new Color32(30, 24, 16, 255), strap = new Color32(60, 48, 26, 255), mask = Black,
                 backdrop = new Color32(150, 110, 20, 255) },
+            new Def { name = "Arctic Ops", role = "Polar strike team", description = "Whiteout camo, a snow balaclava and tinted goggles. At home on frozen fronts and freezing nights.",
+                pattern = Pattern.Blobs, palette = new Color32[] { new Color32(232, 238, 244, 255), new Color32(196, 212, 228, 255), new Color32(150, 170, 190, 255), new Color32(248, 250, 252, 255) },
+                vest = new Color32(214, 222, 230, 255), skin = SkinMedium, boots = new Color32(60, 66, 76, 255), strap = new Color32(176, 186, 198, 255), mask = new Color32(236, 240, 246, 255),
+                helmet = false, faceMask = false, backdrop = new Color32(80, 130, 180, 255) },
+            new Def { name = "Jungle Recon", role = "Long-range scout", description = "Deep jungle camo, boonie hat, face paint and a field radio. Sees the enemy long before they see him.",
+                pattern = Pattern.Blobs, palette = new Color32[] { new Color32(60, 96, 40, 255), new Color32(30, 60, 26, 255), new Color32(100, 130, 56, 255), new Color32(70, 52, 32, 255) },
+                vest = new Color32(48, 58, 34, 255), skin = SkinDark, boots = new Color32(34, 28, 20, 255), strap = new Color32(44, 44, 30, 255), mask = Black,
+                helmet = false, faceMask = false, backdrop = new Color32(36, 92, 48, 255) },
+            new Def { name = "Paratrooper", role = "Airborne assault", description = "Olive fatigues, a maroon beret and a jump harness. First out of the plane, first into the fight.",
+                pattern = Pattern.Blobs, palette = new Color32[] { new Color32(110, 104, 70, 255), new Color32(80, 72, 46, 255), new Color32(146, 136, 96, 255), new Color32(56, 48, 34, 255) },
+                vest = new Color32(88, 80, 54, 255), skin = SkinLight, boots = new Color32(40, 30, 22, 255), strap = new Color32(60, 52, 36, 255), mask = Black,
+                helmet = false, faceMask = false, backdrop = new Color32(110, 36, 48, 255) },
+            new Def { name = "Spec Ops Black", role = "Tier one operator", description = "Black multicam, comms headset, helmet strobe and a loaded plate carrier. Gets the job done quietly.",
+                pattern = Pattern.Blobs, palette = new Color32[] { new Color32(40, 42, 40, 255), new Color32(22, 24, 22, 255), new Color32(60, 62, 56, 255), new Color32(48, 44, 36, 255) },
+                vest = new Color32(20, 22, 20, 255), skin = SkinMedium, boots = new Color32(14, 14, 14, 255), strap = new Color32(18, 18, 18, 255), mask = Black,
+                backdrop = new Color32(32, 38, 52, 255) },
+            new Def { name = "Tank Crew", role = "Armoured commander", description = "Olive drab coveralls, a padded tanker helmet and dust goggles. Smells of diesel and victory.",
+                pattern = Pattern.Solid, palette = new Color32[] { new Color32(84, 90, 52, 255), new Color32(74, 80, 46, 255), new Color32(96, 102, 60, 255), new Color32(68, 72, 42, 255) },
+                vest = new Color32(70, 56, 40, 255), skin = SkinMedium, boots = new Color32(34, 26, 18, 255), strap = new Color32(50, 40, 30, 255), mask = Black,
+                helmet = false, faceMask = false, backdrop = new Color32(96, 84, 40, 255) },
+            new Def { name = "Urban Digital", role = "Metro assault", description = "Blue-grey digital camo, full helmet and face guard. Designed for concrete, steel and close quarters.",
+                pattern = Pattern.Digital, palette = new Color32[] { new Color32(96, 102, 112, 255), new Color32(60, 66, 76, 255), new Color32(140, 148, 158, 255), new Color32(36, 40, 48, 255) },
+                vest = new Color32(44, 48, 58, 255), skin = SkinDark, boots = new Color32(20, 20, 22, 255), strap = new Color32(30, 32, 38, 255), mask = new Color32(50, 56, 66, 255),
+                backdrop = new Color32(50, 64, 90, 255) },
+            new Def { name = "Marine", role = "Amphibious infantry", description = "Woodland digital camo with coyote gear and boots. First to fight, from the beach to the warehouse.",
+                pattern = Pattern.Digital, palette = new Color32[] { new Color32(86, 96, 62, 255), new Color32(56, 64, 40, 255), new Color32(120, 116, 84, 255), new Color32(64, 52, 38, 255) },
+                vest = new Color32(122, 104, 74, 255), skin = SkinLight, boots = new Color32(120, 96, 64, 255), strap = new Color32(96, 80, 56, 255), mask = Black,
+                faceMask = false, backdrop = new Color32(130, 30, 34, 255) },
+            new Def { name = "Phantom", role = "Ghost operative", description = "A dark hood, a blank face plate and a cold cyan visor. Nobody knows who is underneath.",
+                pattern = Pattern.Solid, palette = new Color32[] { new Color32(40, 36, 52, 255), new Color32(32, 28, 42, 255), new Color32(50, 46, 64, 255), new Color32(26, 24, 34, 255) },
+                vest = new Color32(22, 20, 28, 255), skin = SkinLight, boots = new Color32(14, 12, 18, 255), strap = new Color32(20, 18, 26, 255), mask = Black,
+                helmet = false, faceMask = false, backdrop = new Color32(44, 30, 90, 255) },
         };
 
         // ------------------------------------------------------------------ accessories
@@ -247,6 +279,77 @@ namespace WarehouseWar.EditorTools.Gameplay
                 GameObject chest = Group(rig.Spine, 9);
                 P(chest, new Vector3(0f, 0.25f, 0.225f), new Vector3(0.54f, 0.44f, 0.07f), steel);
                 P(chest, new Vector3(0f, 0.25f, 0.262f), new Vector3(0.2f, 0.1f, 0.01f), Flat("Acc_RedVisor", new Color(1f, 0.15f, 0.1f), emission: 2.4f));
+            }
+            // 16 Arctic Ops: white balaclava, orange-tinted snow goggles, grey scarf.
+            {
+                GameObject head = Group(rig.Head, 16);
+                P(head, new Vector3(0f, 0.18f, 0f), new Vector3(0.395f, 0.405f, 0.395f), Flat("Acc_SnowWrap", new Color(0.9f, 0.92f, 0.95f)));
+                P(head, new Vector3(0f, 0.22f, 0f), new Vector3(0.41f, 0.045f, 0.41f), rubber);
+                P(head, new Vector3(0f, 0.22f, 0.206f), new Vector3(0.32f, 0.075f, 0.014f), Flat("Acc_SnowLens", new Color(1f, 0.58f, 0.15f), smoothness: 0.9f, emission: 0.5f));
+                GameObject neck = Group(rig.Spine, 16);
+                P(neck, new Vector3(0f, 0.5f, 0.02f), new Vector3(0.46f, 0.11f, 0.4f), Flat("Acc_ScarfGrey", new Color(0.55f, 0.58f, 0.62f)));
+            }
+            // 17 Jungle Recon: boonie hat, face paint, field radio with antenna on the back.
+            {
+                GameObject head = Group(rig.Head, 17);
+                Material camo = CamoMaterial(17);
+                P(head, new Vector3(0f, 0.41f, 0f), new Vector3(0.41f, 0.12f, 0.41f), camo);
+                P(head, new Vector3(0f, 0.355f, 0f), new Vector3(0.64f, 0.025f, 0.64f), camo);
+                Material paint = Flat("Acc_FacePaint", new Color(0.06f, 0.08f, 0.05f));
+                P(head, new Vector3(-0.09f, 0.185f, 0.1925f), new Vector3(0.08f, 0.022f, 0.005f), paint);
+                P(head, new Vector3(0.09f, 0.185f, 0.1925f), new Vector3(0.08f, 0.022f, 0.005f), paint);
+                P(head, new Vector3(0f, 0.3f, 0.1925f), new Vector3(0.22f, 0.02f, 0.005f), paint);
+                GameObject back = Group(rig.Spine, 17);
+                P(back, new Vector3(0f, 0.3f, -0.26f), new Vector3(0.22f, 0.28f, 0.1f), darkGear);
+                P(back, new Vector3(0.07f, 0.6f, -0.28f), new Vector3(0.015f, 0.36f, 0.015f), rubber);
+            }
+            // 18 Paratrooper: maroon beret with a gold badge, jump harness straps across the chest.
+            {
+                GameObject head = Group(rig.Head, 18);
+                P(head, new Vector3(0.03f, 0.385f, 0f), new Vector3(0.43f, 0.07f, 0.44f), Flat("Acc_BeretMaroon", new Color(0.42f, 0.08f, 0.12f)), -9f);
+                P(head, new Vector3(-0.1f, 0.35f, 0.21f), new Vector3(0.06f, 0.06f, 0.012f), gold);
+                GameObject chest = Group(rig.Spine, 18);
+                Material webbing = Flat("Acc_Webbing", new Color(0.2f, 0.19f, 0.14f));
+                P(chest, new Vector3(-0.12f, 0.27f, 0.214f), new Vector3(0.05f, 0.58f, 0.02f), webbing);
+                P(chest, new Vector3(0.12f, 0.27f, 0.214f), new Vector3(0.05f, 0.58f, 0.02f), webbing);
+                P(chest, new Vector3(0f, 0.34f, 0.218f), new Vector3(0.46f, 0.05f, 0.02f), webbing);
+                P(chest, new Vector3(0f, 0.34f, 0.23f), new Vector3(0.07f, 0.07f, 0.012f), Flat("Acc_Buckle", new Color(0.7f, 0.72f, 0.74f), smoothness: 0.6f));
+            }
+            // 19 Spec Ops Black: comms headset, helmet strobe, plate carrier pouches.
+            {
+                GameObject head = Group(rig.Head, 19);
+                P(head, new Vector3(-0.215f, 0.2f, 0f), new Vector3(0.07f, 0.15f, 0.13f), darkGear);
+                P(head, new Vector3(0.215f, 0.2f, 0f), new Vector3(0.07f, 0.15f, 0.13f), darkGear);
+                P(head, new Vector3(0.16f, 0.09f, 0.15f), new Vector3(0.02f, 0.02f, 0.16f), rubber);
+                P(head, new Vector3(0f, 0.5f, -0.2f), new Vector3(0.05f, 0.04f, 0.05f), Flat("Acc_IrStrobe", new Color(0.3f, 1f, 0.4f), emission: 1.6f));
+                GameObject chest = Group(rig.Spine, 19);
+                foreach (float x in new[] { -0.14f, 0f, 0.14f })
+                {
+                    P(chest, new Vector3(x, 0.25f, 0.23f), new Vector3(0.11f, 0.14f, 0.06f), darkGear);
+                }
+            }
+            // 20 Tank Crew: padded tanker helmet with ear flaps, dust goggles on the forehead.
+            {
+                GameObject head = Group(rig.Head, 20);
+                Material leather = Flat("Acc_Leather", new Color(0.24f, 0.17f, 0.11f), smoothness: 0.35f);
+                P(head, new Vector3(0f, 0.4f, -0.005f), new Vector3(0.43f, 0.15f, 0.43f), leather);
+                P(head, new Vector3(0f, 0.43f, -0.005f), new Vector3(0.1f, 0.15f, 0.44f), leather);
+                P(head, new Vector3(-0.21f, 0.25f, -0.01f), new Vector3(0.05f, 0.18f, 0.16f), leather);
+                P(head, new Vector3(0.21f, 0.25f, -0.01f), new Vector3(0.05f, 0.18f, 0.16f), leather);
+                P(head, new Vector3(0f, 0.355f, 0.215f), new Vector3(0.3f, 0.08f, 0.03f), rubber);
+                Material amber = Flat("Acc_AmberLens", new Color(0.95f, 0.62f, 0.2f), smoothness: 0.9f, emission: 0.4f);
+                P(head, new Vector3(-0.07f, 0.355f, 0.232f), new Vector3(0.09f, 0.06f, 0.01f), amber);
+                P(head, new Vector3(0.07f, 0.355f, 0.232f), new Vector3(0.09f, 0.06f, 0.01f), amber);
+            }
+            // 23 Phantom: hood, blank face plate, glowing cyan visor and chest light.
+            {
+                GameObject head = Group(rig.Head, 23);
+                Material cyan = Flat("Acc_CyanVisor", new Color(0.2f, 0.9f, 1f), emission: 2.4f);
+                P(head, new Vector3(0f, 0.2f, -0.01f), new Vector3(0.43f, 0.45f, 0.43f), CamoMaterial(23));
+                P(head, new Vector3(0f, 0.17f, 0.215f), new Vector3(0.34f, 0.3f, 0.03f), rubber);
+                P(head, new Vector3(0f, 0.24f, 0.232f), new Vector3(0.28f, 0.05f, 0.012f), cyan);
+                GameObject chest = Group(rig.Spine, 23);
+                P(chest, new Vector3(0f, 0.36f, 0.215f), new Vector3(0.3f, 0.03f, 0.02f), cyan);
             }
             return result;
         }

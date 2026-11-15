@@ -14,7 +14,7 @@ namespace WarehouseWar.EditorTools.Testing
     /// </summary>
     public static class ScreenshotTool
     {
-        private const int Width = 1280, Height = 720;
+        private const int Width = 1600, Height = 720; // 20:9, like most current phones
 
         public static void CaptureBatch()
         {

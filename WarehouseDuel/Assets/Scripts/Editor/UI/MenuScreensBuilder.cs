@@ -40,6 +40,49 @@ namespace WarehouseWar.EditorTools.UI
             return label;
         }
 
+        /// <summary>
+        /// Fills the parent from <paramref name="left"/> (x) / <paramref name="top"/> (y, negative) to its right and
+        /// bottom edges, so the area grows with wide (20:9) screens instead of leaving an empty strip on the right.
+        /// </summary>
+        public static RectTransform FillFrom(RectTransform rect, float left, float top)
+        {
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.pivot = new Vector2(0f, 1f);
+            rect.offsetMin = new Vector2(left, 0f);
+            rect.offsetMax = new Vector2(0f, top);
+            return rect;
+        }
+
+        /// <summary>
+        /// Turns a layout drawn for a fixed <paramref name="referenceWidth"/> into one that spreads across the parent's
+        /// real width: every direct child keeps its relative column position; text, panels and lists also widen
+        /// (masked pictures such as avatars keep their size).
+        /// </summary>
+        public static void SpreadColumns(RectTransform parent, float referenceWidth)
+        {
+            foreach (Transform child in parent)
+            {
+                var rect = child as RectTransform;
+                if (rect == null || rect.anchorMin.x != 0f || rect.anchorMax.x != 0f) continue;
+                float width = rect.sizeDelta.x;
+                float left = rect.anchoredPosition.x - rect.pivot.x * width;
+                if (child.GetComponent<Mask>() == null)
+                {
+                    rect.anchorMin = new Vector2(left / referenceWidth, rect.anchorMin.y);
+                    rect.anchorMax = new Vector2((left + width) / referenceWidth, rect.anchorMax.y);
+                    rect.sizeDelta = new Vector2(0f, rect.sizeDelta.y);
+                    rect.anchoredPosition = new Vector2(0f, rect.anchoredPosition.y);
+                }
+                else
+                {
+                    rect.anchorMin = new Vector2(left / referenceWidth, rect.anchorMin.y);
+                    rect.anchorMax = new Vector2(left / referenceWidth, rect.anchorMax.y);
+                    rect.anchoredPosition = new Vector2(rect.pivot.x * width, rect.anchoredPosition.y);
+                }
+            }
+        }
+
         /// <summary>An image clipped to <paramref name="maskSprite"/> (rounded square or circle).</summary>
         public static Image Masked(Transform parent, string name, Sprite maskSprite, Sprite content, out RectTransform container)
         {
@@ -56,7 +99,7 @@ namespace WarehouseWar.EditorTools.UI
         /// Full-screen page: background (opaque, or transparent in the middle to show the 3D scene), a top bar with
         /// a back button and the title. Returns the content area below the bar.
         /// </summary>
-        public static RectTransform Frame(string name, RectTransform safe, string title, bool showScene, out GameObject root, out Button back)
+        public static RectTransform Frame(string name, RectTransform safe, string title, bool showScene, out GameObject root, out Button back, Sprite icon = null)
         {
             Image background = CreateImage(name, safe, showScene ? new Color(0f, 0f, 0f, 0f) : new Color(0.05f, 0.06f, 0.09f, 0.96f), null, raycast: !showScene);
             Stretch(background.rectTransform, -200f, -200f, -200f, -200f);
@@ -78,7 +121,15 @@ namespace WarehouseWar.EditorTools.UI
 
             back = CreateIconButton("Back", page, UiArt.Icon("Back"), 84f, new Color(1f, 1f, 1f, 0.14f));
             At((RectTransform)back.transform, 36f, -20f, 84f, 84f);
-            Label(page, "Title", title, 54f, TextPrimary, 146f, -22f, 900f, 80f, TextAlignmentOptions.Left, display: true);
+            float titleX = 146f;
+            if (icon != null)
+            {
+                // Section icon between the back button and the title, centred on the 84 px button row.
+                Image glyph = CreateImage("Icon", page, Accent, icon);
+                At(glyph.rectTransform, 146f, -30f, 64f, 64f);
+                titleX = 228f;
+            }
+            Label(page, "Title", title, 54f, TextPrimary, titleX, -22f, 900f, 80f, TextAlignmentOptions.Left, display: true);
 
             RectTransform content = CreateRect("Content", page);
             Stretch(content, 40f, 40f, 150f, 26f);
@@ -150,8 +201,13 @@ namespace WarehouseWar.EditorTools.UI
             return content;
         }
 
-        /// <summary>Scrolling grid filling <paramref name="parent"/> (fixed column count). Returns the content to add cells to.</summary>
-        public static RectTransform ScrollGrid(RectTransform parent, string name, Vector2 cell, Vector2 spacing, int columns)
+        /// <summary>
+        /// Scrolling grid filling <paramref name="parent"/>. Columns adapt to the width (see <see cref="AutoGrid"/>):
+        /// spare width widens the cells when <paramref name="stretchCells"/> is set, otherwise the gaps.
+        /// Returns the content to add cells to.
+        /// </summary>
+        public static RectTransform ScrollGrid(RectTransform parent, string name, Vector2 cell, Vector2 spacing,
+            bool stretchCells = false, bool keepAspect = false)
         {
             RectTransform viewport = CreateRect(name, parent);
             Stretch(viewport);
@@ -171,7 +227,13 @@ namespace WarehouseWar.EditorTools.UI
             grid.spacing = spacing;
             grid.padding = new RectOffset(8, 8, 8, 60); // room below the last row so it scrolls fully into view
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = columns;
+            grid.constraintCount = 1;
+            grid.childAlignment = TextAnchor.UpperLeft;
+            AutoGrid fit = content.gameObject.AddComponent<AutoGrid>();
+            fit.baseCell = cell;
+            fit.minSpacing = spacing.x;
+            fit.stretchCells = stretchCells;
+            fit.keepAspect = keepAspect;
             content.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
             scroll.content = content;
@@ -186,7 +248,7 @@ namespace WarehouseWar.EditorTools.UI
 
         public static ProfileScreen Profile(RectTransform safe, ProfileCatalog catalog)
         {
-            RectTransform content = Frame("Profile Screen", safe, "PROFILE", false, out GameObject root, out Button back);
+            RectTransform content = Frame("Profile Screen", safe, "PROFILE", false, out GameObject root, out Button back, UiArt.Icon("DogTag"));
 
             // ---- left: preview card
             Image preview = Panel(content, "Preview", 0f, 0f, 640f, 230f, new Color(0.1f, 0.12f, 0.16f, 1f));
@@ -247,17 +309,11 @@ namespace WarehouseWar.EditorTools.UI
             var pages = new GameObject[3];
 
             // AVATAR page: upload tile, photo tile, presets.
-            RectTransform avatarPage = At(CreateRect("Avatar Page", content), 700f, -112f, 1140f, 780f);
+            RectTransform avatarPage = FillFrom(CreateRect("Avatar Page", content), 700f, -112f);
             pages[0] = avatarPage.gameObject;
-            const float tileSize = 160f, gap = 36f;
-            // Grid layout so the photo tile (hidden until a photo exists) never leaves a hole.
-            RectTransform grid = At(CreateRect("Avatar Grid", avatarPage), 0f, 0f, 1140f, 600f);
-            GridLayoutGroup gridLayout = grid.gameObject.AddComponent<GridLayoutGroup>();
-            gridLayout.cellSize = new Vector2(tileSize, tileSize);
-            gridLayout.spacing = new Vector2(gap, gap);
-            gridLayout.padding = new RectOffset(6, 0, 6, 0);
-            gridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            gridLayout.constraintCount = 6;
+            const float tileSize = 160f, gap = 30f;
+            // Scrolling grid that fills the whole right side; the photo tile (hidden until a photo exists) never leaves a hole.
+            RectTransform grid = ScrollGrid(avatarPage, "Avatar Grid", new Vector2(tileSize, tileSize), new Vector2(gap, gap));
 
             Image RingChild(Button tile)
             {
@@ -297,12 +353,13 @@ namespace WarehouseWar.EditorTools.UI
                 avatarTiles[i] = tile;
             }
             avatarRings[0].color = Accent;
-            TextMeshProUGUI avatarStatus = Label(avatarPage, "Status", "", 22f, TextMuted, 6f, -612f, 1130f, 64f);
+            // Feedback line (locked item, photo picked…) under the career stats; empty unless something happened.
+            TextMeshProUGUI avatarStatus = Label(content, "Status", "", 22f, TextMuted, 0f, -730f, 640f, 70f);
 
             // BANNER page: two columns in a scrolling grid.
-            RectTransform bannerPage = At(CreateRect("Banner Page", content), 700f, -112f, 1140f, 780f);
+            RectTransform bannerPage = FillFrom(CreateRect("Banner Page", content), 700f, -112f);
             pages[1] = bannerPage.gameObject;
-            RectTransform bannerGrid = ScrollGrid(bannerPage, "Banner List", new Vector2(556f, 140f), new Vector2(18f, 22f), 2);
+            RectTransform bannerGrid = ScrollGrid(bannerPage, "Banner List", new Vector2(540f, 135f), new Vector2(22f, 22f), stretchCells: true, keepAspect: true);
             int bannerCount = catalog.BannerCount;
             var bannerTiles = new Button[bannerCount];
             var bannerImages = new Image[bannerCount];
@@ -316,7 +373,7 @@ namespace WarehouseWar.EditorTools.UI
                 bannerImages[i] = Masked(tile.transform, "Mask", UiArt.Rounded, catalog.Banner(i), out RectTransform mask);
                 Stretch(mask);
                 Image nameBack = CreateImage("Name Back", tile.transform, new Color(0f, 0f, 0f, 0.55f), UiArt.RoundedSmall);
-                At(nameBack.rectTransform, 14f, -88f, 200f, 40f);
+                Place(nameBack.rectTransform, Vector2.zero, new Vector2(14f, 12f), new Vector2(200f, 40f), Vector2.zero);
                 TextMeshProUGUI bannerName = CreateText("Name", nameBack.transform, catalog.BannerName(i).ToUpperInvariant(), 20f, TextPrimary, TextAlignmentOptions.Center, display: true);
                 Stretch(bannerName.rectTransform);
                 bannerLocks[i] = LockOverlay(tile.transform, out _, withPrice: false);
@@ -324,9 +381,10 @@ namespace WarehouseWar.EditorTools.UI
             }
             if (bannerCount > 0) bannerRings[0].color = Accent;
 
-            // TITLE page: two columns of titles.
-            RectTransform titlePage = At(CreateRect("Title Page", content), 700f, -112f, 1140f, 780f);
+            // TITLE page: scrolling grid of titles filling the right side.
+            RectTransform titlePage = FillFrom(CreateRect("Title Page", content), 700f, -112f);
             pages[2] = titlePage.gameObject;
+            RectTransform titleGrid = ScrollGrid(titlePage, "Title List", new Vector2(540f, 116f), new Vector2(22f, 22f), stretchCells: true);
             int titleCount = PlayerProfile.Titles.Length;
             var titleButtons = new Button[titleCount];
             var titleBackgrounds = new Image[titleCount];
@@ -335,14 +393,12 @@ namespace WarehouseWar.EditorTools.UI
             var titleLocks = new GameObject[titleCount];
             for (int i = 0; i < titleCount; i++)
             {
-                float x = (i % 2) * 574f + 6f, y = -(i / 2) * 136f - 6f;
-                Button tile = CreateButton($"Title {i + 1}", titlePage, "", ButtonStyle.Ghost, new Vector2(556f, 116f));
-                At((RectTransform)tile.transform, x, y, 556f, 116f);
+                Button tile = CreateButton($"Title {i + 1}", titleGrid, "", ButtonStyle.Ghost, new Vector2(540f, 116f));
                 titleBackgrounds[i] = tile.GetComponent<Image>();
                 titleNames[i] = Label(tile.transform, "Name", PlayerProfile.Titles[i].name.ToUpperInvariant(), 32f, TextPrimary, 30f, -18f, 430f, 44f, display: true);
                 titleRequirements[i] = Label(tile.transform, "Requirement", PlayerProfile.Titles[i].requirement, 21f, TextMuted, 30f, -64f, 430f, 34f);
                 Image lockIcon = CreateImage("Lock", tile.transform, new Color(1f, 1f, 1f, 0.5f), UiArt.Icon("Lock"));
-                At(lockIcon.rectTransform, 480f, -34f, 48f, 48f);
+                Place(lockIcon.rectTransform, new Vector2(1f, 0.5f), new Vector2(-28f, 0f), new Vector2(48f, 48f), new Vector2(1f, 0.5f));
                 titleLocks[i] = lockIcon.gameObject;
                 titleButtons[i] = tile;
             }
@@ -387,13 +443,13 @@ namespace WarehouseWar.EditorTools.UI
 
         public static LeaderboardScreen Leaderboard(RectTransform safe, WeaponCatalog catalog, ProfileCatalog profiles)
         {
-            RectTransform content = Frame("Leaderboard Screen", safe, "LEADERBOARD", false, out GameObject root, out Button back);
+            RectTransform content = Frame("Leaderboard Screen", safe, "LEADERBOARD", false, out GameObject root, out Button back, UiArt.Icon("Medal"));
             Tabs(content, new[] { "STANDINGS", "RECORDS" }, 0f, 0f, 300f, 80f, 16f, false,
                 out Button[] tabButtons, out Image[] tabBackgrounds, out TMP_Text[] tabLabels);
             Label(content, "Hint", "Your matches on this device", 22f, TextMuted, 660f, -24f, 900f, 36f);
 
             // ---- standings
-            RectTransform standings = At(CreateRect("Standings Page", content), 0f, -110f, 1840f, 790f);
+            RectTransform standings = FillFrom(CreateRect("Standings Page", content), 0f, -110f);
             string[] headers = { "RANK", "PLAYER", "LEVEL", "PLAYED", "WON", "LOST", "K/D" };
             float[] columns = { 24f, 230f, 900f, 1080f, 1260f, 1440f, 1620f };
             float[] widths = { 120f, 640f, 160f, 160f, 160f, 160f, 180f };
@@ -417,7 +473,9 @@ namespace WarehouseWar.EditorTools.UI
             Place(emptyText.rectTransform, new Vector2(0.5f, 1f), new Vector2(0f, -258f), new Vector2(1200f, 80f), new Vector2(0.5f, 1f));
 
             // ---- records
-            RectTransform records = At(CreateRect("Records Page", content), 0f, -110f, 1840f, 790f);
+            SpreadColumns(standings, 1840f);
+
+            RectTransform records = FillFrom(CreateRect("Records Page", content), 0f, -110f);
             string[] recordCaptions = { "MOST ELIMINATIONS IN A MATCH", "BEST WIN STREAK", "CURRENT WIN STREAK", "WIN RATE", "FAVOURITE WEAPON", "TIME PLAYED" };
             string[] recordIcons = { "Fire", "Star", "Trophy", "Podium", "Bullets", "Reload" };
             var recordValues = new TMP_Text[recordCaptions.Length];
@@ -437,6 +495,7 @@ namespace WarehouseWar.EditorTools.UI
                         ("Score", 920f, 220f, 32f, TextAlignmentOptions.Center, true), ("Weapon", 1180f, 300f, 26f, TextAlignmentOptions.Center, false),
                         ("When", 1500f, 300f, 24f, TextAlignmentOptions.Right, false) }, avatarX: 170f, avatarSize: 58f);
             TextMeshProUGUI recentEmpty = Label(records, "Recent Empty", "Your online matches will show up here.", 26f, TextMuted, 0f, -440f, 1840f, 60f, TextAlignmentOptions.Center);
+            SpreadColumns(records, 1840f);
 
             records.gameObject.SetActive(false);
             tabBackgrounds[0].color = Accent;
@@ -482,6 +541,7 @@ namespace WarehouseWar.EditorTools.UI
                 texts[i] = text;
             }
 
+            SpreadColumns(background.rectTransform, 1840f);
             LeaderboardRow row = background.gameObject.AddComponent<LeaderboardRow>();
             WireArray(row, "cells", texts);
             Wire(row, "avatar", avatar);
@@ -494,7 +554,7 @@ namespace WarehouseWar.EditorTools.UI
 
         public static CharacterScreen Characters(RectTransform safe, CharacterCatalog catalog, SoldierAnimator character, Transform turntable)
         {
-            RectTransform content = Frame("Character Screen", safe, "WARDROBE", true, out GameObject root, out Button back);
+            RectTransform content = Frame("Character Screen", safe, "WARDROBE", true, out GameObject root, out Button back, UiArt.Icon("Helmet"));
 
             // Drag the soldier in the middle.
             Image drag = CreateImage("Character Drag Area", content, new Color(0f, 0f, 0f, 0f), raycast: true);
@@ -511,12 +571,18 @@ namespace WarehouseWar.EditorTools.UI
             var locks = new GameObject[count];
             var prices = new TMP_Text[count];
             const float cardW = 236f, cardH = 158f, gap = 14f;
+            // Scrolling two-column list down the left edge, so every costume can be reached.
+            RectTransform listArea = CreateRect("Character List Area", content);
+            listArea.anchorMin = Vector2.zero;
+            listArea.anchorMax = new Vector2(0f, 1f);
+            listArea.pivot = new Vector2(0f, 1f);
+            listArea.offsetMin = new Vector2(-8f, 0f);
+            listArea.offsetMax = new Vector2(2f * cardW + gap + 16f - 8f, 0f);
+            RectTransform cardList = ScrollGrid(listArea, "Character List", new Vector2(cardW, cardH), new Vector2(gap, gap));
             for (int i = 0; i < count; i++)
             {
                 CharacterCatalog.Entry entry = catalog.Get(i);
-                float x = (i % 2) * (cardW + gap), y = -(i / 2) * (cardH + gap);
-                Button card = CreateButton($"Character {i + 1}", content, "", ButtonStyle.Secondary, new Vector2(cardW, cardH));
-                At((RectTransform)card.transform, x, y, cardW, cardH);
+                Button card = CreateButton($"Character {i + 1}", cardList, "", ButtonStyle.Secondary, new Vector2(cardW, cardH));
                 frames[i] = card.GetComponent<Image>();
                 frames[i].color = i == 0 ? Accent : new Color(1f, 1f, 1f, 0.08f);
                 portraits[i] = Masked(card.transform, "Portrait", UiArt.Rounded, entry != null ? entry.portrait : null, out RectTransform mask);
@@ -594,7 +660,7 @@ namespace WarehouseWar.EditorTools.UI
 
         public static ShopScreen ShopPage(RectTransform safe, CharacterCatalog characters, ProfileCatalog profiles)
         {
-            RectTransform content = Frame("Shop Screen", safe, "SHOP", false, out GameObject root, out Button back);
+            RectTransform content = Frame("Shop Screen", safe, "SHOP", false, out GameObject root, out Button back, UiArt.Icon("Crate"));
 
             // Balance (top right of the page).
             Image balance = CreateImage("Balance", content, new Color(0.04f, 0.05f, 0.08f, 0.9f), UiArt.Rounded);
@@ -616,9 +682,11 @@ namespace WarehouseWar.EditorTools.UI
                 Image rim = CreateImage("Rim", card.transform, new Color(1f, 1f, 1f, 0.08f), UiArt.Rounded);
                 Stretch(rim.rectTransform);
                 Image picture = Masked(card.transform, "Art", UiArt.Rounded, art, out RectTransform mask);
-                At(mask, (cell.x - artSize.x) * 0.5f, -14f, artSize.x, artSize.y);
+                Place(mask, new Vector2(0.5f, 1f), new Vector2(0f, -14f), artSize, new Vector2(0.5f, 1f));
                 picture.preserveAspect = true;
                 TextMeshProUGUI titleText = Label(card.transform, "Name", title, 24f, TextPrimary, 12f, -26f - artSize.y, cell.x - 24f, 34f, TextAlignmentOptions.Center, display: true);
+                titleText.rectTransform.anchorMax = new Vector2(1f, 1f);
+                titleText.rectTransform.offsetMax = new Vector2(-12f, titleText.rectTransform.offsetMax.y);
                 titleText.enableAutoSizing = true;
                 titleText.fontSizeMin = 16f;
                 titleText.fontSizeMax = 24f;
@@ -638,10 +706,10 @@ namespace WarehouseWar.EditorTools.UI
             }
 
             // Costumes.
-            RectTransform costumePage = At(CreateRect("Costumes Page", content), 0f, -140f, 1840f, 770f);
+            RectTransform costumePage = FillFrom(CreateRect("Costumes Page", content), 0f, -140f);
             pages[0] = costumePage.gameObject;
             var costumeCell = new Vector2(330f, 440f);
-            RectTransform costumeGrid = ScrollGrid(costumePage, "Costume List", costumeCell, new Vector2(30f, 30f), 5);
+            RectTransform costumeGrid = ScrollGrid(costumePage, "Costume List", costumeCell, new Vector2(30f, 30f), stretchCells: true);
             int characterCount = characters != null ? characters.Count : 0;
             var costumes = new ShopScreen.Item[characterCount];
             for (int i = 0; i < characterCount; i++)
@@ -651,18 +719,18 @@ namespace WarehouseWar.EditorTools.UI
             }
 
             // Avatars.
-            RectTransform avatarPage = At(CreateRect("Avatars Page", content), 0f, -140f, 1840f, 770f);
+            RectTransform avatarPage = FillFrom(CreateRect("Avatars Page", content), 0f, -140f);
             pages[1] = avatarPage.gameObject;
             var avatarCell = new Vector2(270f, 380f);
-            RectTransform avatarGrid = ScrollGrid(avatarPage, "Avatar List", avatarCell, new Vector2(28f, 28f), 6);
+            RectTransform avatarGrid = ScrollGrid(avatarPage, "Avatar List", avatarCell, new Vector2(28f, 28f), stretchCells: true);
             var avatars = new ShopScreen.Item[profiles.AvatarCount];
             for (int i = 0; i < avatars.Length; i++) avatars[i] = MakeItem(avatarGrid, $"Avatar {i + 1}", profiles.Avatar(i), $"AVATAR {i + 1}", avatarCell, new Vector2(230f, 230f));
 
             // Banners.
-            RectTransform bannerPage = At(CreateRect("Banners Page", content), 0f, -140f, 1840f, 770f);
+            RectTransform bannerPage = FillFrom(CreateRect("Banners Page", content), 0f, -140f);
             pages[2] = bannerPage.gameObject;
             var bannerCell = new Vector2(580f, 290f);
-            RectTransform bannerGrid = ScrollGrid(bannerPage, "Banner List", bannerCell, new Vector2(30f, 30f), 3);
+            RectTransform bannerGrid = ScrollGrid(bannerPage, "Banner List", bannerCell, new Vector2(30f, 30f), stretchCells: true);
             var banners = new ShopScreen.Item[profiles.BannerCount];
             for (int i = 0; i < banners.Length; i++) banners[i] = MakeItem(bannerGrid, $"Banner {i + 1}", profiles.Banner(i), profiles.BannerName(i).ToUpperInvariant(), bannerCell, new Vector2(540f, 135f));
 
@@ -705,7 +773,7 @@ namespace WarehouseWar.EditorTools.UI
 
         public static ArmoryScreen Armory(RectTransform safe, WeaponCatalog catalog, SoldierAnimator character, Transform turntable)
         {
-            RectTransform content = Frame("Armory Screen", safe, "ARMORY", true, out GameObject root, out Button back);
+            RectTransform content = Frame("Armory Screen", safe, "ARMORY", true, out GameObject root, out Button back, UiArt.Icon("Crosshair"));
 
             // Drag the soldier in the middle.
             Image drag = CreateImage("Character Drag Area", content, new Color(0f, 0f, 0f, 0f), raycast: true);

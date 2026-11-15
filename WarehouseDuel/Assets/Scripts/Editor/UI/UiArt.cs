@@ -314,14 +314,86 @@ namespace WarehouseWar.EditorTools.UI
             },
             ["Alert"] = p => Mathf.Min(SdRing(p, Vector2.zero, 0.7f, 0.08f),
                 Mathf.Min(SdSegment(p, new Vector2(0f, 0.38f), new Vector2(0f, -0.06f), 0.1f), SdCircle(p, new Vector2(0f, -0.32f), 0.1f))),
-            ["Star"] = p =>
+            ["Star"] = SdStar,
+
+            // ---- battlefield icons (screen headers, menu cards)
+            ["Helmet"] = p =>
             {
-                // Tips every 72°, starting straight up; radius blends from the valley (0.3) to the tip (0.68).
-                float angle = Mathf.Atan2(p.x, p.y);
-                float sector = Mathf.Abs(Mathf.Repeat(angle, Mathf.PI * 2f / 5f) - Mathf.PI / 5f) / (Mathf.PI / 5f);
-                return p.magnitude - Mathf.Lerp(0.3f, 0.68f, sector * sector);
+                float dome = Mathf.Max(SdCircle(p, new Vector2(0f, -0.12f), 0.66f), -(p.y + 0.12f));
+                float brim = SdBox(p, new Vector2(0f, -0.2f), new Vector2(0.84f, 0.08f)) - 0.02f;
+                float band = SdBox(p, new Vector2(0f, 0.08f), new Vector2(0.72f, 0.045f));
+                float shell = Mathf.Max(Mathf.Min(dome, brim), -band);
+                float strap = Mathf.Max(SdRing(p, new Vector2(0f, -0.3f), 0.4f, 0.05f), p.y + 0.34f);
+                return Mathf.Min(shell, strap);
+            },
+            ["Crosshair"] = p =>
+            {
+                float ring = SdRing(p, Vector2.zero, 0.56f, 0.07f);
+                float vertical = Mathf.Min(SdBox(p, new Vector2(0f, 0.62f), new Vector2(0.06f, 0.26f)), SdBox(p, new Vector2(0f, -0.62f), new Vector2(0.06f, 0.26f)));
+                float horizontal = Mathf.Min(SdBox(p, new Vector2(0.62f, 0f), new Vector2(0.26f, 0.06f)), SdBox(p, new Vector2(-0.62f, 0f), new Vector2(0.26f, 0.06f)));
+                return Mathf.Min(Mathf.Min(ring, SdCircle(p, Vector2.zero, 0.1f)), Mathf.Min(vertical, horizontal));
+            },
+            ["Medal"] = p =>
+            {
+                var c = new Vector2(0f, -0.3f);
+                float disc = SdCircle(p, c, 0.52f);
+                float rim = SdRing(p, c, 0.4f, 0.035f);
+                float star = SdStar((p - c) / 0.5f) * 0.5f;
+                float face = Mathf.Max(disc, -Mathf.Min(rim, star));
+                float straps = Mathf.Min(SdSegment(p, new Vector2(-0.38f, 0.86f), new Vector2(-0.1f, 0.2f), 0.13f),
+                                         SdSegment(p, new Vector2(0.38f, 0.86f), new Vector2(0.1f, 0.2f), 0.13f));
+                straps = Mathf.Max(straps, -(disc - 0.07f));
+                return Mathf.Min(face, straps);
+            },
+            ["DogTag"] = p =>
+            {
+                Vector2 q = Rot(p - new Vector2(0.14f, -0.2f), -14f);
+                float front = SdBox(q, Vector2.zero, new Vector2(0.32f, 0.48f)) - 0.14f;
+                float cut = Mathf.Min(SdCircle(q, new Vector2(0f, 0.42f), 0.08f),
+                    Mathf.Min(SdBox(q, new Vector2(0f, 0.06f), new Vector2(0.24f, 0.035f)), SdBox(q, new Vector2(-0.05f, -0.14f), new Vector2(0.19f, 0.035f))));
+                float frontTag = Mathf.Max(front, -cut);
+                Vector2 r = Rot(p - new Vector2(-0.2f, -0.06f), 12f);
+                float back = Mathf.Abs(SdBox(r, Vector2.zero, new Vector2(0.32f, 0.48f)) - 0.14f) - 0.05f;
+                float chain = Mathf.Max(SdRing(p, new Vector2(-0.04f, 0.4f), 0.42f, 0.035f), 0.4f - p.y);
+                float behind = Mathf.Max(Mathf.Min(back, chain), -(front - 0.07f));
+                return Mathf.Min(frontTag, behind);
+            },
+            ["Crate"] = p =>
+            {
+                // Supply crate: solid box with a lid seam, two side planks and a star stencil cut out of the front.
+                float body = SdBox(p, new Vector2(0f, -0.1f), new Vector2(0.74f, 0.52f)) - 0.05f;
+                float lid = SdBox(p, new Vector2(0f, 0.56f), new Vector2(0.8f, 0.1f)) - 0.04f;
+                float seams = Mathf.Min(SdBox(p, new Vector2(-0.46f, -0.1f), new Vector2(0.025f, 0.5f)), SdBox(p, new Vector2(0.46f, -0.1f), new Vector2(0.025f, 0.5f)));
+                float star = SdStar((p - new Vector2(0f, -0.1f)) / 0.48f) * 0.48f;
+                return Mathf.Min(Mathf.Max(body, -Mathf.Min(seams, star)), lid);
+            },
+            ["Pin"] = p =>
+            {
+                var c = new Vector2(0f, 0.24f);
+                float head = SdCircle(p, c, 0.5f);
+                float tail = SdTriangle(p, new Vector2(-0.43f, 0f), new Vector2(0.43f, 0f), new Vector2(0f, -0.86f));
+                return Mathf.Max(Mathf.Min(head, tail), -SdCircle(p, c, 0.2f));
+            },
+            ["Target"] = p => Mathf.Min(Mathf.Min(SdRing(p, Vector2.zero, 0.72f, 0.07f), SdRing(p, Vector2.zero, 0.44f, 0.07f)), SdCircle(p, Vector2.zero, 0.17f)),
+            ["Globe"] = p =>
+            {
+                float outline = SdRing(p, Vector2.zero, 0.72f, 0.065f);
+                float meridian = Mathf.Abs(new Vector2(p.x / 0.36f, p.y / 0.72f).magnitude - 1f) * 0.36f - 0.05f;
+                float axis = SdBox(p, Vector2.zero, new Vector2(0.05f, 0.72f));
+                float equator = SdBox(p, Vector2.zero, new Vector2(0.72f, 0.05f));
+                float latitudes = Mathf.Min(SdBox(p, new Vector2(0f, 0.38f), new Vector2(0.64f, 0.045f)), SdBox(p, new Vector2(0f, -0.38f), new Vector2(0.64f, 0.045f)));
+                float lines = Mathf.Max(Mathf.Min(Mathf.Min(meridian, axis), Mathf.Min(equator, latitudes)), SdCircle(p, Vector2.zero, 0.7f));
+                return Mathf.Min(outline, lines);
             },
         };
+
+        /// <summary>Five-pointed star, tips every 72° starting straight up; radius blends from the valley (0.3) to the tip (0.68).</summary>
+        private static float SdStar(Vector2 p)
+        {
+            float angle = Mathf.Atan2(p.x, p.y);
+            float sector = Mathf.Abs(Mathf.Repeat(angle, Mathf.PI * 2f / 5f) - Mathf.PI / 5f) / (Mathf.PI / 5f);
+            return p.magnitude - Mathf.Lerp(0.3f, 0.68f, sector * sector);
+        }
 
         /// <summary>Arrowhead at the end of a circular arc (radius 0.5) at <paramref name="degrees"/>, pointing clockwise.</summary>
         private static float ArrowHead(Vector2 p, float degrees)

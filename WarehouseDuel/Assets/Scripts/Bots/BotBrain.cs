@@ -23,9 +23,9 @@ namespace WarehouseWar.Bots
     {
         private const float SenseInterval = 0.2f;
         private const float RepathInterval = 0.5f;
-        private const float SightRange = 70f;
-        private const float AwarenessRadius = 10f;   // enemies this close are noticed even behind the bot
-        private const float FieldOfView = 140f;
+        private const float SightRange = 55f;
+        private const float AwarenessRadius = 5f;    // enemies this close are noticed even behind the bot
+        private const float FieldOfView = 110f;
         private const float MemorySeconds = 4f;
 
         private PlayerCharacter character;
@@ -34,6 +34,12 @@ namespace WarehouseWar.Bots
 
         // Personality (per bot).
         private float reactionMin, reactionMax, aimErrorStart, aimErrorFloor, aimSettleRate, turnSpeed, headshotBias;
+        // Human-like imperfection: the bot tracks where the target WAS (so strafing beats it), its aim sways
+        // constantly, and holding the trigger lets the spray drift off target.
+        private float trackingLag, swayAmplitude, swaySpeed, swaySeed, sprayDrift;
+        private Vector3 trackedPoint;
+        private bool hasTrackedPoint;
+        private float nextFloorShuffle;
 
         // Input cache: computed once per tick, read by every behaviour on the character.
         private int cachedTick = -1;
@@ -92,7 +98,11 @@ namespace WarehouseWar.Bots
             aimErrorFloor = Random.Range(1.4f, 2.6f);
             aimSettleRate = Random.Range(1.0f, 1.6f);
             turnSpeed = Random.Range(160f, 240f);
-            headshotBias = Random.Range(0f, 0.15f);
+            headshotBias = Random.Range(0f, 0.1f);
+            trackingLag = Random.Range(0.22f, 0.38f);
+            swayAmplitude = Random.Range(1.6f, 2.8f);
+            swaySpeed = Random.Range(0.5f, 0.9f);
+            swaySeed = Random.Range(0f, 100f);
             preferredDistanceJitter = Random.Range(-2f, 2f);
             strafeSign = Random.value < 0.5f ? -1f : 1f;
             nextSenseTime = Random.Range(0f, SenseInterval);
@@ -174,7 +184,7 @@ namespace WarehouseWar.Bots
             bool engaged = target != null && targetVisible;
             if (engaged)
             {
-                AimAt(target, weapon, dt);
+                AimAt(target, weapon, now, dt);
             }
 
             // --- movement (world-space direction)
@@ -271,6 +281,8 @@ namespace WarehouseWar.Bots
                     reactionReadyTime = now + (reacquired ? Random.Range(0.08f, 0.2f) : Random.Range(reactionMin, reactionMax));
                     float error = reacquired ? aimErrorStart * 0.4f : aimErrorStart;
                     aimError = Random.insideUnitCircle.normalized * Random.Range(error * 0.6f, error);
+                    sprayDrift = 0f;
+                    hasTrackedPoint = false;
                     burstPauseEndTime = reactionReadyTime;
                     preferKnife = Random.value < 0.5f;
                 }
@@ -297,22 +309,36 @@ namespace WarehouseWar.Bots
 
         // ------------------------------------------------------------------ aim & fire
 
-        private void AimAt(PlayerCharacter enemy, WeaponDefinition weapon, float dt)
+        private void AimAt(PlayerCharacter enemy, WeaponDefinition weapon, float now, float dt)
         {
-            // Aim error shrinks while tracking, never fully to zero.
+            // Aim error shrinks while tracking, never fully to zero; the leftover error wanders around the target
+            // instead of sticking to one side.
             float settle = Mathf.Exp(-aimSettleRate * dt);
             aimError *= settle;
-            if (aimError.magnitude < aimErrorFloor) aimError = aimError.normalized * aimErrorFloor + Random.insideUnitCircle * 0.05f;
+            if (aimError.magnitude < aimErrorFloor || now >= nextFloorShuffle)
+            {
+                if (aimError.magnitude < aimErrorFloor) aimError = Random.insideUnitCircle.normalized * aimErrorFloor * Random.Range(0.8f, 1.4f);
+                nextFloorShuffle = now + Random.Range(0.35f, 0.7f);
+            }
 
-            float height = weapon != null && weapon.IsExplosive ? 0.35f : Mathf.Lerp(1.15f, 1.55f, headshotBias);
+            // Spray drifts while the trigger is held and recovers between bursts.
+            sprayDrift = fireHeld ? Mathf.Min(sprayDrift + 4.5f * dt, 5f) : Mathf.Max(sprayDrift - 6f * dt, 0f);
+
+            float height = weapon != null && weapon.IsExplosive ? 0.35f : Mathf.Lerp(1.1f, 1.5f, headshotBias);
             Vector3 point = enemy.transform.position + Vector3.up * height;
-            // Lead moving targets a little (imperfectly).
-            point += enemy.Motor.Velocity * 0.06f;
+            // Track with a human delay: follow the target's position from a moment ago (no prediction), so a player
+            // who strafes or changes direction makes the bot miss.
+            if (!hasTrackedPoint) { trackedPoint = point - enemy.Motor.Velocity * trackingLag; hasTrackedPoint = true; }
+            trackedPoint = Vector3.Lerp(trackedPoint, point, 1f - Mathf.Exp(-dt / trackingLag));
 
-            Vector3 toPoint = point - character.EyePosition;
+            float t = now * swaySpeed + swaySeed;
+            float swayYaw = (Mathf.PerlinNoise(t, 0.3f) - 0.5f) * 2f * swayAmplitude;
+            float swayPitch = (Mathf.PerlinNoise(0.7f, t) - 0.5f) * 2f * swayAmplitude * 0.7f;
+
+            Vector3 toPoint = trackedPoint - character.EyePosition;
             float flat = new Vector2(toPoint.x, toPoint.z).magnitude;
-            float wantedYaw = Mathf.Atan2(toPoint.x, toPoint.z) * Mathf.Rad2Deg + aimError.x;
-            float wantedPitch = -Mathf.Atan2(toPoint.y, Mathf.Max(flat, 0.01f)) * Mathf.Rad2Deg + aimError.y * 0.6f;
+            float wantedYaw = Mathf.Atan2(toPoint.x, toPoint.z) * Mathf.Rad2Deg + aimError.x + swayYaw + sprayDrift * 0.4f;
+            float wantedPitch = -Mathf.Atan2(toPoint.y, Mathf.Max(flat, 0.01f)) * Mathf.Rad2Deg + aimError.y * 0.6f + swayPitch - sprayDrift;
 
             float step = turnSpeed * dt;
             // Fast flick when far off, finer tracking when close to the target direction.

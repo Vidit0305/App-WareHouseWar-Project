@@ -64,6 +64,7 @@ namespace WarehouseWar.EditorTools
                 WarehouseMapBuilder.Build(report);
                 OutdoorMapBuilder.Build(report);
                 HudBuilder.Build(report, catalog);
+                MenuArtBuilder.Build(report);
                 MenuScenesBuilder.BuildMainMenu(report, catalog);
                 MenuScenesBuilder.BuildLobby(report, catalog);
                 SplashBuilder.Build(report);

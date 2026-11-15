@@ -109,24 +109,26 @@ namespace WarehouseWar.EditorTools.UI
             // ---- left: feature cards
             CharacterCatalog characters = AssetDatabase.LoadAssetAtPath<CharacterCatalog>(WarehouseWar.EditorTools.Gameplay.CharacterBuilder.CatalogPath);
             Sprite costumeArt = characters != null && characters.Count > 3 ? characters.Get(3).portrait : UiArt.Icon("Profile");
-            Button armoryCard = SideCard(home, "Armory Card", "ARMORY", "Equip three weapons", "8 WEAPONS", profiles.Banner(5),
+            Sprite Shot(int index, int fallbackBanner) => MenuArtBuilder.MapShot(index) != null ? MenuArtBuilder.MapShot(index) : profiles.Banner(fallbackBanner);
+            Sprite cutout = MenuArtBuilder.SoldierCutout != null ? MenuArtBuilder.SoldierCutout : costumeArt;
+            Button armoryCard = SideCard(home, "Armory Card", "ARMORY", "Equip three weapons", "8 WEAPONS", Shot(0, 5),
                 catalog.Get(4) != null ? catalog.Get(4).icon : null, false, -196f, new Color(0.95f, 0.62f, 0.08f, 1f));
-            Button characterCard = SideCard(home, "Wardrobe Card", "WARDROBE", "Change your costume", "COSTUMES", profiles.Banner(2),
-                costumeArt, true, -380f, new Color(0.62f, 0.3f, 1f, 1f));
-            Button shopCard = SideCard(home, "Shop Card", "SHOP", "Spend your stars", "NEW ITEMS", profiles.Banner(3),
-                UiArt.Icon("Star"), false, -564f, new Color(0.25f, 0.85f, 0.45f, 1f));
+            Button characterCard = SideCard(home, "Wardrobe Card", "WARDROBE", "Change your costume", "COSTUMES", Shot(3, 2),
+                cutout, true, -380f, new Color(0.62f, 0.3f, 1f, 1f));
+            Button shopCard = SideCard(home, "Shop Card", "SHOP", "Spend your stars", "NEW ITEMS", Shot(2, 3),
+                UiArt.Icon("Crate"), false, -564f, new Color(0.25f, 0.85f, 0.45f, 1f));
             Button leaderboard = CreateButton("Leaderboard", home, "LEADERBOARD", ButtonStyle.Secondary, new Vector2(420f, 110f), out TextMeshProUGUI leaderboardLabel, 32f);
             RectTransform leaderboardRect = Place((RectTransform)leaderboard.transform, new Vector2(0f, 0f), new Vector2(30f, 30f), new Vector2(420f, 110f), new Vector2(0f, 0f));
             leaderboard.GetComponent<Image>().color = new Color(0.12f, 0.14f, 0.19f, 0.95f);
             Stretch(leaderboardLabel.rectTransform, 110f, 16f, 4f, 4f);
             leaderboardLabel.alignment = TextAlignmentOptions.Left;
-            Image podium = CreateImage("Icon", leaderboard.transform, Accent, UiArt.Icon("Trophy"));
+            Image podium = CreateImage("Icon", leaderboard.transform, Accent, UiArt.Icon("Medal"));
             Place(podium.rectTransform, new Vector2(0f, 0.5f), new Vector2(28f, 0f), new Vector2(64f, 64f), new Vector2(0f, 0.5f));
             AddTransition(leaderboardRect, new Vector2(-220f, 0f), 0.2f);
 
             // ---- right: game modes
-            Button online = ModeCard(home, "Online Mode", "ONLINE WAR", "Create a room or join friends", "8 PLAYERS", profiles.Banner(7), catalog.Get(0) != null ? catalog.Get(0).icon : null, -196f, Accent);
-            Button practice = ModeCard(home, "Practice Mode", "PRACTICE", "Fight 5 bots on any map", "VS BOTS", profiles.Banner(0), catalog.Get(3) != null ? catalog.Get(3).icon : null, -380f, Success);
+            Button online = ModeCard(home, "Online Mode", "ONLINE WAR", "Create a room or join friends", "8 PLAYERS", Shot(1, 7), catalog.Get(0) != null ? catalog.Get(0).icon : null, -200f, Accent);
+            Button practice = ModeCard(home, "Practice Mode", "PRACTICE", "Fight 5 bots on any map", "VS BOTS", Shot(4, 0), catalog.Get(3) != null ? catalog.Get(3).icon : null, -420f, Success);
 
             // ---- bottom right: PLAY
             Button play = CreateButton("Play", home, "PLAY", ButtonStyle.Primary, new Vector2(440f, 150f), out TextMeshProUGUI playLabel, 72f);
@@ -150,33 +152,85 @@ namespace WarehouseWar.EditorTools.UI
             GameObject settingsPanel = SharedUiBuilder.Settings(safe, out Button settingsClose);
 
             // ---- map picker (quick match + create room): four maps and Random
-            RectTransform mapCard = SharedUiBuilder.Modal("Map Picker", safe, new Vector2(1500f, 640f), out GameObject mapPanel);
-            mapCard.GetComponent<Image>().color = new Color(0.07f, 0.08f, 0.12f, 0.98f);
-            TextMeshProUGUI mapTitle = MenuScreensBuilder.Label(mapCard, "Title", "QUICK MATCH — CHOOSE A MAP", 46f, Accent, 0f, -30f, 1500f, 64f, TextAlignmentOptions.Center, display: true);
+            // Five tall cards, each a real rendered picture of the map (Random: a collage of all four).
+            const float pickerW = 1720f, pickerH = 870f, mapW = 300f, mapH = 520f, mapGap = 26f;
+            RectTransform mapCard = SharedUiBuilder.Modal("Map Picker", safe, new Vector2(pickerW, pickerH), out GameObject mapPanel);
+            mapCard.GetComponent<Image>().color = new Color(0.06f, 0.07f, 0.1f, 0.98f);
+            float mapLeft = (pickerW - (5f * mapW + 4f * mapGap)) * 0.5f;
+            Image mapPin = CreateImage("Icon", mapCard, Accent, UiArt.Icon("Pin"));
+            MenuScreensBuilder.At(mapPin.rectTransform, mapLeft, -38f, 60f, 60f);
+            TextMeshProUGUI mapTitle = MenuScreensBuilder.Label(mapCard, "Title", "QUICK MATCH — CHOOSE A MAP", 50f, TextPrimary, mapLeft + 80f, -30f, 1300f, 72f, TextAlignmentOptions.Left, display: true);
+            MenuScreensBuilder.Label(mapCard, "Subtitle", "Everyone in the match fights on the map you pick.", 24f, TextMuted, mapLeft + 82f, -102f, 1300f, 36f);
+            Image mapDivider = CreateImage("Divider", mapCard, new Color(1f, 1f, 1f, 0.1f));
+            MenuScreensBuilder.At(mapDivider.rectTransform, mapLeft, -156f, pickerW - mapLeft * 2f, 2f);
+
             string[] mapNames = { "WAREHOUSE", "DESERT", "FOREST", "SNOW", "RANDOM" };
-            string[] mapHints = { "Indoor close quarters", "Ruins under the sun", "Trees, logs and cabins", "Frozen outpost", "Surprise me" };
-            int[] mapArt = { 0, 3, 2, 5, 7 };
+            string[] mapHints = { "Indoor close quarters", "Ruins under the sun", "Trees, logs and cabins", "Frozen outpost", "Any of the four maps" };
+            string[] mapTags = { "INDOOR", "OPEN GROUND", "DENSE COVER", "LONG RANGE", "SURPRISE" };
+            int[] mapFallback = { 0, 3, 2, 5, 7 };
             var mapButtons = new Button[mapNames.Length];
+            void Envelope(Image image)
+            {
+                image.preserveAspect = false;
+                var fitter = image.gameObject.AddComponent<AspectRatioFitter>();
+                fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+                fitter.aspectRatio = 16f / 9f;
+            }
             for (int i = 0; i < mapNames.Length; i++)
             {
-                Button tile = CreateButton($"Map {mapNames[i]}", mapCard, "", ButtonStyle.Ghost, new Vector2(264f, 360f));
-                MenuScreensBuilder.At((RectTransform)tile.transform, 40f + i * 288f, -120f, 264f, 360f);
-                Image art = MenuScreensBuilder.Masked(tile.transform, "Art", UiArt.Rounded, profiles.Banner(mapArt[i]), out RectTransform artMask);
-                Stretch(artMask);
-                art.preserveAspect = false;
-                Image shade = CreateImage("Shade", tile.transform, new Color(0f, 0f, 0f, 0.45f), UiArt.Rounded);
-                Stretch(shade.rectTransform);
-                if (i == mapNames.Length - 1)
+                bool random = i == mapNames.Length - 1;
+                Button tile = CreateButton($"Map {mapNames[i]}", mapCard, "", ButtonStyle.Ghost, new Vector2(mapW, mapH));
+                MenuScreensBuilder.At((RectTransform)tile.transform, mapLeft + i * (mapW + mapGap), -186f, mapW, mapH);
+                tile.GetComponent<Image>().color = new Color(1f, 1f, 1f, 0.06f);
+                Image art = MenuScreensBuilder.Masked(tile.transform, "Art", UiArt.Rounded, random ? null : Shot(i, mapFallback[i]), out RectTransform artMask);
+                Stretch(artMask, 4f, 4f, 4f, 4f);
+                if (!random) Envelope(art);
+                else
                 {
-                    TextMeshProUGUI question = CreateText("Question", tile.transform, "?", 160f, new Color(1f, 1f, 1f, 0.85f), TextAlignmentOptions.Center, display: true);
-                    Place(question.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 30f), new Vector2(240f, 200f), new Vector2(0.5f, 0.5f));
+                    // 2×2 collage of the four maps behind a big question mark.
+                    art.color = new Color(0.05f, 0.06f, 0.09f, 1f);
+                    for (int q = 0; q < 4; q++)
+                    {
+                        RectTransform cell = CreateRect($"Quarter {q}", artMask);
+                        cell.anchorMin = new Vector2(q % 2 * 0.5f, q / 2 * 0.5f);
+                        cell.anchorMax = cell.anchorMin + new Vector2(0.5f, 0.5f);
+                        cell.offsetMin = new Vector2(2f, 2f);
+                        cell.offsetMax = new Vector2(-2f, -2f);
+                        cell.gameObject.AddComponent<RectMask2D>();
+                        Image piece = CreateImage("Image", cell, new Color(0.75f, 0.75f, 0.8f, 1f), Shot(q, mapFallback[q]));
+                        Stretch(piece.rectTransform);
+                        Envelope(piece);
+                    }
                 }
-                MenuScreensBuilder.Label(tile.transform, "Name", mapNames[i], 34f, TextPrimary, 0f, -272f, 264f, 44f, TextAlignmentOptions.Center, display: true);
-                MenuScreensBuilder.Label(tile.transform, "Hint", mapHints[i], 18f, new Color(1f, 1f, 1f, 0.75f), 0f, -316f, 264f, 30f, TextAlignmentOptions.Center);
+                Image fade = CreateImage("Shade", artMask, new Color(0f, 0f, 0f, 0.92f), UiArt.BottomFade);
+                fade.rectTransform.anchorMin = Vector2.zero;
+                fade.rectTransform.anchorMax = new Vector2(1f, 0.55f);
+                fade.rectTransform.offsetMin = fade.rectTransform.offsetMax = Vector2.zero;
+                if (random)
+                {
+                    Image dim = CreateImage("Dim", artMask, new Color(0f, 0f, 0f, 0.35f));
+                    Stretch(dim.rectTransform);
+                    dim.transform.SetSiblingIndex(fade.transform.GetSiblingIndex());
+                    TextMeshProUGUI question = CreateText("Question", tile.transform, "?", 200f, Accent, TextAlignmentOptions.Center, display: true);
+                    Place(question.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 60f), new Vector2(260f, 240f), new Vector2(0.5f, 0.5f));
+                }
+                Image mapChip = CreateImage("Tag", tile.transform, random ? Accent : new Color(0f, 0f, 0f, 0.65f), UiArt.RoundedSmall);
+                MenuScreensBuilder.At(mapChip.rectTransform, 18f, -18f, 170f, 34f);
+                TextMeshProUGUI chipText = CreateText("Text", mapChip.transform, mapTags[i], 17f, random ? AccentDark : TextPrimary, TextAlignmentOptions.Center, display: true);
+                Stretch(chipText.rectTransform);
+                TextMeshProUGUI mapName = CreateText("Name", tile.transform, mapNames[i], 40f, TextPrimary, TextAlignmentOptions.Left, display: true);
+                Place(mapName.rectTransform, Vector2.zero, new Vector2(22f, 64f), new Vector2(mapW - 40f, 52f), Vector2.zero);
+                mapName.enableAutoSizing = true;
+                mapName.fontSizeMin = 26f;
+                mapName.fontSizeMax = 40f;
+                Image underline = CreateImage("Underline", tile.transform, Accent);
+                Place(underline.rectTransform, Vector2.zero, new Vector2(24f, 58f), new Vector2(56f, 5f), Vector2.zero);
+                TextMeshProUGUI hint = CreateText("Hint", tile.transform, mapHints[i], 20f, new Color(1f, 1f, 1f, 0.78f), TextAlignmentOptions.Left);
+                Place(hint.rectTransform, Vector2.zero, new Vector2(24f, 18f), new Vector2(mapW - 40f, 34f), Vector2.zero);
                 mapButtons[i] = tile;
             }
-            Button mapBack = CreateButton("Back", mapCard, "BACK", ButtonStyle.Ghost, new Vector2(300f, 80f));
-            Place((RectTransform)mapBack.transform, new Vector2(0.5f, 0f), new Vector2(0f, 26f), new Vector2(300f, 80f), new Vector2(0.5f, 0f));
+            Button mapBack = CreateButton("Back", mapCard, "BACK", ButtonStyle.Ghost, new Vector2(320f, 84f));
+            Place((RectTransform)mapBack.transform, new Vector2(0.5f, 0f), new Vector2(0f, 34f), new Vector2(320f, 84f), new Vector2(0.5f, 0f));
 
             // ---- online dialogs
             RectTransform onlineCard = SharedUiBuilder.Modal("Online", safe, new Vector2(820f, 640f), out GameObject onlinePanel);
@@ -284,8 +338,19 @@ namespace WarehouseWar.EditorTools.UI
             Save(scene, GameConstants.Scenes.MainMenu, report);
         }
 
-        /// <summary>Size shared by every main-menu card (Armory, Wardrobe, Shop, Online, Practice).</summary>
+        /// <summary>Size of the left-hand feature cards (Armory, Wardrobe, Shop).</summary>
         private static readonly Vector2 MenuCardSize = new Vector2(420f, 164f);
+
+        /// <summary>Fills the card with a 16:9 picture without stretching it (crops the overflow; the card masks it).</summary>
+        private static void CoverArt(Image image)
+        {
+            if (image.sprite == null) return;
+            Rect r = image.sprite.rect;
+            image.preserveAspect = false;
+            var fitter = image.gameObject.AddComponent<AspectRatioFitter>();
+            fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+            fitter.aspectRatio = r.width / Mathf.Max(1f, r.height);
+        }
 
         /// <summary>
         /// Left-hand feature card in the same style as the game-mode cards: banner art washed with the card's colour,
@@ -301,17 +366,20 @@ namespace WarehouseWar.EditorTools.UI
             Image artImage = CreateImage("Art", card.transform, Color.white, art);
             artImage.type = Image.Type.Simple;
             Stretch(artImage.rectTransform);
-            Image wash = CreateImage("Wash", card.transform, new Color(colour.r * 0.45f, colour.g * 0.45f, colour.b * 0.45f, 0.72f));
+            CoverArt(artImage);
+            Image wash = CreateImage("Wash", card.transform, new Color(colour.r * 0.35f, colour.g * 0.35f, colour.b * 0.35f, 0.5f));
             Stretch(wash.rectTransform);
-            Image shade = CreateImage("Shade", card.transform, new Color(0f, 0f, 0f, 0.55f), UiArt.BottomFade);
+            Image shade = CreateImage("Shade", card.transform, new Color(0f, 0f, 0f, 0.6f), UiArt.BottomFade);
             Stretch(shade.rectTransform);
+            Image tint = CreateImage("Tint", card.transform, new Color(0f, 0f, 0f, 0.25f));
+            Stretch(tint.rectTransform);
             Image edge = CreateImage("Edge", card.transform, colour);
             Place(edge.rectTransform, new Vector2(0f, 0f), Vector2.zero, new Vector2(10f, 0f), new Vector2(0f, 0f));
             edge.rectTransform.anchorMax = new Vector2(0f, 1f);
             edge.rectTransform.sizeDelta = new Vector2(10f, 0f);
             Image glyph = CreateImage("Icon", card.transform, fullColourIcon ? Color.white : new Color(1f, 1f, 1f, 0.92f), icon);
             glyph.preserveAspect = true;
-            if (fullColourIcon) Place(glyph.rectTransform, new Vector2(1f, 0f), new Vector2(-6f, 0f), new Vector2(162f, 162f), new Vector2(1f, 0f));
+            if (fullColourIcon) Place(glyph.rectTransform, new Vector2(1f, 0f), new Vector2(4f, -6f), new Vector2(200f, 200f), new Vector2(1f, 0f));
             else Place(glyph.rectTransform, new Vector2(1f, 0.5f), new Vector2(-16f, -8f), new Vector2(170f, 100f), new Vector2(1f, 0.5f));
             MenuScreensBuilder.Label(card.transform, "Title", title, 38f, TextPrimary, 28f, -16f, 360f, 50f, display: true);
             MenuScreensBuilder.Label(card.transform, "Subtitle", subtitle, 20f, new Color(1f, 1f, 1f, 0.85f), 30f, -66f, 220f, 50f);
@@ -324,24 +392,35 @@ namespace WarehouseWar.EditorTools.UI
         }
 
         /// <summary>Game-mode card on the right: banner art, title, subtitle, a tag and a weapon silhouette.</summary>
+        private static readonly Vector2 ModeCardSize = new Vector2(460f, 196f);
+
         private static Button ModeCard(RectTransform parent, string name, string title, string subtitle, string tag, Sprite art, Sprite icon, float y, Color tagColor)
         {
-            Button card = CreateButton(name, parent, "", ButtonStyle.Ghost, MenuCardSize);
-            RectTransform rect = Place((RectTransform)card.transform, new Vector2(1f, 1f), new Vector2(-30f, y), MenuCardSize, new Vector2(1f, 1f));
+            Button card = CreateButton(name, parent, "", ButtonStyle.Ghost, ModeCardSize);
+            RectTransform rect = Place((RectTransform)card.transform, new Vector2(1f, 1f), new Vector2(-30f, y), ModeCardSize, new Vector2(1f, 1f));
             card.GetComponent<Image>().color = new Color(0.08f, 0.09f, 0.13f, 1f);
             card.gameObject.AddComponent<Mask>().showMaskGraphic = true;
             Image artImage = CreateImage("Art", card.transform, Color.white, art);
             artImage.type = Image.Type.Simple;
             Stretch(artImage.rectTransform);
-            Image shade = CreateImage("Shade", card.transform, new Color(0f, 0f, 0f, 0.5f));
+            CoverArt(artImage);
+            Image shade = CreateImage("Shade", card.transform, new Color(0f, 0f, 0f, 0.6f), UiArt.BottomFade);
             Stretch(shade.rectTransform);
+            Image tint = CreateImage("Tint", card.transform, new Color(0f, 0f, 0f, 0.25f));
+            Stretch(tint.rectTransform);
+            Image edge = CreateImage("Edge", card.transform, tagColor);
+            edge.rectTransform.anchorMin = new Vector2(1f, 0f);
+            edge.rectTransform.anchorMax = new Vector2(1f, 1f);
+            edge.rectTransform.pivot = new Vector2(1f, 0.5f);
+            edge.rectTransform.sizeDelta = new Vector2(10f, 0f);
+            edge.rectTransform.anchoredPosition = Vector2.zero;
             Image weapon = CreateImage("Weapon", card.transform, new Color(1f, 1f, 1f, 0.9f), icon);
             weapon.preserveAspect = true;
-            Place(weapon.rectTransform, new Vector2(1f, 0f), new Vector2(-16f, 12f), new Vector2(180f, 84f), new Vector2(1f, 0f));
-            MenuScreensBuilder.Label(card.transform, "Title", title, 38f, TextPrimary, 26f, -16f, 370f, 50f, display: true);
-            MenuScreensBuilder.Label(card.transform, "Subtitle", subtitle, 20f, new Color(1f, 1f, 1f, 0.8f), 28f, -66f, 230f, 50f);
+            Place(weapon.rectTransform, new Vector2(1f, 0f), new Vector2(-24f, 14f), new Vector2(220f, 100f), new Vector2(1f, 0f));
+            MenuScreensBuilder.Label(card.transform, "Title", title, 42f, TextPrimary, 26f, -22f, 400f, 56f, display: true);
+            MenuScreensBuilder.Label(card.transform, "Subtitle", subtitle, 21f, new Color(1f, 1f, 1f, 0.85f), 28f, -80f, 260f, 60f);
             Image tagBack = CreateImage("Tag", card.transform, tagColor, UiArt.RoundedSmall);
-            MenuScreensBuilder.At(tagBack.rectTransform, 26f, -122f, 140f, 30f);
+            MenuScreensBuilder.At(tagBack.rectTransform, 26f, -146f, 150f, 34f);
             TextMeshProUGUI tagText = CreateText("Text", tagBack.transform, tag, 17f, new Color(0.08f, 0.08f, 0.08f), TextAlignmentOptions.Center, display: true);
             Stretch(tagText.rectTransform);
             AddTransition(rect, new Vector2(240f, 0f), y < -300f ? 0.15f : 0.1f);

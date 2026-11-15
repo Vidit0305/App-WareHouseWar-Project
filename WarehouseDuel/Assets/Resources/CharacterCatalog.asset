@@ -252,3 +252,123 @@ MonoBehaviour:
     - {fileID: 2100000, guid: 08d8acd7ec0f6d64ba56435ec4221e8c, type: 2}
     helmet: 1
     faceMask: 1
+  - name: Arctic Ops
+    role: Polar strike team
+    description: Whiteout camo, a snow balaclava and tinted goggles. At home on frozen
+      fronts and freezing nights.
+    portrait: {fileID: 21300000, guid: b3383a9c34c630f4689e97a731ccceb9, type: 3}
+    materials:
+    - {fileID: 2100000, guid: af9bf52e99a6d95498f61582968af86e, type: 2}
+    - {fileID: 2100000, guid: a04fcf3cfc757994788f9fe0da8db468, type: 2}
+    - {fileID: 2100000, guid: 7dcc30e7eb2fa7842a38800bb28fdd11, type: 2}
+    - {fileID: 2100000, guid: 1c8c60ede39cc6449bab7ca4f8efa741, type: 2}
+    - {fileID: 2100000, guid: 50d461ba88e30ce42a5d47c7b10a3b8f, type: 2}
+    - {fileID: 2100000, guid: 65681a3fc07096b4b9ae10953a6219b6, type: 2}
+    - {fileID: 2100000, guid: c8c37788dcf8fff40a76a8b52dca983b, type: 2}
+    helmet: 0
+    faceMask: 0
+  - name: Jungle Recon
+    role: Long-range scout
+    description: Deep jungle camo, boonie hat, face paint and a field radio. Sees
+      the enemy long before they see him.
+    portrait: {fileID: 21300000, guid: 3085ebf3e7006484abd7f7f0b3e6c0bd, type: 3}
+    materials:
+    - {fileID: 2100000, guid: 5643590a365e8b74c8e620a3748b1e22, type: 2}
+    - {fileID: 2100000, guid: aa243c96d8f5e14409925bbb80fc1a84, type: 2}
+    - {fileID: 2100000, guid: 451fe45ad487f1446b4b2ef181482630, type: 2}
+    - {fileID: 2100000, guid: 1199b263eeb7f454b8f1cc50ce2698eb, type: 2}
+    - {fileID: 2100000, guid: e3bce0aab330bb34c874c54baa50d586, type: 2}
+    - {fileID: 2100000, guid: 934d599e646565d438a6db316c412b87, type: 2}
+    - {fileID: 2100000, guid: 111f0286f5a92c94f97d918f9c8f6c0f, type: 2}
+    helmet: 0
+    faceMask: 0
+  - name: Paratrooper
+    role: Airborne assault
+    description: Olive fatigues, a maroon beret and a jump harness. First out of
+      the plane, first into the fight.
+    portrait: {fileID: 21300000, guid: b9d808904674d4f41805ffb77eff5bf2, type: 3}
+    materials:
+    - {fileID: 2100000, guid: 74a15e6e9764d9045a72ea92caabce2a, type: 2}
+    - {fileID: 2100000, guid: d2ec591c22f956c409b17d27f7c6d352, type: 2}
+    - {fileID: 2100000, guid: 66ec76d564022e64dbde4baff6f13713, type: 2}
+    - {fileID: 2100000, guid: 2337287e642d9c34a82a2f5e17d30935, type: 2}
+    - {fileID: 2100000, guid: 566305dac79ff2e48bd024647e54ee87, type: 2}
+    - {fileID: 2100000, guid: 72e576c201062a24a8fdf657a56f3d00, type: 2}
+    - {fileID: 2100000, guid: 9042f5501418aaf419a35ecdaa4fe7a9, type: 2}
+    helmet: 0
+    faceMask: 0
+  - name: Spec Ops Black
+    role: Tier one operator
+    description: Black multicam, comms headset, helmet strobe and a loaded plate
+      carrier. Gets the job done quietly.
+    portrait: {fileID: 21300000, guid: 674054465bf35a04fa8acf1edff9ecf4, type: 3}
+    materials:
+    - {fileID: 2100000, guid: 1085bcb8db7b6e04380d6543b9fccb3d, type: 2}
+    - {fileID: 2100000, guid: 0529779f1ebf26a4fa6346e9631cdcd9, type: 2}
+    - {fileID: 2100000, guid: a1b2feaaa3fad58409794c5ff37e180d, type: 2}
+    - {fileID: 2100000, guid: 86e45f0a5bd4f7c41805e3b1abd1b7e1, type: 2}
+    - {fileID: 2100000, guid: ff344bb9cf19e9045951ea2b3ed8655b, type: 2}
+    - {fileID: 2100000, guid: 94369e436b7f887499bc3fd4a2e4559c, type: 2}
+    - {fileID: 2100000, guid: 559e14a15ee45774e9390724ccfbd8fb, type: 2}
+    helmet: 1
+    faceMask: 1
+  - name: Tank Crew
+    role: Armoured commander
+    description: Olive drab coveralls, a padded tanker helmet and dust goggles. Smells
+      of diesel and victory.
+    portrait: {fileID: 21300000, guid: 8791e89f61f776747a681105a866aff1, type: 3}
+    materials:
+    - {fileID: 2100000, guid: ef1840a4bd0801b4cb20986b4f04d525, type: 2}
+    - {fileID: 2100000, guid: 6426d54ad2431f540bdae619608fdfe3, type: 2}
+    - {fileID: 2100000, guid: b2efce1602ce1534c95e1820ec6241f2, type: 2}
+    - {fileID: 2100000, guid: 6b9330789cebb6f47acc352d4a0bfa68, type: 2}
+    - {fileID: 2100000, guid: fbf4bd66fc8a5514da0954b864839328, type: 2}
+    - {fileID: 2100000, guid: 8ea29154323ac6140829401fa6f09bef, type: 2}
+    - {fileID: 2100000, guid: 8b125535d900065448938db5ae86dabe, type: 2}
+    helmet: 0
+    faceMask: 0
+  - name: Urban Digital
+    role: Metro assault
+    description: Blue-grey digital camo, full helmet and face guard. Designed for
+      concrete, steel and close quarters.
+    portrait: {fileID: 21300000, guid: 457a9806d2b305b48ad18829c7d15a5d, type: 3}
+    materials:
+    - {fileID: 2100000, guid: 52c0ca94516fa1343a536a99eec58bf2, type: 2}
+    - {fileID: 2100000, guid: ac79214bf3e1f1147b74608877bc6451, type: 2}
+    - {fileID: 2100000, guid: 32f3eeaa5619354468d6bd18f721cc70, type: 2}
+    - {fileID: 2100000, guid: 8dd2558b0ee41234998d84929efac98a, type: 2}
+    - {fileID: 2100000, guid: c55ccac6bbbc3384d96563932a61ea2f, type: 2}
+    - {fileID: 2100000, guid: 15d838f5d8a697245affc7dd47e44b31, type: 2}
+    - {fileID: 2100000, guid: 4cfaf1f114f058f4fa8a15516c38f1e1, type: 2}
+    helmet: 1
+    faceMask: 1
+  - name: Marine
+    role: Amphibious infantry
+    description: Woodland digital camo with coyote gear and boots. First to fight,
+      from the beach to the warehouse.
+    portrait: {fileID: 21300000, guid: 42f6a155bc1f4394ba478c3d35aa5061, type: 3}
+    materials:
+    - {fileID: 2100000, guid: b8ec6b03f1ce6c94bbb086d03a4b60af, type: 2}
+    - {fileID: 2100000, guid: 24aec0a25b2d937428f06de90b6f17c4, type: 2}
+    - {fileID: 2100000, guid: b09d753a98e0c984dbd4dab737cb66f3, type: 2}
+    - {fileID: 2100000, guid: 825123501aecfb646bcdc1dea70bb0a3, type: 2}
+    - {fileID: 2100000, guid: 89227454580456a49b07bf93c04262bd, type: 2}
+    - {fileID: 2100000, guid: a6ade7389d40ef442993cf52340df048, type: 2}
+    - {fileID: 2100000, guid: c829f28e7620bee448fe802dd6999101, type: 2}
+    helmet: 1
+    faceMask: 0
+  - name: Phantom
+    role: Ghost operative
+    description: A dark hood, a blank face plate and a cold cyan visor. Nobody knows
+      who is underneath.
+    portrait: {fileID: 21300000, guid: dc4fdd4875c8d31488d32961acd29e4b, type: 3}
+    materials:
+    - {fileID: 2100000, guid: 7411cabb7795c1b45a7bba751361d72b, type: 2}
+    - {fileID: 2100000, guid: 8d879bfb407ede64386fd5826889cab0, type: 2}
+    - {fileID: 2100000, guid: 51ddf5da70ede29498ddf20e520dc6cf, type: 2}
+    - {fileID: 2100000, guid: b3ca37e615709334ba083172a6ee0b0c, type: 2}
+    - {fileID: 2100000, guid: 855bdb59acaff364f8e386b2d705393a, type: 2}
+    - {fileID: 2100000, guid: 508581dbbbd438b48bcf213e49e98344, type: 2}
+    - {fileID: 2100000, guid: bcc245b9b5ac6e0479caef6a36999187, type: 2}
+    helmet: 0
+    faceMask: 0

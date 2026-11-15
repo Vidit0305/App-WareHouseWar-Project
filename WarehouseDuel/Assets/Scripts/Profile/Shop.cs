@@ -48,14 +48,18 @@ namespace WarehouseWar.Profile
             }
         }
 
-        private static readonly int[] CostumePrices = { 0, 0, 30, 25, 30, 20, 40, 35, 45, 60, 40, 45, 50, 55, 65, 80 };
+        private static readonly int[] CostumePrices =
+        {
+            0, 0, 30, 25, 30, 20, 40, 35, 45, 60, 40, 45, 50, 55, 65, 80,
+            50, 55, 60, 70, 80, 90, 100, 120,
+        };
 
         public static int Price(Category category, int index)
         {
             if (IsFree(category, index)) return 0;
             switch (category)
             {
-                case Category.Costume: return index < CostumePrices.Length ? CostumePrices[index] : 80;
+                case Category.Costume: return index < CostumePrices.Length ? CostumePrices[index] : 120;
                 case Category.Avatar: return 10 + 2 * Mathf.Max(0, index - 4);
                 default: return 15 + 2 * Mathf.Max(0, index - 4);
             }
