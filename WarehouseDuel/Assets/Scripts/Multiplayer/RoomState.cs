@@ -180,15 +180,19 @@ namespace WarehouseWar.Multiplayer
 
         public string NameOf(PlayerRef player) => TryGetSlot(player, out PlayerSlot slot) ? slot.Name.ToString() : "Player";
 
+        /// <summary>True when every player in the room (at least one) is ready. Empty slots are ignored.</summary>
         public bool AllReady
         {
             get
             {
+                int occupied = 0;
                 for (int i = 0; i < Capacity; i++)
                 {
-                    if (!Slots[i].Occupied || !Slots[i].Ready) return false;
+                    if (!Slots[i].Occupied) continue;
+                    if (!Slots[i].Ready) return false;
+                    occupied++;
                 }
-                return true;
+                return occupied > 0;
             }
         }
 
